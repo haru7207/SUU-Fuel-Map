@@ -1,0 +1,5 @@
+{
+  "name": "SUU Fuel Map",
+  "description": "Interactive aviation fuel map for SUU instructors, featuring fuel card rules, FBO info, and live weather data (advisory only, don't use this for situational awareness)",
+  "requestFramePermissions": []
+}
