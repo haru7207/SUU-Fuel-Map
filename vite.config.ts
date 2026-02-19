@@ -21,3 +21,11 @@ export default defineConfig(({ mode }) => {
       }
     };
 });
+
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/SUU-Fuel-Map/', // 이 줄을 꼭 추가해 주세요!
+})
