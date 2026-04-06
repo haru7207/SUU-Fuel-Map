@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType } from '../types';
-import { Search, Plane, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft } from 'lucide-react';
+import { Search, Plane, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -254,6 +254,47 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
                     <span>Clear Saved Fuel Memos</span>
                   </div>
                 </button>
+              </div>
+            </div>
+
+            {/* Developer Information */}
+            <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Developer Information</h3>
+              <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-4 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold text-lg">
+                    EJ
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 dark:text-slate-200">Elon Jun</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Creator & Developer</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-2 text-sm">
+                  <a href="mailto:haru7207.local@gmail.com" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:underline">
+                    <Mail size={14} />
+                    <span>haru7207.local@gmail.com</span>
+                  </a>
+                  <a href="tel:4356811849" className="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-slate-800 dark:hover:text-white transition-colors">
+                    <Phone size={14} />
+                    <span>(435) 681-1849</span>
+                  </a>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 italic mt-1">
+                    * Instructors: Please send any bug reports or feedback to the email above.
+                  </p>
+                </div>
+
+                <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
+                  <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Technical Notes & Disclaimers</h5>
+                  <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5 list-disc pl-3">
+                    <li>Weather data (METAR, TAF, G-AIRMET) is sourced from the FAA AWC API.</li>
+                    <li>Runway crosswind calculations are based on current METAR data.</li>
+                    <li>FBO & airport data are aggregated from various free APIs.</li>
+                    <li>NOTAM data is currently unavailable due to API complexity. If you have experience with NOTAM APIs, please reach out!</li>
+                    <li className="text-red-600/80 dark:text-red-400/80 font-medium">All weather data provided here is advisory only. Never use this application as an official weather source for flight planning.</li>
+                  </ul>
+                </div>
               </div>
             </div>
 

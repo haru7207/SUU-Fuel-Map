@@ -224,7 +224,7 @@ Notes: ${log.notes || 'None'}
     <>
       {/* Floating Action Buttons */}
       {!isOpen && !isHidden && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:bottom-auto md:translate-x-0 md:top-4 md:left-6 md:right-auto z-[1050] flex flex-col items-center md:items-start gap-3">
+        <div className="absolute top-20 left-4 md:top-4 md:left-6 z-[1050] flex flex-col items-start gap-3">
           <button
             onClick={() => setIsOpen(true)}
             className={`flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-full shadow-xl hover:bg-red-700 hover:scale-105 transition-all active:scale-95 group`}
