@@ -517,17 +517,11 @@ Notes: ${log.notes || 'None'}
                                         <div className="flex gap-1 items-center">
                                             <button 
                                                 onClick={(e) => handleEmail(log, 'katiebaca@suu.edu', e)} 
-                                                className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
-                                                title="Email Katie Baca"
+                                                className="flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                                                title="Send email report to Katie Baca"
                                             >
-                                                Katie
-                                            </button>
-                                            <button 
-                                                onClick={(e) => handleEmail(log, 'suenghunjun@suu.edu', e)} 
-                                                className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
-                                                title="Email Elon Jun"
-                                            >
-                                                Elon
+                                                <Mail size={10} />
+                                                <span>Email Katie</span>
                                             </button>
                                             <button 
                                                 onClick={(e) => handleShare(log, e)} 

@@ -595,8 +595,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                                 <p className="text-[10px] text-slate-500 uppercase font-bold">Finance Manager</p>
                             </div>
                             <div className="text-right">
-                                <a href="tel:435-586-7849" className="block text-xs font-bold text-blue-600 hover:underline">
-                                    (435) 586-7849
+                                <a href="tel:435-922-5107" className="block text-xs font-bold text-blue-600 hover:underline">
+                                    (435) 922-5107
                                 </a>
                                 <a href="mailto:katiebaca@suu.edu" className="block text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-end gap-1">
                                     <Mail size={10} />
