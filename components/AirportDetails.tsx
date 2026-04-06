@@ -1,17 +1,19 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Airport, CardType, WeatherData, UserNote, FuelType } from '../types';
 import { fetchWeather, fetchPilotNotes, savePilotNote } from '../services/aviationService';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio } from 'lucide-react';
 
 interface AirportDetailsProps {
   airport: Airport;
   onClose: () => void;
+  onOpenFuelLog: () => void;
+  weatherMap: Record<string, WeatherData>;
 }
 
-type Tab = 'info' | 'weather' | 'notes';
+type Tab = 'info' | 'weather' | 'notam' | 'notes';
 
-const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => {
+const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpenFuelLog, weatherMap }) => {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
@@ -37,18 +39,35 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
   // Crosswind Calculator State
   const [selectedRunway, setSelectedRunway] = useState<string>(airport.runways[0] || '18/36');
   
-  const loadWeather = async () => {
-      setLoadingWeather(true);
-      try {
-        const weatherId = airport.weatherSource || airport.id;
-        const w = await fetchWeather(weatherId);
-        setWeather(w);
-      } catch (e) {
-          console.error("Weather load failed", e);
-      } finally {
-          setLoadingWeather(false);
+  const loadWeather = useCallback(async (forceRefresh: boolean = false) => {
+      const weatherId = airport.weatherSource || airport.id;
+      
+      // If we have it in the pre-fetched map and not forcing refresh, use it instantly
+      if (!forceRefresh && weatherMap && weatherMap[weatherId]) {
+          setWeather(weatherMap[weatherId]);
+          setLoadingWeather(false); // Instantly hide loading state
+          
+          // If TAF is not fetched, we might want to fetch it now for the details view
+          if (weatherMap[weatherId].taf === 'TAF NOT FETCHED') {
+              try {
+                  const fullWeather = await fetchWeather(weatherId);
+                  setWeather(fullWeather);
+              } catch (e) {
+                  console.error("Weather load failed", e);
+              }
+          }
+      } else {
+          setLoadingWeather(true);
+          try {
+              const w = await fetchWeather(weatherId);
+              setWeather(w);
+          } catch (e) {
+              console.error("Weather load failed", e);
+          } finally {
+              setLoadingWeather(false);
+          }
       }
-  };
+  }, [airport.id, airport.weatherSource, weatherMap]);
 
   const loadNotes = async () => {
     if (isOffline) {
@@ -167,13 +186,16 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
     setIsReplyAnonymous(false);
     
     // Load data
-    loadWeather();
     loadNotes();
     
     if (airport.runways.length > 0) {
       setSelectedRunway(airport.runways[0]);
     }
   }, [airport]);
+
+  useEffect(() => {
+    loadWeather();
+  }, [loadWeather]);
 
   // Listen for online/offline events to update local state
   useEffect(() => {
@@ -189,11 +211,11 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
 
   const getFlightCategoryColor = (cat: string) => {
     switch (cat) {
-      case 'VFR': return 'text-green-700 bg-green-100 border-green-200';
-      case 'MVFR': return 'text-blue-700 bg-blue-100 border-blue-200';
-      case 'IFR': return 'text-red-700 bg-red-100 border-red-200';
-      case 'LIFR': return 'text-purple-700 bg-purple-100 border-purple-200';
-      default: return 'text-slate-500 bg-slate-100 border-slate-200';
+      case 'VFR': return 'bg-green-500 border-green-600';
+      case 'MVFR': return 'bg-blue-500 border-blue-600';
+      case 'IFR': return 'bg-red-500 border-red-600';
+      case 'LIFR': return 'bg-purple-500 border-purple-600';
+      default: return 'bg-slate-400 border-slate-500';
     }
   };
 
@@ -238,7 +260,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
     }
     return {
         direction: weather.wind.direction,
-        isVrb: false, // API provides number
+        isVrb: weather.wind.isVrb || false,
         speed: weather.wind.speed,
         gust: weather.wind.gust
     };
@@ -318,77 +340,81 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
   };
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden relative font-sans">
+    <div className="h-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden relative font-sans">
       
       {/* --- HEADER --- */}
-      <div className="p-5 border-b border-gray-100 bg-white flex justify-between items-start flex-shrink-0">
+      <div className="p-5 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-start flex-shrink-0">
         <div>
           <div className="flex items-center gap-3">
-             <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {airport.id}
              </h2>
              {weather && (
               <div 
-                className={`flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded border cursor-help ${
-                    weather.flightCategory === 'UNKNOWN' 
-                    ? 'text-slate-500 bg-slate-100 border-slate-200' 
-                    : getFlightCategoryColor(weather.flightCategory)
-                }`}
-                title="Current Flight Category (VFR/IFR)"
+                className="flex items-center justify-center p-1"
+                title={`Current Flight Category: ${weather.flightCategory}`}
               >
                 {weather.flightCategory === 'UNKNOWN' ? (
-                    <>
-                        <AlertTriangle size={10} />
-                        <span>WX N/A</span>
-                    </>
+                    <div className="h-3 w-3 rounded-full bg-slate-300 border border-slate-400" title="WX N/A" />
                 ) : (
-                    weather.flightCategory
+                    <div className={`h-3 w-3 rounded-full border shadow-sm ${getFlightCategoryColor(weather.flightCategory)}`} />
                 )}
               </div>
             )}
             
             {airport.weatherSource && (
-                 <span className="text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 px-2 py-0.5 rounded flex items-center gap-1" title={`Weather from ${airport.weatherSource}`}>
+                 <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded flex items-center gap-1" title={`Weather from ${airport.weatherSource}`}>
                     <CloudSun size={10} /> {airport.weatherSource}
                  </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 font-medium">{airport.name}</p>
-          <div className="flex items-center text-xs text-slate-400 mt-1">
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{airport.name}</p>
+          <div className="flex items-center text-xs text-slate-400 dark:text-slate-500 mt-1">
             <MapPin size={12} className="mr-1" />
             {airport.city}, {airport.state}
           </div>
         </div>
-        <button onClick={onClose} className="p-2 -mr-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full transition-colors">
-          <X size={24} />
-        </button>
+        <div className="flex items-center gap-1 -mr-2">
+            <button onClick={onOpenFuelLog} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors flex items-center gap-1" title="Log Fuel">
+                <Fuel size={20} />
+            </button>
+            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-colors">
+            <X size={24} />
+            </button>
+        </div>
       </div>
 
       {/* --- TABS --- */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-gray-200 dark:border-slate-800">
         <button 
             onClick={() => setActiveTab('info')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'info' ? 'border-slate-800 text-slate-800' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'info' ? 'border-slate-800 dark:border-slate-200 text-slate-800 dark:text-slate-200' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
             FBO & Info
         </button>
         <button 
             onClick={() => setActiveTab('weather')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'weather' ? 'border-blue-600 text-blue-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'weather' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
             Weather
         </button>
         <button 
+            onClick={() => setActiveTab('notam')}
+            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'notam' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+        >
+            NOTAM
+        </button>
+        <button 
             onClick={() => setActiveTab('notes')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'notes' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
+            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'notes' ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
             Pilot Notes
-            {notes.length > 0 && <span className="text-[10px] bg-indigo-50 text-indigo-600 px-1.5 rounded-full">{notes.length}</span>}
+            {notes.length > 0 && <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 rounded-full">{notes.length}</span>}
         </button>
       </div>
 
       {/* --- CONTENT AREA --- */}
-      <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50">
+      <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50 dark:bg-slate-900/50">
         
         {/* TAB: INFO */}
         {activeTab === 'info' && (
@@ -416,7 +442,10 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                                     <div key={f} className="flex items-center justify-end gap-2 border-b border-slate-50 last:border-0 pb-1 last:pb-0">
                                         <div className="flex flex-col items-end">
                                             <div className="flex items-center gap-2">
-                                                 <span className="text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">{f}</span>
+                                                 <span className="flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
+                                                    <Droplets size={10} className={f === FuelType.LL100 ? 'text-green-500' : 'text-blue-500'} />
+                                                    {f}
+                                                 </span>
                                                  {airport.fuelPhones && airport.fuelPhones[f] && (
                                                      <a href={`tel:${airport.fuelPhones[f]}`} className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 font-bold bg-blue-50 px-1.5 py-0.5 rounded transition-colors">
                                                         <Phone size={10} />
@@ -432,6 +461,58 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                                 ))}
                             </div>
                         </div>
+                    </div>
+
+                    <div className="pt-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Required Card</span>
+                        
+                        {airport.cardRules.byFuelType ? (
+                            <div className="mt-1 space-y-2">
+                                {Object.entries(airport.cardRules.byFuelType).map(([fuelType, card]) => (
+                                    <div key={fuelType} className={`p-3 rounded border flex justify-between items-center ${
+                                        card === CardType.WHITE_CARD ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
+                                    }`}>
+                                         <div>
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">{fuelType}</span>
+                                            <span className={`text-base font-bold ${
+                                                card === CardType.WHITE_CARD ? 'text-red-700' : 'text-blue-700'
+                                            }`}>
+                                                {card}
+                                            </span>
+                                         </div>
+                                    </div>
+                                ))}
+                                <p className="text-xs text-slate-600 mt-1 italic">
+                                    {airport.cardRules.notes}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className={`mt-1 p-4 rounded border ${
+                                airport.cardRules.primary === CardType.WHITE_CARD ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
+                            }`}>
+                                <p className={`text-lg font-bold ${
+                                    airport.cardRules.primary === CardType.WHITE_CARD ? 'text-red-700' : 'text-blue-700'
+                                }`}>
+                                    {airport.cardRules.primary === CardType.WHITE_CARD ? `White Card (${airport.fbo})` : airport.cardRules.primary}
+                                </p>
+                                <p className="text-xs text-slate-600 mt-1">
+                                    {airport.cardRules.notes || "Standard fueling procedures apply."}
+                                </p>
+
+                                {/* New Fueling Notes Section */}
+                                {airport.cardRules.fuelingNotes && (
+                                    <div className="mt-3 pt-3 border-t border-black/5">
+                                        <div className="flex items-center gap-1.5 mb-1">
+                                            <Droplets size={12} className="text-slate-500" />
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase">Fueling Notes</p>
+                                        </div>
+                                        <p className="text-xs text-slate-700 italic bg-white/50 p-2 rounded">
+                                            "{airport.cardRules.fuelingNotes}"
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Runway Info */}
@@ -475,57 +556,25 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                         </div>
                     </div>
 
-                    <div className="pt-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Required Card</span>
-                        
-                        {airport.cardRules.byFuelType ? (
-                            <div className="mt-1 space-y-2">
-                                {Object.entries(airport.cardRules.byFuelType).map(([fuelType, card]) => (
-                                    <div key={fuelType} className={`p-3 rounded border flex justify-between items-center ${
-                                        card === CardType.WHITE_CARD ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
-                                    }`}>
-                                         <div>
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">{fuelType}</span>
-                                            <span className={`text-base font-bold ${
-                                                card === CardType.WHITE_CARD ? 'text-red-700' : 'text-blue-700'
-                                            }`}>
-                                                {card}
-                                            </span>
-                                         </div>
+                    {/* Frequencies Info */}
+                    {airport.frequencies && airport.frequencies.length > 0 && (
+                        <div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-2">Frequencies</span>
+                            <div className="flex flex-col gap-2">
+                                {airport.frequencies.map((freq, index) => (
+                                    <div key={index} className="flex items-center justify-between border px-3 py-2 rounded text-xs font-bold bg-slate-50 border-slate-200 text-slate-700">
+                                        <div className="flex items-center gap-2">
+                                            <Radio size={14} className="text-slate-400" />
+                                            <span className="text-sm">{freq.name}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="font-mono text-slate-800">{freq.freq}</span>
+                                        </div>
                                     </div>
                                 ))}
-                                <p className="text-xs text-slate-600 mt-1 italic">
-                                    {airport.cardRules.notes}
-                                </p>
                             </div>
-                        ) : (
-                            <div className={`mt-1 p-4 rounded border ${
-                                airport.cardRules.primary === CardType.WHITE_CARD ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
-                            }`}>
-                                <p className={`text-lg font-bold ${
-                                    airport.cardRules.primary === CardType.WHITE_CARD ? 'text-red-700' : 'text-blue-700'
-                                }`}>
-                                    {airport.cardRules.primary}
-                                </p>
-                                <p className="text-xs text-slate-600 mt-1">
-                                    {airport.cardRules.notes || "Standard fueling procedures apply."}
-                                </p>
-
-                                {/* New Fueling Notes Section */}
-                                {airport.cardRules.fuelingNotes && (
-                                    <div className="mt-3 pt-3 border-t border-black/5">
-                                        <div className="flex items-center gap-1.5 mb-1">
-                                            <Droplets size={12} className="text-slate-500" />
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase">Fueling Notes</p>
-                                        </div>
-                                        <p className="text-xs text-slate-700 italic bg-white/50 p-2 rounded">
-                                            "{airport.cardRules.fuelingNotes}"
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                     
                     <a href={`tel:${airport.phone}`} className="flex items-center justify-center w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded font-bold text-sm transition-colors gap-2 shadow-sm mt-2">
                         <Phone size={18} />
@@ -555,22 +604,18 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                                 </a>
                             </div>
                         </div>
-                        <div className="border-t border-slate-200"></div>
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-sm font-bold text-slate-800">Elon Jun</p>
-                                <p className="text-[10px] text-slate-500 uppercase font-bold">Finance Assistant</p>
-                            </div>
-                            <div className="text-right">
-                                <a href="tel:435-681-1849" className="block text-xs font-bold text-blue-600 hover:underline">
-                                    (435) 681-1849
-                                </a>
-                                <a href="mailto:suenghunjun@suu.edu" className="block text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-end gap-1">
-                                    <Mail size={10} />
-                                    suenghunjun@suu.edu
-                                </a>
-                            </div>
-                        </div>
+                    </div>
+                    
+                    <div className="mt-4 pt-3 border-t border-slate-200">
+                        <a 
+                            href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform" 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="flex items-center justify-center w-full py-2 bg-white text-red-600 hover:bg-red-50 border border-red-200 rounded font-bold text-xs transition-colors gap-2 shadow-sm"
+                        >
+                            <AlertCircle size={14} />
+                            Report Fuel/Card Error
+                        </a>
                     </div>
                 </div>
             </div>
@@ -582,16 +627,25 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                 <div className="flex justify-between items-center mb-2">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Metar & Taf</h3>
                     <div className="flex items-center gap-3">
+                        {/* Last Updated Badge */}
+                        {weather?.lastUpdated && (
+                             <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-1 rounded-full border border-blue-100" title="Last fetched from API">
+                                <RefreshCw size={10} className="text-blue-500" />
+                                <span className="text-[10px] font-bold text-blue-700">
+                                    Updated: {weather.lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                </span>
+                             </div>
+                        )}
                         {/* Observation Time Badge */}
                         {weather?.observationTime && (
                              <div className="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
                                 <Clock size={10} className="text-slate-500" />
                                 <span className="text-[10px] font-bold text-slate-600">
-                                    {formatObsTime(weather.observationTime)}
+                                    Observed: {formatObsTime(weather.observationTime)}
                                 </span>
                              </div>
                         )}
-                        <button onClick={loadWeather} className={`text-blue-500 hover:text-blue-700 transition-colors ${loadingWeather ? 'animate-spin' : ''}`}>
+                        <button onClick={() => loadWeather(true)} className={`text-blue-500 hover:text-blue-700 transition-colors ${loadingWeather ? 'animate-spin' : ''}`}>
                             <RefreshCw size={14} />
                         </button>
                     </div>
@@ -630,7 +684,15 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                     <>
                     <div className="bg-white p-3 rounded border border-slate-200 shadow-sm relative overflow-hidden">
                         <div className="flex justify-between items-center mb-1">
-                             <span className="text-[10px] font-bold text-slate-400 uppercase">METAR</span>
+                             <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase">METAR</span>
+                                {weather.flightCategory && weather.flightCategory !== 'UNKNOWN' && (
+                                    <div 
+                                        className={`h-2 w-2 rounded-full ${getFlightCategoryColor(weather.flightCategory).split(' ')[0]}`} 
+                                        title={`Flight Category: ${weather.flightCategory}`}
+                                    />
+                                )}
+                             </div>
                              {weather.flightCategory && weather.flightCategory !== 'UNKNOWN' && (
                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                                      weather.flightCategory === 'VFR' ? 'bg-green-100 text-green-700' :
@@ -646,7 +708,15 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                         <p className="font-mono text-xs text-slate-700 leading-relaxed relative z-10">{weather.metar}</p>
                     </div>
                     <div className="bg-white p-3 rounded border border-slate-200 shadow-sm">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">TAF</span>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">TAF</span>
+                            {weather.flightCategory && weather.flightCategory !== 'UNKNOWN' && (
+                                <div 
+                                    className={`h-2 w-2 rounded-full ${getFlightCategoryColor(weather.flightCategory).split(' ')[0]}`} 
+                                    title={`Flight Category: ${weather.flightCategory}`}
+                                />
+                            )}
+                        </div>
                         <p className="font-mono text-xs text-slate-700 leading-relaxed">{weather.taf}</p>
                     </div>
                     
@@ -712,7 +782,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                                             <div>
                                                 <div className="text-[10px] text-slate-400 font-bold uppercase">Wind</div>
                                                 <div className="text-lg font-mono font-bold text-slate-800">
-                                                    {windData.direction.toString().padStart(3, '0')}@{windData.speed}kt
+                                                    {windData.isVrb ? 'VRB' : windData.direction.toString().padStart(3, '0')}@{windData.speed}
+                                                    {windData.gust > 0 ? `G${windData.gust}` : ''}kt
                                                 </div>
                                             </div>
                                             <div className="grid grid-cols-2 gap-2">
@@ -743,6 +814,28 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose }) => 
                 ) : (
                     <div className="text-center py-8 text-slate-400">Weather unavailable</div>
                 )}
+            </div>
+        )}
+
+        {/* TAB: NOTAM */}
+        {activeTab === 'notam' && (
+            <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-fadeIn">
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-4">
+                    <AlertTriangle size={32} className="text-blue-500 dark:text-blue-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">Official FAA NOTAMs</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-8 max-w-xs">
+                    For the most accurate and up-to-date information, please visit the official FAA NOTAM search.
+                </p>
+                <a 
+                    href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&designators=${airport.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full max-w-xs py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                >
+                    Open FAA NOTAM Search
+                    <CornerDownRight size={16} className="-rotate-90" />
+                </a>
             </div>
         )}
 

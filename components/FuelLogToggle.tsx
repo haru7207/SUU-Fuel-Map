@@ -1,10 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard } from 'lucide-react';
+import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle } from 'lucide-react';
 import { AIRPORT_DATABASE } from '../constants';
 
 interface FuelLogToggleProps {
   currentAirportId: string | null;
+  isOnline?: boolean;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+  isHidden?: boolean;
 }
 
 interface FuelLogData {
@@ -23,8 +27,7 @@ interface FuelLogData {
 const STORAGE_KEY = 'suu_fuel_logs_list';
 const OLD_STORAGE_KEY = 'suu_fuel_log_draft';
 
-const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId }) => {
-  const [isOpen, setIsOpen] = useState(false);
+const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId, isOnline = true, isOpen, setIsOpen, isHidden = false }) => {
   const [view, setView] = useState<'form' | 'list'>('form');
   const [showSavedToast, setShowSavedToast] = useState(false);
   
@@ -175,22 +178,76 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId }) => {
       }
   };
 
+  const formatLogForSharing = (log: FuelLogData) => {
+    return `SUU Fuel Memo
+-------------------
+Airport: ${log.airport || 'N/A'}
+Tail #: ${log.tailNumber || 'N/A'}
+Date/Time: ${new Date(log.dateTime).toLocaleString()}
+Gallons: ${log.gallons || 'N/A'}
+Card Used: ${log.usedCard || 'N/A'}
+Instructor: ${log.instructor || 'N/A'}
+Student: ${log.student || 'N/A'}
+Notes: ${log.notes || 'None'}
+`;
+  };
+
+  const handleShare = async (log: FuelLogData, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const text = formatLogForSharing(log);
+    const title = `Fuel Memo - ${log.tailNumber || log.airport || 'Unknown'}`;
+    
+    if (navigator.share) {
+        try {
+            await navigator.share({
+                title: title,
+                text: text,
+            });
+        } catch (err) {
+            console.error("Error sharing", err);
+        }
+    } else {
+        // Fallback to clipboard
+        navigator.clipboard.writeText(text);
+        alert("Memo copied to clipboard!");
+    }
+  };
+
+  const handleEmail = (log: FuelLogData, email: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const text = formatLogForSharing(log);
+    const subject = `Fuel Memo - ${log.tailNumber || log.airport || 'Unknown'}`;
+    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`;
+  };
+
   return (
     <>
-      {/* Floating Action Button - Moved to Top Left */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="absolute top-4 left-16 md:left-6 z-[1050] flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-full shadow-xl hover:bg-red-700 hover:scale-105 transition-all active:scale-95 group"
-        >
-          <Fuel size={20} className="group-hover:rotate-12 transition-transform" />
-          <span className="font-bold tracking-wide">Log Fuel</span>
-        </button>
+      {/* Floating Action Buttons */}
+      {!isOpen && !isHidden && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 md:bottom-auto md:translate-x-0 md:top-4 md:left-6 md:right-auto z-[1050] flex flex-col items-center md:items-start gap-3">
+          <button
+            onClick={() => setIsOpen(true)}
+            className={`flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-full shadow-xl hover:bg-red-700 hover:scale-105 transition-all active:scale-95 group`}
+          >
+            <Fuel size={20} className="group-hover:rotate-12 transition-transform" />
+            <span className="font-bold tracking-wide">Log Fuel</span>
+          </button>
+          
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 px-4 py-2 rounded-full shadow-lg hover:bg-red-50 dark:hover:bg-slate-700 transition-all active:scale-95 text-xs font-bold"
+          >
+            <AlertCircle size={16} />
+            <span>Fuel Error Report</span>
+          </a>
+        </div>
       )}
 
-      {/* Slide-up/Popover Panel - Moved to Top Left (Below button) */}
+      {/* Slide-up/Popover Panel - Bottom Sheet on Mobile */}
       {isOpen && (
-        <div className="absolute z-[1060] top-20 left-4 right-4 md:left-6 md:right-auto md:w-96 bg-white rounded-xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-slide-in-up h-[600px] max-h-[75vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-20 md:left-6 md:right-auto md:w-96 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
           
           {/* Header */}
           <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">
@@ -211,13 +268,13 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId }) => {
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 bg-slate-50">
+          <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
               <button 
                 onClick={() => setView('form')}
                 className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
                     view === 'form' 
-                    ? 'bg-white text-red-600 border-b-2 border-red-600' 
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                    ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400' 
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
                 <Edit2 size={14} />
@@ -227,8 +284,8 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId }) => {
                 onClick={() => setView('list')}
                 className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
                     view === 'list' 
-                    ? 'bg-white text-blue-600 border-b-2 border-blue-600' 
-                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
                 <List size={14} />
@@ -237,7 +294,7 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId }) => {
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-y-auto bg-white custom-scrollbar relative">
+          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 custom-scrollbar relative">
             
             {/* VIEW: FORM */}
             {view === 'form' && (
@@ -457,13 +514,36 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId }) => {
                                         <span className="text-[9px] text-slate-400">
                                             {new Date(log.dateTime).toLocaleDateString()}
                                         </span>
-                                        <button 
-                                            onClick={(e) => handleDelete(log.id, e)}
-                                            className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                                            title="Delete Log"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                        <div className="flex gap-1 items-center">
+                                            <button 
+                                                onClick={(e) => handleEmail(log, 'katiebaca@suu.edu', e)} 
+                                                className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                                                title="Email Katie Baca"
+                                            >
+                                                Katie
+                                            </button>
+                                            <button 
+                                                onClick={(e) => handleEmail(log, 'suenghunjun@suu.edu', e)} 
+                                                className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 hover:bg-blue-100 transition-colors"
+                                                title="Email Elon Jun"
+                                            >
+                                                Elon
+                                            </button>
+                                            <button 
+                                                onClick={(e) => handleShare(log, e)} 
+                                                className="text-slate-400 hover:text-blue-500 transition-colors p-1 ml-1" 
+                                                title="Share (Other)"
+                                            >
+                                                <Share2 size={14} />
+                                            </button>
+                                            <button 
+                                                onClick={(e) => handleDelete(log.id, e)}
+                                                className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                                                title="Delete Log"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <div className="absolute right-3 top-10 opacity-0 group-hover:opacity-100 transition-opacity text-blue-500">

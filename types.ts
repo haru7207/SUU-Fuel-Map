@@ -37,6 +37,7 @@ export interface Airport {
   runways: string[]; // e.g. ["02/20", "08/26"]
   runwayLengths?: Record<string, number>; // Length in feet, mapped by runway ID "02/20"
   weatherSource?: string; // If this airport has no weather, use this airport's ID (e.g., 'KCDC' for '1L9')
+  frequencies?: { name: string; freq: string }[];
   cardRules: {
     primary: CardType;
     notes: string;
@@ -57,6 +58,7 @@ export interface WeatherData {
     direction: number;
     speed: number;
     gust: number;
+    isVrb?: boolean;
   };
   lastUpdated: Date;
 }

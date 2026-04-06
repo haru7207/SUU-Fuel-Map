@@ -5,10 +5,10 @@ import { WeatherData, TFR, Airmet, WindAloftData, UserNote } from '../types';
 const AWC_API_BASE = 'https://aviationweather.gov/api/data';
 
 // Google Apps Script Web App URL for Pilot Notes Backend
-const PILOT_NOTES_API_URL = 'https://script.google.com/macros/s/AKfycbwzAInEGNU-6jGfvCw1OVnbb8f7cqoYv3Dk00srZkIqQ76GWY9pOD2Q9f4HFZGyGFsFiA/exec';
+const PILOT_NOTES_API_URL = 'https://script.google.com/macros/s/AKfycbwI3lNi6N5QekHISz0GIqrimSkDgKNhGeoY3JI_3Jfj2W77lIZdlg9UpUEtD-aLBfhd/exec';
 
 // Google Apps Script Web App URL for Fuel Map Data (FBO, Cards, Prices)
-const FUEL_DATA_API_URL = 'https://script.google.com/macros/s/AKfycbx4Za9xP5m9MfVmCFAacLbU31vHFcfv9Qx89hm3drfqTk5rzlfmfgWGTJYVydx6kgVYqQ/exec';
+const FUEL_DATA_API_URL = 'https://script.google.com/macros/s/AKfycbwLYchReDkCKVkVdNs2G6RfXV8M2DmInbwsYtFnCRrdI-wiyAoTwGoeCdsZluMwJtK5/exec';
 
 /**
  * Robust Fetcher that tries Direct connection first, then falls back to multiple Proxies.
@@ -153,12 +153,17 @@ export const fetchWeather = async (airportId: string): Promise<WeatherData> => {
 
       if (m.wdir !== undefined && m.wspd !== undefined) {
          let dir = m.wdir;
-         if (dir === 'VRB') dir = 0;
+         let isVrb = false;
+         if (dir === 'VRB') {
+             dir = 0;
+             isVrb = true;
+         }
          
          wind = {
              direction: typeof dir === 'number' ? dir : 0,
              speed: typeof m.wspd === 'number' ? m.wspd : 0,
-             gust: typeof m.wgst === 'number' ? m.wgst : 0
+             gust: typeof m.wgst === 'number' ? m.wgst : 0,
+             isVrb: isVrb
          };
       }
     }
@@ -184,6 +189,89 @@ export const fetchWeather = async (airportId: string): Promise<WeatherData> => {
       flightCategory: 'UNKNOWN',
       lastUpdated: now
     };
+  }
+};
+
+/**
+ * Fetch live METAR data for multiple airports at once.
+ */
+export const fetchAllWeather = async (airportIds: string[]): Promise<Record<string, WeatherData>> => {
+  const now = new Date();
+  const uniqueIds = Array.from(new Set(airportIds));
+  
+  const weatherMap: Record<string, WeatherData> = {};
+  
+  // Initialize with default values
+  uniqueIds.forEach(id => {
+      weatherMap[id] = {
+          metar: 'METAR NOT AVAILABLE',
+          taf: 'TAF NOT FETCHED',
+          flightCategory: 'UNKNOWN',
+          lastUpdated: now
+      };
+  });
+
+  // Chunk the IDs to avoid URL length limits (especially with proxies)
+  const chunkSize = 5;
+  const chunks = [];
+  for (let i = 0; i < uniqueIds.length; i += chunkSize) {
+      chunks.push(uniqueIds.slice(i, i + chunkSize));
+  }
+
+  try {
+    const promises = chunks.map(async (chunk) => {
+        const idsParam = chunk.join(',');
+        try {
+            const response = await fetchSafe(`${AWC_API_BASE}/metar?ids=${idsParam}&format=json`, true);
+            const data = await response.json();
+            return Array.isArray(data) ? data : [];
+        } catch (e) {
+            console.warn(`Failed to fetch chunk: ${idsParam}`, e);
+            return [];
+        }
+    });
+
+    const results = await Promise.all(promises);
+    const metarData = results.flat();
+
+    if (metarData && Array.isArray(metarData)) {
+      metarData.forEach(m => {
+        const id = m.icaoId || m.stationId || m.station_id || m.id;
+        if (!id) return;
+
+        let wind: { direction: number; speed: number; gust: number; isVrb?: boolean } | undefined;
+        if (m.wdir !== undefined && m.wspd !== undefined) {
+           let dir = m.wdir;
+           let isVrb = false;
+           if (dir === 'VRB') {
+               dir = 0;
+               isVrb = true;
+           }
+           
+           wind = {
+               direction: typeof dir === 'number' ? dir : 0,
+               speed: typeof m.wspd === 'number' ? m.wspd : 0,
+               gust: typeof m.wgst === 'number' ? m.wgst : 0,
+               isVrb: isVrb
+           };
+        }
+
+        weatherMap[id] = {
+          metar: m.rawOb || 'METAR DATA ERROR',
+          taf: 'TAF NOT FETCHED', // We don't fetch TAF for the map pins to save bandwidth
+          flightCategory: m.fltcat || 'UNKNOWN',
+          observationTime: m.obsTime,
+          wind: wind,
+          lastUpdated: now
+        };
+      });
+      console.log("Parsed Weather Map:", weatherMap);
+    }
+
+    return weatherMap;
+  } catch (error) {
+    console.warn(`Failed to fetch weather for multiple airports`, error);
+    return weatherMap;
   }
 };
 
@@ -302,6 +390,8 @@ export interface LiveFuelData {
     fbo?: string;
     card?: string; 
     note?: string; 
+    contact?: string;
+    fueltype?: string;
 }
 
 export const fetchFuelMapData = async (): Promise<LiveFuelData[]> => {
@@ -311,17 +401,50 @@ export const fetchFuelMapData = async (): Promise<LiveFuelData[]> => {
         
         if (Array.isArray(data)) {
             return data.map((item: any) => ({
-                id: String(item.id || item.airport || '').toUpperCase(),
-                fbo: item.fbo,
-                card: item.card,
-                note: item.note
+                id: String(item.airportcode || item.id || item.airport || '').toUpperCase(),
+                fbo: item.fboprovider || item.fbo,
+                card: item.cardtype || item.card,
+                note: item.note,
+                contact: item.contact,
+                fueltype: item.fueltype || item.fuel
             }));
         }
         return [];
     } catch (error) {
-        console.error("[AviationService] Failed to fetch live fuel data:", error);
+        // Silently fail and fallback to static data if the live sheet is unavailable
         return [];
     }
+};
+
+/**
+ * Fetch Station Info (Lat/Lon) for new airports not in the static database
+ */
+export const fetchStationInfo = async (airportId: string) => {
+    try {
+        const response = await fetchSafe(`${AWC_API_BASE}/stationinfo?ids=${airportId}&format=json`, true);
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+            const station = data[0];
+            // Try to extract city from name (e.g., "Cedar City Regional Airport" -> "Cedar City")
+            let city = station.site || station.name || airportId;
+            if (city.includes(' Airport')) city = city.replace(' Airport', '');
+            if (city.includes(' Regional')) city = city.replace(' Regional', '');
+            if (city.includes(' Municipal')) city = city.replace(' Municipal', '');
+            if (city.includes(' International')) city = city.replace(' International', '');
+            if (city.includes(' Intl')) city = city.replace(' Intl', '');
+            
+            return {
+                name: station.site || station.name || airportId,
+                lat: station.lat,
+                lon: station.lon,
+                state: station.state || 'Unknown',
+                city: city.trim()
+            };
+        }
+    } catch (error) {
+        console.warn(`[AviationService] Failed to fetch station info for ${airportId}`, error);
+    }
+    return null;
 };
 
 /**
@@ -345,7 +468,25 @@ export const fetchPilotNotes = async (airportId?: string): Promise<UserNote[]> =
             : `${PILOT_NOTES_API_URL}`; 
 
         const response = await fetchSafe(url, true);
-        const data: RawApiNote[] = await response.json();
+        const rawData = await response.json();
+        
+        let data: RawApiNote[] = [];
+        if (Array.isArray(rawData) && rawData.length > 0) {
+            if (Array.isArray(rawData[0])) {
+                // It's a 2D array (Google Sheets raw format)
+                const headers = rawData[0] as string[];
+                data = rawData.slice(1).map((row: any[]) => {
+                    const obj: RawApiNote = {};
+                    headers.forEach((header, index) => {
+                        obj[header] = row[index];
+                    });
+                    return obj;
+                });
+            } else {
+                // It's already an array of objects
+                data = rawData;
+            }
+        }
         
         const noteMap = new Map<string, UserNote>();
         const roots: UserNote[] = [];
@@ -443,19 +584,20 @@ export const fetchPilotNotes = async (airportId?: string): Promise<UserNote[]> =
  * Post a new Pilot Note/Reply to Google Sheets
  */
 export const savePilotNote = async (note: UserNote, airportId: string, parentId?: string): Promise<boolean> => {
-    try {
-        const payload = {
-            airportId: airportId,
-            id: note.id,
-            text: note.text,    
-            content: note.text, 
-            author: note.author,
-            date: note.date,
-            type: note.type || 'general',
-            parentId: parentId || '',
-            reply: parentId || '' 
-        };
+    const payload = {
+        airportId: airportId,
+        id: note.id,
+        text: note.text,    
+        content: note.text, 
+        author: note.author,
+        date: note.date,
+        type: note.type || 'general',
+        parentId: parentId || '',
+        reply: parentId || '' 
+    };
 
+    // Strategy 1: Direct Fetch
+    try {
         const response = await fetch(PILOT_NOTES_API_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
@@ -463,12 +605,59 @@ export const savePilotNote = async (note: UserNote, airportId: string, parentId?
                 "Content-Type": "text/plain;charset=utf-8", 
             },
         });
-
-        const result = await response.json();
-        return result.status === 'success';
-
-    } catch (error) {
-        console.error("[AviationService] Failed to save pilot note:", error);
-        return false;
+        
+        if (response.ok) {
+            const text = await response.text();
+            const result = JSON.parse(text);
+            return result.status === 'success';
+        }
+    } catch (directError) {
+        // Fallback to proxy if direct fetch fails (CORS error)
     }
+
+    // Strategy 2: CorsProxy.io
+    try {
+        const encodedUrl = encodeURIComponent(PILOT_NOTES_API_URL);
+        const proxyUrl = `https://corsproxy.io/?${encodedUrl}`;
+
+        const response = await fetch(proxyUrl, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8", 
+            },
+        });
+
+        if (response.ok) {
+            const text = await response.text();
+            try {
+                const result = JSON.parse(text);
+                return result.status === 'success';
+            } catch (e) {
+                console.warn("[AviationService] Failed to parse save response from proxy:", text.substring(0, 100));
+                return false;
+            }
+        }
+    } catch (error) {
+        console.error("[AviationService] Failed to save pilot note via proxy:", error);
+    }
+
+    // Strategy 3: Direct Fetch with no-cors (blind send)
+    try {
+        await fetch(PILOT_NOTES_API_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(payload),
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8", 
+            },
+        });
+        // With no-cors, we can't read the response, so we just assume it worked
+        // if the network request didn't throw an exception.
+        return true;
+    } catch (error) {
+        console.error("[AviationService] Failed to save pilot note via no-cors:", error);
+    }
+
+    return false;
 };
