@@ -94,3 +94,8 @@ export interface WindAloftData {
   temp?: number;
   altitude: number;
 }
+
+export interface NotamData {
+  rawNotams: string[];
+  hasFuelAlert: boolean;
+}

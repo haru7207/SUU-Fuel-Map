@@ -1,19 +1,22 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Airport, CardType, WeatherData, UserNote, FuelType } from '../types';
+import { Airport, CardType, WeatherData, UserNote, FuelType, NotamData } from '../types';
 import { fetchWeather, fetchPilotNotes, savePilotNote } from '../services/aviationService';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles } from 'lucide-react';
+import { GoogleGenAI } from '@google/genai';
+import Markdown from 'react-markdown';
 
 interface AirportDetailsProps {
   airport: Airport;
   onClose: () => void;
   onOpenFuelLog: () => void;
   weatherMap: Record<string, WeatherData>;
+  notamMap?: Record<string, NotamData>;
 }
 
 type Tab = 'info' | 'weather' | 'notam' | 'notes';
 
-const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpenFuelLog, weatherMap }) => {
+const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpenFuelLog, weatherMap, notamMap }) => {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
@@ -39,6 +42,57 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
   // Crosswind Calculator State
   const [selectedRunway, setSelectedRunway] = useState<string>(airport.runways[0] || '18/36');
   
+  // NOTAM State
+  const [notams, setNotams] = useState<string[]>([]);
+  const [loadingNotams, setLoadingNotams] = useState(false);
+  const [notamError, setNotamError] = useState<string | null>(null);
+  const [notamSource, setNotamSource] = useState<'preloaded' | 'live' | null>(null);
+
+  useEffect(() => {
+      if (notamMap && notamMap[airport.id]) {
+          setNotams(notamMap[airport.id].rawNotams || []);
+          setNotamSource('preloaded');
+      }
+  }, [notamMap, airport.id]);
+
+  const fetchNotams = useCallback(async () => {
+      setLoadingNotams(true);
+      setNotamError(null);
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          const response = await ai.models.generateContent({
+              model: 'gemini-3.1-flash-lite-preview',
+              contents: `Find the current real-time FAA NOTAMs for airport ${airport.id} (${airport.name}). Return ONLY a JSON object with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations). If there are no NOTAMs, return an empty array.`,
+              config: {
+                  tools: [{ googleSearch: {} }],
+                  responseMimeType: "application/json",
+              }
+          });
+          if (response.text) {
+              try {
+                  const data = JSON.parse(response.text);
+                  setNotams(data.rawNotams || []);
+                  setNotamSource('live');
+              } catch (e) {
+                  setNotamError("Could not parse NOTAMs.");
+              }
+          } else {
+              setNotamError("Could not retrieve NOTAMs.");
+          }
+      } catch (error) {
+          console.error("Error fetching NOTAMs:", error);
+          setNotamError("Failed to fetch NOTAMs. Please try again later.");
+      } finally {
+          setLoadingNotams(false);
+      }
+  }, [airport.id, airport.name]);
+
+  useEffect(() => {
+      if (activeTab === 'notam' && notams.length === 0 && !notamMap?.[airport.id]) {
+          fetchNotams();
+      }
+  }, [activeTab, fetchNotams, notams.length, notamMap, airport.id]);
+
   const loadWeather = useCallback(async (forceRefresh: boolean = false) => {
       const weatherId = airport.weatherSource || airport.id;
       
@@ -400,9 +454,12 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
         </button>
         <button 
             onClick={() => setActiveTab('notam')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'notam' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'notam' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
             NOTAM
+            {notamMap && notamMap[airport.id]?.hasFuelAlert && (
+                <AlertTriangle size={12} className="text-orange-500" />
+            )}
         </button>
         <button 
             onClick={() => setActiveTab('notes')}
@@ -419,6 +476,25 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
         {/* TAB: INFO */}
         {activeTab === 'info' && (
             <div className="space-y-4 animate-fadeIn">
+                {/* NOTAM Fuel Alert */}
+                {notamMap && notamMap[airport.id]?.hasFuelAlert && (
+                    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg flex gap-3 items-start shadow-sm">
+                        <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5 animate-pulse" />
+                        <div>
+                            <p className="text-sm text-orange-800 dark:text-orange-400 font-bold uppercase tracking-wide">Fueling NOTAM Alert</p>
+                            <p className="text-sm text-orange-700 dark:text-orange-300 font-medium mt-1">
+                                There is an active NOTAM regarding fueling or self-serve availability at this airport. Please check the NOTAM tab for details.
+                            </p>
+                            <button 
+                                onClick={() => setActiveTab('notam')}
+                                className="mt-2 text-xs font-bold text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 underline"
+                            >
+                                View NOTAMs
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {airport.cardRules.critical && (
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex gap-3 items-start">
                     <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -819,23 +895,76 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
 
         {/* TAB: NOTAM */}
         {activeTab === 'notam' && (
-            <div className="flex flex-col items-center justify-center h-full p-6 text-center animate-fadeIn">
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-full mb-4">
-                    <AlertTriangle size={32} className="text-blue-500 dark:text-blue-400" />
+            <div className="flex flex-col h-full animate-fadeIn">
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle size={18} className="text-amber-500" />
+                        <h3 className="font-bold text-slate-800 dark:text-slate-200">Real-time NOTAMs</h3>
+                        {notamSource && !loadingNotams && (
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
+                                notamSource === 'preloaded' 
+                                ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' 
+                                : 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
+                            }`}>
+                                {notamSource === 'preloaded' ? 'Pre-loaded' : 'Live Fetched'}
+                            </span>
+                        )}
+                    </div>
+                    <button 
+                        onClick={() => fetchNotams()}
+                        disabled={loadingNotams}
+                        className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                        title="Refresh NOTAMs"
+                    >
+                        <RefreshCw size={16} className={loadingNotams ? "animate-spin" : ""} />
+                    </button>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-2">Official FAA NOTAMs</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-8 max-w-xs">
-                    For the most accurate and up-to-date information, please visit the official FAA NOTAM search.
-                </p>
-                <a 
-                    href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&designators=${airport.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full max-w-xs py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                    Open FAA NOTAM Search
-                    <CornerDownRight size={16} className="-rotate-90" />
-                </a>
+
+                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    {loadingNotams ? (
+                        <div className="flex flex-col items-center justify-center h-40 text-slate-500 gap-3">
+                            <Loader2 size={24} className="animate-spin text-blue-500" />
+                            <span className="text-sm font-medium">Fetching latest NOTAMs via AI...</span>
+                        </div>
+                    ) : notamError ? (
+                        <div className="flex flex-col items-center justify-center h-40 text-center">
+                            <AlertCircle size={32} className="text-red-400 mb-3" />
+                            <p className="text-sm text-slate-600 dark:text-slate-400">{notamError}</p>
+                            <button 
+                                onClick={fetchNotams}
+                                className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded transition-colors"
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    ) : notams && notams.length > 0 ? (
+                        <div className="space-y-3 text-left">
+                            {notams.map((notam, idx) => (
+                                <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded shadow-sm">
+                                    <p className="text-sm font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
+                                        {notam}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-40 text-slate-500">
+                            <span className="text-sm">No NOTAMs available.</span>
+                        </div>
+                    )}
+                </div>
+                
+                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+                    <a 
+                        href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&designators=${airport.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+                    >
+                        Open Official FAA NOTAM Search
+                        <CornerDownRight size={16} className="-rotate-90" />
+                    </a>
+                </div>
             </div>
         )}
 

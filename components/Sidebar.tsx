@@ -267,7 +267,7 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-800 dark:text-slate-200">Elon Jun</h4>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Creator & Developer</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Developer</p>
                   </div>
                 </div>
                 
@@ -291,7 +291,6 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
                     <li>Weather data (METAR, TAF, G-AIRMET) is sourced from the FAA AWC API.</li>
                     <li>Runway crosswind calculations are based on current METAR data.</li>
                     <li>FBO & airport data are aggregated from various free APIs.</li>
-                    <li>NOTAM data is currently unavailable due to API complexity. If you have experience with NOTAM APIs, please reach out!</li>
                     <li className="text-red-600/80 dark:text-red-400/80 font-medium">All weather data provided here is advisory only. Never use this application as an official weather source for flight planning.</li>
                   </ul>
                 </div>

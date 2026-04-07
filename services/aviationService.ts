@@ -661,3 +661,68 @@ export const savePilotNote = async (note: UserNote, airportId: string, parentId?
 
     return false;
 };
+
+import { GoogleGenAI, Type } from '@google/genai';
+import { NotamData } from '../types';
+
+export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Record<string, NotamData>> => {
+    const notamMap: Record<string, NotamData> = {};
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    // Chunk airports into groups of 10 to avoid overwhelming the model or hitting rate limits
+    const chunkSize = 10;
+    const chunks: string[][] = [];
+    for (let i = 0; i < airports.length; i += chunkSize) {
+        chunks.push(airports.slice(i, i + chunkSize));
+    }
+
+    const fetchChunk = async (chunk: string[], index: number) => {
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-3.1-flash-lite-preview',
+                contents: `Find the current real-time FAA NOTAMs for the following airports: ${chunk.join(', ')}. Return ONLY a JSON object where the keys are the airport ICAO codes and the values are objects with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations) and 'hasFuelAlert' (boolean, true ONLY if a NOTAM mentions fuel, fueling, self-serve, avgas, or jet a being out of service or having issues). If an airport has no NOTAMs, return an empty array for rawNotams.`,
+                config: {
+                    tools: [{ googleSearch: {} }],
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: Object.fromEntries(chunk.map(icao => [
+                            icao,
+                            {
+                                type: Type.OBJECT,
+                                properties: {
+                                    rawNotams: {
+                                        type: Type.ARRAY,
+                                        items: { type: Type.STRING }
+                                    },
+                                    hasFuelAlert: { type: Type.BOOLEAN }
+                                },
+                                required: ["rawNotams", "hasFuelAlert"]
+                            }
+                        ]))
+                    }
+                }
+            });
+
+            if (response.text) {
+                try {
+                    const data = JSON.parse(response.text);
+                    for (const icao of chunk) {
+                        if (data[icao]) {
+                            notamMap[icao] = data[icao];
+                        }
+                    }
+                } catch (e) {
+                    console.error(`Failed to parse NOTAM JSON for chunk ${index}`, e);
+                }
+            }
+        } catch (error) {
+            console.error(`Error fetching NOTAMs for chunk ${index}:`, error);
+        }
+    };
+
+    // Run all chunk fetches in parallel to significantly improve speed
+    await Promise.all(chunks.map((chunk, index) => fetchChunk(chunk, index)));
+    
+    return notamMap;
+};

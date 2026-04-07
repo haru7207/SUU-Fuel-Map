@@ -6,9 +6,9 @@ import AirportDetails from './components/AirportDetails';
 import FuelLogToggle from './components/FuelLogToggle';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
-import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
+import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini } from './services/aviationService';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react';
-import { Airport, CardType, FuelType, WeatherData } from './types';
+import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
 const App: React.FC = () => {
   const [airports, setAirports] = useState<Airport[]>(AIRPORT_DATABASE);
@@ -31,6 +31,9 @@ const App: React.FC = () => {
 
   // Weather State
   const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>({});
+  
+  // NOTAM State
+  const [notamMap, setNotamMap] = useState<Record<string, NotamData>>({});
 
   // Fuel Log State
   const [isFuelLogOpen, setIsFuelLogOpen] = useState(false);
@@ -159,6 +162,17 @@ const App: React.FC = () => {
                 setWeatherMap(weatherData);
             } catch (e) {
                 console.error("Failed to fetch weather data", e);
+            }
+
+            // Fetch NOTAMs for ALL airports
+            try {
+                console.log("Fetching NOTAMs for all airports...");
+                // We don't await this so it doesn't block the UI, it will update state when done
+                fetchAllNotamsWithGemini(currentAirports.map(a => a.id)).then(notamData => {
+                    setNotamMap(notamData);
+                });
+            } catch (e) {
+                console.error("Failed to fetch NOTAM data", e);
             }
         };
 
@@ -308,6 +322,7 @@ const App: React.FC = () => {
                     onClose={() => setSelectedId(null)} 
                     onOpenFuelLog={() => setIsFuelLogOpen(true)}
                     weatherMap={weatherMap}
+                    notamMap={notamMap}
                 />
             </div>
         )}
