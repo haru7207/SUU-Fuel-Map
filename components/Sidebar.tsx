@@ -340,6 +340,16 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
                                 White Card
                             </span>
                         )}
+                        {!isWhiteCard && airport.cardRules.primary === CardType.PCARD && (
+                            <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
+                                PCard
+                            </span>
+                        )}
+                        {!isWhiteCard && airport.cardRules.primary === CardType.AVFUEL && (
+                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
+                                AVFuel
+                            </span>
+                        )}
                         
                         {airport.cardRules.warning && !isWhiteCard && (
                              <span className="px-1.5 py-0.5 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 rounded flex items-center justify-center">

@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
-import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2 } from 'lucide-react';
 import { AIRPORT_DATABASE } from '../constants';
+import { GoogleGenAI, Type } from '@google/genai';
 
 interface FuelLogToggleProps {
   currentAirportId: string | null;
@@ -91,6 +92,89 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId, isOnlin
   };
 
   const [formData, setFormData] = useState<FuelLogData>(getEmptyForm());
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isFormatting, setIsFormatting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsAnalyzing(true);
+    try {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64Data = (reader.result as string).split(',')[1];
+            
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+            
+            const response = await ai.models.generateContent({
+                model: 'gemini-3.1-pro-preview',
+                contents: [
+                    {
+                        inlineData: {
+                            data: base64Data,
+                            mimeType: file.type
+                        }
+                    },
+                    "Extract the following information from this fuel receipt. Return ONLY a JSON object with these exact keys: 'airport' (ICAO code, e.g. KCDC), 'tailNumber' (e.g. N12345), 'gallons' (number as string), 'usedCard' (one of: 'PCard', 'AVFuel', 'White Card', or 'Unknown'). If you can't find a value, leave it as an empty string."
+                ],
+                config: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: Type.OBJECT,
+                        properties: {
+                            airport: { type: Type.STRING },
+                            tailNumber: { type: Type.STRING },
+                            gallons: { type: Type.STRING },
+                            usedCard: { type: Type.STRING }
+                        }
+                    }
+                }
+            });
+
+            if (response.text) {
+                try {
+                    const data = JSON.parse(response.text);
+                    setFormData(prev => ({
+                        ...prev,
+                        airport: data.airport || prev.airport,
+                        tailNumber: data.tailNumber || prev.tailNumber,
+                        gallons: data.gallons || prev.gallons,
+                        usedCard: data.usedCard || prev.usedCard
+                    }));
+                } catch (e) {
+                    console.error("Failed to parse Gemini response", e);
+                }
+            }
+            setIsAnalyzing(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        };
+        reader.readAsDataURL(file);
+    } catch (error) {
+        console.error("Error analyzing image:", error);
+        setIsAnalyzing(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSmartFormat = async () => {
+      if (!formData.notes) return;
+      setIsFormatting(true);
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          const response = await ai.models.generateContent({
+              model: 'gemini-3.1-flash-lite-preview',
+              contents: `Format the following pilot notes to be professional, clear, and concise. Fix any typos. Notes: "${formData.notes}"`
+          });
+          if (response.text) {
+              setFormData(prev => ({ ...prev, notes: response.text || prev.notes }));
+          }
+      } catch (error) {
+          console.error("Error formatting notes:", error);
+      }
+      setIsFormatting(false);
+  };
 
   // Persist logs
   useEffect(() => {
@@ -308,6 +392,35 @@ Notes: ${log.notes || 'None'}
                     </p>
                     </div>
 
+                    {/* AI Receipt Scanner */}
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
+                            <Camera size={18} />
+                            <span className="text-xs font-bold">Auto-fill from Receipt</span>
+                        </div>
+                        <div className="relative">
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                capture="environment"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                onChange={handleImageUpload}
+                                ref={fileInputRef}
+                                disabled={isAnalyzing}
+                            />
+                            <button 
+                                disabled={isAnalyzing}
+                                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-1.5 px-3 rounded flex items-center gap-2 transition-colors disabled:opacity-50"
+                            >
+                                {isAnalyzing ? (
+                                    <><Loader2 size={12} className="animate-spin" /> Analyzing...</>
+                                ) : (
+                                    'Take Photo'
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                     {/* Airport */}
                     <div className="space-y-1">
@@ -432,9 +545,20 @@ Notes: ${log.notes || 'None'}
 
                     {/* Notes */}
                     <div className="space-y-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
-                        <FileText size={10} /> Notes / Issues
-                    </label>
+                    <div className="flex items-center justify-between">
+                        <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                            <FileText size={10} /> Notes / Issues
+                        </label>
+                        <button
+                            onClick={handleSmartFormat}
+                            disabled={isFormatting || !formData.notes}
+                            className="text-[10px] font-bold text-blue-600 hover:text-blue-800 disabled:opacity-50 flex items-center gap-1"
+                            title="Format notes with AI"
+                        >
+                            {isFormatting ? <Loader2 size={10} className="animate-spin" /> : <Wand2 size={10} />}
+                            Smart Format
+                        </button>
+                    </div>
                     <textarea 
                         name="notes"
                         rows={3}
