@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2 } from 'lucide-react';
+import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2, Clock } from 'lucide-react';
 import { AIRPORT_DATABASE } from '../constants';
 import { GoogleGenAI, Type } from '@google/genai';
 
@@ -10,6 +10,8 @@ interface FuelLogToggleProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   isHidden?: boolean;
+  onOpenFlightTime?: () => void;
+  isFlightTimeOpen?: boolean;
 }
 
 interface FuelLogData {
@@ -28,7 +30,15 @@ interface FuelLogData {
 const STORAGE_KEY = 'suu_fuel_logs_list';
 const OLD_STORAGE_KEY = 'suu_fuel_log_draft';
 
-const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ currentAirportId, isOnline = true, isOpen, setIsOpen, isHidden = false }) => {
+const FuelLogToggle: React.FC<FuelLogToggleProps> = ({ 
+  currentAirportId, 
+  isOnline = true, 
+  isOpen, 
+  setIsOpen, 
+  isHidden = false,
+  onOpenFlightTime,
+  isFlightTimeOpen
+}) => {
   const [view, setView] = useState<'form' | 'list'>('form');
   const [showSavedToast, setShowSavedToast] = useState(false);
   
@@ -307,7 +317,7 @@ Notes: ${log.notes || 'None'}
   return (
     <>
       {/* Floating Action Buttons */}
-      {!isOpen && !isHidden && (
+      {!isOpen && !isFlightTimeOpen && !isHidden && (
         <div className="absolute top-20 left-4 md:top-4 md:left-6 z-[1050] flex flex-col items-start gap-3">
           <button
             onClick={() => setIsOpen(true)}
@@ -316,7 +326,7 @@ Notes: ${log.notes || 'None'}
             <Fuel size={20} className="group-hover:rotate-12 transition-transform" />
             <span className="font-bold tracking-wide">Log Fuel</span>
           </button>
-          
+
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
             target="_blank"

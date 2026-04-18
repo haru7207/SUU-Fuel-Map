@@ -79,19 +79,60 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
           } else {
               setNotamError("Could not retrieve NOTAMs.");
           }
-      } catch (error) {
-          console.error("Error fetching NOTAMs:", error);
-          setNotamError("Failed to fetch NOTAMs. Please try again later.");
+      } catch (error: any) {
+          if (error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota')) {
+              console.warn("Error fetching NOTAMs: API quota exceeded.");
+              setNotamError("API quota exceeded. Please try again later.");
+          } else {
+              console.error("Error fetching NOTAMs:", error);
+              setNotamError("Failed to fetch NOTAMs. Please try again later.");
+          }
       } finally {
           setLoadingNotams(false);
       }
   }, [airport.id, airport.name]);
 
   useEffect(() => {
-      if (activeTab === 'notam' && notams.length === 0 && !notamMap?.[airport.id]) {
+      if (activeTab === 'notam' && notamSource === null && !notamMap?.[airport.id] && !notamError && !loadingNotams) {
           fetchNotams();
       }
-  }, [activeTab, fetchNotams, notams.length, notamMap, airport.id]);
+  }, [activeTab, fetchNotams, notamSource, notamMap, airport.id, notamError, loadingNotams]);
+
+  // Forecast State
+  const [forecast, setForecast] = useState<string | null>(null);
+  const [loadingForecast, setLoadingForecast] = useState(false);
+  const [forecastError, setForecastError] = useState<string | null>(null);
+
+  const fetchForecast = useCallback(async () => {
+      setLoadingForecast(true);
+      setForecastError(null);
+      try {
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          const response = await ai.models.generateContent({
+              model: 'gemini-3.1-flash-lite-preview',
+              contents: `Find the 7-day weather forecast for ${airport.city}, ${airport.state} (near airport ${airport.id}). Provide a concise summary for each day, focusing on aerial/aviation relevant info if possible (e.g., wind, visibility, precipitation). Format as a simple markdown list or short paragraphs.`,
+              config: {
+                  tools: [{ googleSearch: {} }],
+              }
+          });
+          if (response.text) {
+              setForecast(response.text);
+          } else {
+              setForecastError("Could not retrieve forecast.");
+          }
+      } catch (error) {
+          console.error("Error fetching forecast:", error);
+          setForecastError("Failed to fetch forecast. Please try again later.");
+      } finally {
+          setLoadingForecast(false);
+      }
+  }, [airport.id, airport.city, airport.state]);
+
+  useEffect(() => {
+      if (activeTab === 'weather' && !forecast && !loadingForecast && !forecastError) {
+          fetchForecast();
+      }
+  }, [activeTab, fetchForecast, forecast, loadingForecast, forecastError]);
 
   const loadWeather = useCallback(async (forceRefresh: boolean = false) => {
       const weatherId = airport.weatherSource || airport.id;
@@ -886,6 +927,39 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                             </div>
                         )}
                     </div>
+
+                    {/* 7-Day Forecast */}
+                    <div className="mt-6">
+                        <div className="flex items-center gap-2 mb-3">
+                            <CloudSun size={16} className="text-slate-500" />
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">7-Day Aerial Forecast</h3>
+                        </div>
+                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+                            {loadingForecast ? (
+                                <div className="flex flex-col items-center justify-center py-6 text-slate-500 gap-3">
+                                    <Loader2 size={20} className="animate-spin text-blue-500" />
+                                    <span className="text-xs font-medium">Fetching forecast via AI...</span>
+                                </div>
+                            ) : forecastError ? (
+                                <div className="flex flex-col items-center justify-center py-4 text-center">
+                                    <AlertCircle size={24} className="text-red-400 mb-2" />
+                                    <p className="text-xs text-slate-600">{forecastError}</p>
+                                    <button 
+                                        onClick={fetchForecast}
+                                        className="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded transition-colors"
+                                    >
+                                        Try Again
+                                    </button>
+                                </div>
+                            ) : forecast ? (
+                                <div className="prose prose-sm max-w-none prose-p:leading-snug prose-p:text-slate-600 prose-li:text-slate-600 prose-headings:text-slate-800 prose-strong:text-slate-700 text-xs">
+                                    <Markdown>{forecast}</Markdown>
+                                </div>
+                            ) : (
+                                <div className="text-center py-6 text-slate-400 text-xs">Forecast unavailable</div>
+                            )}
+                        </div>
+                    </div>
                     </>
                 ) : (
                     <div className="text-center py-8 text-slate-400">Weather unavailable</div>
@@ -922,9 +996,18 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
 
                 <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
                     {loadingNotams ? (
-                        <div className="flex flex-col items-center justify-center h-40 text-slate-500 gap-3">
-                            <Loader2 size={24} className="animate-spin text-blue-500" />
-                            <span className="text-sm font-medium">Fetching latest NOTAMs via AI...</span>
+                        <div className="space-y-3 w-full">
+                            <div className="flex items-center justify-center mb-4 text-slate-500 gap-2">
+                                <Loader2 size={16} className="animate-spin text-blue-500" />
+                                <span className="text-sm font-medium">Fetching latest NOTAMs via AI...</span>
+                            </div>
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded shadow-sm animate-pulse">
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
+                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
+                                </div>
+                            ))}
                         </div>
                     ) : notamError ? (
                         <div className="flex flex-col items-center justify-center h-40 text-center">

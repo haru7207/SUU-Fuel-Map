@@ -4,10 +4,11 @@ import Sidebar from './components/Sidebar';
 import Map from './components/Map';
 import AirportDetails from './components/AirportDetails';
 import FuelLogToggle from './components/FuelLogToggle';
+import { FlightTimeCalculator } from './components/FlightTimeCalculator';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock } from 'lucide-react';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
 const App: React.FC = () => {
@@ -37,6 +38,7 @@ const App: React.FC = () => {
 
   // Fuel Log State
   const [isFuelLogOpen, setIsFuelLogOpen] = useState(false);
+  const [isFlightTimeOpen, setIsFlightTimeOpen] = useState(false);
 
   // Theme Effect
   useEffect(() => {
@@ -293,21 +295,41 @@ const App: React.FC = () => {
           isOpen={isFuelLogOpen}
           setIsOpen={setIsFuelLogOpen}
           isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+          onOpenFlightTime={() => setIsFlightTimeOpen(true)}
+          isFlightTimeOpen={isFlightTimeOpen}
+        />
+
+        {/* Flight Time Calculator Panel */}
+        <FlightTimeCalculator
+          isOpen={isFlightTimeOpen}
+          setIsOpen={setIsFlightTimeOpen}
+          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
         />
 
         {/* Toolbar */}
-        <div className="absolute top-4 right-4 z-[1000] flex items-start gap-2">
+        <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
           
           {/* G-AIRMET Control */}
           <button 
               onClick={() => setShowAirmet(!showAirmet)}
-              className={`flex items-center gap-2 font-bold py-2 px-4 rounded shadow-md border border-slate-200 dark:border-slate-700 transition-all active:scale-95 ${
-                showAirmet ? 'bg-purple-600 text-white border-purple-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200'
+              className={`flex items-center justify-center gap-2 font-bold py-2 px-4 rounded shadow-md border transition-all active:scale-95 w-full ${
+                showAirmet ? 'bg-purple-600 text-white border-purple-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
               }`}
             >
               <CloudFog size={18} className={showAirmet ? 'text-white' : 'text-purple-500'} />
               <span>G-AIRMET</span>
             </button>
+
+            {/* Flight Time Button */}
+            {!isFlightTimeOpen && !(isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)) && (
+              <button
+                onClick={() => setIsFlightTimeOpen(true)}
+                className={`flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded shadow-md hover:bg-blue-700 hover:scale-105 transition-all active:scale-95 border border-blue-600 font-bold justify-center w-full`}
+              >
+                <Clock size={18} className="text-white" />
+                <span className="tracking-wide">Flight Time</span>
+              </button>
+            )}
         </div>
 
         {/* Airport Details Panel */}

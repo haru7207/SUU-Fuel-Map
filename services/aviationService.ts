@@ -665,18 +665,36 @@ export const savePilotNote = async (note: UserNote, airportId: string, parentId?
 import { GoogleGenAI, Type } from '@google/genai';
 import { NotamData } from '../types';
 
+const NOTAM_CACHE_KEY = 'suu_notam_cache';
+const NOTAM_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes
+
 export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Record<string, NotamData>> => {
     const notamMap: Record<string, NotamData> = {};
+    
+    // Check cache first
+    try {
+        const cachedStr = localStorage.getItem(NOTAM_CACHE_KEY);
+        if (cachedStr) {
+            const cached = JSON.parse(cachedStr);
+            if (Date.now() - cached.timestamp < NOTAM_CACHE_EXPIRY) {
+                console.log("Using cached NOTAM data");
+                return cached.data;
+            }
+        }
+    } catch (e) {
+        console.warn("Failed to read NOTAM cache", e);
+    }
+
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     
-    // Chunk airports into groups of 10 to avoid overwhelming the model or hitting rate limits
-    const chunkSize = 10;
+    // Chunk airports into groups of 20 to avoid overwhelming the model or hitting rate limits
+    const chunkSize = 20;
     const chunks: string[][] = [];
     for (let i = 0; i < airports.length; i += chunkSize) {
         chunks.push(airports.slice(i, i + chunkSize));
     }
 
-    const fetchChunk = async (chunk: string[], index: number) => {
+    const fetchChunk = async (chunk: string[], index: number): Promise<boolean> => {
         try {
             const response = await ai.models.generateContent({
                 model: 'gemini-3.1-flash-lite-preview',
@@ -716,13 +734,44 @@ export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Reco
                     console.error(`Failed to parse NOTAM JSON for chunk ${index}`, e);
                 }
             }
-        } catch (error) {
-            console.error(`Error fetching NOTAMs for chunk ${index}:`, error);
+            return true;
+        } catch (error: any) {
+            // If we hit a rate limit or quota error, return false to abort further chunks
+            if (error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota')) {
+                console.warn(`Quota exceeded fetching NOTAMs for chunk ${index}. Aborting background fetch.`);
+                return false;
+            }
+            console.error(`Error fetching NOTAMs for chunk ${index}:`, error?.message || error);
+            return true; // Continue on other errors (like a single chunk failing for some other reason)
         }
     };
 
-    // Run all chunk fetches in parallel to significantly improve speed
-    await Promise.all(chunks.map((chunk, index) => fetchChunk(chunk, index)));
+    // Run all chunk fetches sequentially to avoid rate limits
+    let aborted = false;
+    for (let i = 0; i < chunks.length; i++) {
+        const shouldContinue = await fetchChunk(chunks[i], i);
+        if (!shouldContinue) {
+            console.warn("Aborting remaining NOTAM fetches due to rate limits/quota.");
+            aborted = true;
+            break;
+        }
+        if (i < chunks.length - 1) {
+            // Add a larger delay between chunks to avoid rate limits (10 seconds)
+            await new Promise(resolve => setTimeout(resolve, 10000));
+        }
+    }
+    
+    // Only cache if we didn't abort due to quota, or if we at least got some data
+    if (!aborted || Object.keys(notamMap).length > 0) {
+        try {
+            localStorage.setItem(NOTAM_CACHE_KEY, JSON.stringify({
+                timestamp: Date.now(),
+                data: notamMap
+            }));
+        } catch (e) {
+            console.warn("Failed to write NOTAM cache", e);
+        }
+    }
     
     return notamMap;
 };
