@@ -61,7 +61,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
           const response = await ai.models.generateContent({
-              model: 'gemini-3.1-flash-lite-preview',
+              model: 'gemini-3-flash-preview',
               contents: `Find the current real-time FAA NOTAMs for airport ${airport.id} (${airport.name}). Return ONLY a JSON object with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations). If there are no NOTAMs, return an empty array.`,
               config: {
                   tools: [{ googleSearch: {} }],
@@ -109,7 +109,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
           const response = await ai.models.generateContent({
-              model: 'gemini-3.1-flash-lite-preview',
+              model: 'gemini-3-flash-preview',
               contents: `Find the 7-day weather forecast for ${airport.city}, ${airport.state} (near airport ${airport.id}). Provide a concise summary for each day, focusing on aerial/aviation relevant info if possible (e.g., wind, visibility, precipitation). Format as a simple markdown list or short paragraphs.`,
               config: {
                   tools: [{ googleSearch: {} }],
@@ -705,7 +705,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                         <HelpCircle size={14} />
                         Fuel & Finance Support
                     </h4>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-sm font-bold text-slate-800">Katie Baca</p>
@@ -718,6 +718,22 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                                 <a href="mailto:katiebaca@suu.edu" className="block text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-end gap-1">
                                     <Mail size={10} />
                                     katiebaca@suu.edu
+                                </a>
+                            </div>
+                        </div>
+
+                        <div className="flex justify-between items-start pt-3 border-t border-slate-200">
+                            <div>
+                                <p className="text-sm font-bold text-slate-800">Elon Jun</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold">Finance Assistant</p>
+                            </div>
+                            <div className="text-right">
+                                <a href="tel:435-681-1849" className="block text-xs font-bold text-blue-600 hover:underline">
+                                    (435) 681 - 1849
+                                </a>
+                                <a href="mailto:suenghunjun@suu.edu" className="block text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-end gap-1">
+                                    <Mail size={10} />
+                                    suenghunjun@suu.edu
                                 </a>
                             </div>
                         </div>
@@ -938,7 +954,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                             {loadingForecast ? (
                                 <div className="flex flex-col items-center justify-center py-6 text-slate-500 gap-3">
                                     <Loader2 size={20} className="animate-spin text-blue-500" />
-                                    <span className="text-xs font-medium">Fetching forecast via AI...</span>
+                                    <span className="text-xs font-medium">Fetching forecast...</span>
                                 </div>
                             ) : forecastError ? (
                                 <div className="flex flex-col items-center justify-center py-4 text-center">
@@ -999,7 +1015,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                         <div className="space-y-3 w-full">
                             <div className="flex items-center justify-center mb-4 text-slate-500 gap-2">
                                 <Loader2 size={16} className="animate-spin text-blue-500" />
-                                <span className="text-sm font-medium">Fetching latest NOTAMs via AI...</span>
+                                <span className="text-sm font-medium">Fetching latest NOTAMs...</span>
                             </div>
                             {[1, 2, 3].map((i) => (
                                 <div key={i} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded shadow-sm animate-pulse">

@@ -697,7 +697,7 @@ export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Reco
     const fetchChunk = async (chunk: string[], index: number): Promise<boolean> => {
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-3.1-flash-lite-preview',
+                model: 'gemini-3-flash-preview',
                 contents: `Find the current real-time FAA NOTAMs for the following airports: ${chunk.join(', ')}. Return ONLY a JSON object where the keys are the airport ICAO codes and the values are objects with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations) and 'hasFuelAlert' (boolean, true ONLY if a NOTAM mentions fuel, fueling, self-serve, avgas, or jet a being out of service or having issues). If an airport has no NOTAMs, return an empty array for rawNotams.`,
                 config: {
                     tools: [{ googleSearch: {} }],

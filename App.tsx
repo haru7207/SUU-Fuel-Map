@@ -5,10 +5,12 @@ import Map from './components/Map';
 import AirportDetails from './components/AirportDetails';
 import FuelLogToggle from './components/FuelLogToggle';
 import { FlightTimeCalculator } from './components/FlightTimeCalculator';
+import { PivotalAltitudeCalculator } from './components/PivotalAltitudeCalculator';
+import { NightTimeCalculator } from './components/NightTimeCalculator';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target } from 'lucide-react';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
 const App: React.FC = () => {
@@ -39,6 +41,9 @@ const App: React.FC = () => {
   // Fuel Log State
   const [isFuelLogOpen, setIsFuelLogOpen] = useState(false);
   const [isFlightTimeOpen, setIsFlightTimeOpen] = useState(false);
+  const [isPivotalAltOpen, setIsPivotalAltOpen] = useState(false);
+  const [isNightTimeOpen, setIsNightTimeOpen] = useState(false);
+  const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
 
   // Theme Effect
   useEffect(() => {
@@ -306,6 +311,20 @@ const App: React.FC = () => {
           isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
         />
 
+        {/* Pivotal Altitude Calculator Panel */}
+        <PivotalAltitudeCalculator
+          isOpen={isPivotalAltOpen}
+          setIsOpen={setIsPivotalAltOpen}
+          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+        />
+
+        {/* Night Time Calculator Panel */}
+        <NightTimeCalculator
+          isOpen={isNightTimeOpen}
+          setIsOpen={setIsNightTimeOpen}
+          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+        />
+
         {/* Toolbar */}
         <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
           
@@ -320,15 +339,60 @@ const App: React.FC = () => {
               <span>G-AIRMET</span>
             </button>
 
-            {/* Flight Time Button */}
-            {!isFlightTimeOpen && !(isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)) && (
-              <button
-                onClick={() => setIsFlightTimeOpen(true)}
-                className={`flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded shadow-md hover:bg-blue-700 hover:scale-105 transition-all active:scale-95 border border-blue-600 font-bold justify-center w-full`}
-              >
-                <Clock size={18} className="text-white" />
-                <span className="tracking-wide">Flight Time</span>
-              </button>
+            {/* Instructor Tools Dropdown */}
+            {!(isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)) && (
+              <div className="relative w-full">
+                <button
+                  onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
+                  className={`flex items-center justify-center gap-2 font-bold py-2 px-4 rounded shadow-md border transition-all active:scale-95 w-full ${
+                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                  }`}
+                >
+                  <Briefcase size={18} className={isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen ? 'text-white' : 'text-blue-500'} />
+                  <span>Instructor Tools</span>
+                </button>
+
+                {isInstructorToolsMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1050]">
+                    <button
+                      onClick={() => {
+                        setIsFlightTimeOpen(true);
+                        setIsPivotalAltOpen(false);
+                        setIsNightTimeOpen(false);
+                        setIsInstructorToolsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                    >
+                      <Clock size={16} className="text-blue-500" />
+                      Flight Time Calc
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsPivotalAltOpen(true);
+                        setIsFlightTimeOpen(false);
+                        setIsNightTimeOpen(false);
+                        setIsInstructorToolsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                    >
+                      <Target size={16} className="text-indigo-500" />
+                      Pivotal Altitude
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsNightTimeOpen(true);
+                        setIsFlightTimeOpen(false);
+                        setIsPivotalAltOpen(false);
+                        setIsInstructorToolsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                    >
+                      <Moon size={16} className="text-purple-500" />
+                      Night Time Calc
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
         </div>
 

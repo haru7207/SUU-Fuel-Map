@@ -18,6 +18,7 @@ interface FlightTimeRecord {
 }
 
 const STORAGE_KEY = 'suu_flight_times';
+const DRAFT_STORAGE_KEY = 'suu_flight_times_draft';
 
 export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
   isOpen,
@@ -37,17 +38,43 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
     return [];
   });
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  const [tailNumber, setTailNumber] = useState<string>('');
-  const [startTach, setStartTach] = useState<string>('');
-  const [endTach, setEndTach] = useState<string>('');
-  const [startHobbs, setStartHobbs] = useState<string>('');
-  const [endHobbs, setEndHobbs] = useState<string>('');
+  // Load draft from local storage
+  const [draft, setDraft] = useState(() => {
+    const savedDraft = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (savedDraft) {
+      try {
+        return JSON.parse(savedDraft);
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
+  });
 
+  const [editingId, setEditingId] = useState<string | null>(draft?.editingId || null);
+  const [tailNumber, setTailNumber] = useState<string>(draft?.tailNumber || '');
+  const [startTach, setStartTach] = useState<string>(draft?.startTach || '');
+  const [endTach, setEndTach] = useState<string>(draft?.endTach || '');
+  const [startHobbs, setStartHobbs] = useState<string>(draft?.startHobbs || '');
+  const [endHobbs, setEndHobbs] = useState<string>(draft?.endHobbs || '');
+
+  // Save records map
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   }, [records]);
+
+  // Save live draft form
+  useEffect(() => {
+    const activeDraft = {
+        editingId,
+        tailNumber,
+        startTach,
+        endTach,
+        startHobbs,
+        endHobbs
+    };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(activeDraft));
+  }, [editingId, tailNumber, startTach, endTach, startHobbs, endHobbs]);
 
   // Calculate functions
   const calculateChange = (start: string, end: string) => {
@@ -120,7 +147,7 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
   return (
     <>
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-20 md:right-4 md:left-auto md:w-96 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-96 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
           
           {/* Header */}
           <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">

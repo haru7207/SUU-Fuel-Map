@@ -563,7 +563,7 @@ Notes: ${log.notes || 'None'}
                             onClick={handleSmartFormat}
                             disabled={isFormatting || !formData.notes}
                             className="text-[10px] font-bold text-blue-600 hover:text-blue-800 disabled:opacity-50 flex items-center gap-1"
-                            title="Format notes with AI"
+                            title="Auto-format notes"
                         >
                             {isFormatting ? <Loader2 size={10} className="animate-spin" /> : <Wand2 size={10} />}
                             Smart Format
@@ -655,7 +655,15 @@ Notes: ${log.notes || 'None'}
                                                 title="Send email report to Katie Baca"
                                             >
                                                 <Mail size={10} />
-                                                <span>Email Katie</span>
+                                                <span>Katie</span>
+                                            </button>
+                                            <button 
+                                                onClick={(e) => handleEmail(log, 'suenghunjun@suu.edu', e)} 
+                                                className="flex items-center gap-1 text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition-colors"
+                                                title="Send email report to Elon Jun"
+                                            >
+                                                <Mail size={10} />
+                                                <span>Elon</span>
                                             </button>
                                             <button 
                                                 onClick={(e) => handleShare(log, e)} 
