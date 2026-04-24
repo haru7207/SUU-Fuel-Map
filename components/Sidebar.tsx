@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType } from '../types';
-import { Search, Plane, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone } from 'lucide-react';
+import { Search, Plane, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -10,13 +10,14 @@ interface SidebarProps {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   onOpenGlobalNotes: () => void;
+  onOpenCheatSheet?: (query: string) => void;
   themeMode: 'day' | 'night' | 'auto';
   setThemeMode: (mode: 'day' | 'night' | 'auto') => void;
   isMobile: boolean;
   onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searchTerm, setSearchTerm, onOpenGlobalNotes, themeMode, setThemeMode, isMobile, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searchTerm, setSearchTerm, onOpenGlobalNotes, onOpenCheatSheet, themeMode, setThemeMode, isMobile, onClose }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [cardFilter, setCardFilter] = useState<CardType | 'ALL'>('ALL');
   
@@ -319,9 +320,17 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
               
               return (
                 <li key={airport.id}>
-                  <button 
+                  <div 
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onSelect(airport.id)}
-                    className={`w-full text-left px-5 py-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex justify-between items-start group relative ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelect(airport.id);
+                      }
+                    }}
+                    className={`w-full text-left px-5 py-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex justify-between items-start group relative cursor-pointer ${
                       isSelected ? 'bg-slate-50 dark:bg-slate-800' : ''
                     }`}
                   >
@@ -330,35 +339,49 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
                     )}
                     <div className="w-full">
                       <div className="flex items-center justify-between w-full mb-1">
-                        <span className={`font-bold text-lg ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
-                            {airport.id}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className={`font-bold text-lg ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                              {airport.id}
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onOpenCheatSheet) onOpenCheatSheet(airport.id);
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                            title="View in Cheat Sheet"
+                          >
+                            <FileSpreadsheet size={14} />
+                          </button>
+                        </div>
                         
-                        {isWhiteCard && (
-                            <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
-                                White Card
-                            </span>
-                        )}
-                        {!isWhiteCard && airport.cardRules.primary === CardType.PCARD && (
-                            <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
-                                PCard
-                            </span>
-                        )}
-                        {!isWhiteCard && airport.cardRules.primary === CardType.AVFUEL && (
-                            <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
-                                AVFuel
-                            </span>
-                        )}
-                        
-                        {airport.cardRules.warning && !isWhiteCard && (
-                             <span className="px-1.5 py-0.5 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 rounded flex items-center justify-center">
-                                <AlertCircle size={12} className="fill-current" />
-                             </span>
-                        )}
+                        <div className="flex items-center gap-1">
+                          {isWhiteCard && (
+                              <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
+                                  White Card
+                              </span>
+                          )}
+                          {!isWhiteCard && airport.cardRules.primary === CardType.PCARD && (
+                              <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
+                                  PCard
+                              </span>
+                          )}
+                          {!isWhiteCard && airport.cardRules.primary === CardType.AVFUEL && (
+                              <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
+                                  AVFuel
+                              </span>
+                          )}
+                          
+                          {airport.cardRules.warning && !isWhiteCard && (
+                               <span className="px-1.5 py-0.5 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 rounded flex items-center justify-center">
+                                  <AlertCircle size={12} className="fill-current" />
+                               </span>
+                          )}
+                        </div>
                       </div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{airport.city}, {airport.state}</p>
                     </div>
-                  </button>
+                  </div>
                 </li>
               );
             })}

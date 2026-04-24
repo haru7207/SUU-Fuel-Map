@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 interface AirportCheatSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  initialSearchQuery?: string;
 }
 
 interface CheatSheetData {
@@ -18,11 +19,17 @@ interface CheatSheetData {
   'CFI Practical Notes / Remarks': string;
 }
 
-export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, onClose }) => {
+export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, onClose, initialSearchQuery = '' }) => {
   const [data, setData] = useState<CheatSheetData[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setSearchQuery(initialSearchQuery);
+    }
+  }, [isOpen, initialSearchQuery]);
 
   useEffect(() => {
     if (isOpen && data.length === 0) {

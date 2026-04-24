@@ -45,6 +45,7 @@ const App: React.FC = () => {
   const [isPivotalAltOpen, setIsPivotalAltOpen] = useState(false);
   const [isNightTimeOpen, setIsNightTimeOpen] = useState(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
+  const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
 
   // Theme Effect
@@ -269,6 +270,11 @@ const App: React.FC = () => {
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             onOpenGlobalNotes={handleOpenGlobalNotes}
+            onOpenCheatSheet={(query) => {
+              setCheatSheetQuery(query);
+              setIsCheatSheetOpen(true);
+              if (isMobile) setIsSidebarOpen(false);
+            }}
             themeMode={themeMode}
             setThemeMode={setThemeMode}
             isMobile={isMobile}
@@ -329,6 +335,7 @@ const App: React.FC = () => {
 
         <AirportCheatSheet
           isOpen={isCheatSheetOpen}
+          initialSearchQuery={cheatSheetQuery}
           onClose={() => setIsCheatSheetOpen(false)}
         />
 
