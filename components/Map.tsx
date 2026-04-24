@@ -248,17 +248,17 @@ const Map: React.FC<MapProps> = ({ airports, selectedId, onSelect, showAirmet, w
     <div className="relative h-full w-full group">
       
       {/* GPS Tracking Button */}
-      <div className="absolute top-4 left-20 md:top-auto md:left-auto md:bottom-6 md:right-4 z-[1000]">
+      <div className="absolute top-4 left-14 md:top-auto md:left-auto md:bottom-6 md:right-4 z-[1000]">
         <button 
           onClick={toggleTracking}
-          className={`p-3 rounded-full shadow-lg transition-all ${
+          className={`p-2 md:p-3 rounded-full shadow-lg transition-all ${
             isTracking 
               ? 'bg-blue-600 text-white hover:bg-blue-700' 
               : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
           }`}
           title={isTracking ? "Center on my location" : "Start GPS tracking"}
         >
-          <Navigation size={24} className={isTracking ? 'fill-current' : ''} />
+          <Navigation size={18} className={`md:w-6 md:h-6 ${isTracking ? 'fill-current' : ''}`} />
         </button>
         {locationError && (
           <div className="absolute top-full left-0 md:top-auto md:bottom-full md:left-auto md:right-0 mt-2 md:mt-0 md:mb-2 w-48 bg-red-100 border border-red-200 text-red-700 text-xs p-2 rounded shadow-md">

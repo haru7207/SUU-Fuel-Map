@@ -286,6 +286,24 @@ Notes: ${log.notes || 'None'}
 `;
   };
 
+  const [isFuelMenuOpen, setIsFuelMenuOpen] = useState(false);
+
+  // Focus ref for dropdown
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsFuelMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.addEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
+
   const handleShare = async (log: FuelLogData, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     const text = formatLogForSharing(log);
@@ -318,24 +336,40 @@ Notes: ${log.notes || 'None'}
     <>
       {/* Floating Action Buttons */}
       {!isOpen && !isFlightTimeOpen && !isHidden && (
-        <div className="absolute top-20 left-4 md:top-4 md:left-6 z-[1050] flex flex-col items-start gap-3">
+        <div className="absolute top-14 left-4 md:top-4 md:left-6 z-[1050]" ref={dropdownRef}>
           <button
-            onClick={() => setIsOpen(true)}
-            className={`flex items-center gap-2 bg-red-600 text-white px-5 py-3 rounded-full shadow-xl hover:bg-red-700 hover:scale-105 transition-all active:scale-95 group`}
+            onClick={() => setIsFuelMenuOpen(!isFuelMenuOpen)}
+            className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${isFuelMenuOpen ? 'bg-red-700 text-white' : 'bg-red-600 text-white hover:bg-red-700 hover:scale-105'}`}
           >
-            <Fuel size={20} className="group-hover:rotate-12 transition-transform" />
-            <span className="font-bold tracking-wide">Log Fuel</span>
+            <Fuel size={16} className="md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
+            <span className="font-bold tracking-wide text-sm md:text-base">Fuel Ops</span>
           </button>
 
-          <a
-            href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/50 px-4 py-2 rounded-full shadow-lg hover:bg-red-50 dark:hover:bg-slate-700 transition-all active:scale-95 text-xs font-bold"
-          >
-            <AlertCircle size={16} />
-            <span>Fuel Error Report</span>
-          </a>
+          {isFuelMenuOpen && (
+            <div className="absolute top-full mt-2 w-full min-w-[200px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1060]">
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setIsFuelMenuOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+              >
+                <Fuel size={16} className="text-red-500" />
+                Log Fuel
+              </button>
+              
+              <a
+                href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setIsFuelMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+              >
+                <AlertCircle size={16} className="text-orange-500" />
+                Fuel Error Report
+              </a>
+            </div>
+          )}
         </div>
       )}
 
