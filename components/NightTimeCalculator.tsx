@@ -22,7 +22,7 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
   const [results, setResults] = useState<{
     totalFlightTime: number;
     loggingNightTime: number;
-    currencyNightTime: number;
+    dayTime: number;
     lightsTime: number;
   } | null>(null);
 
@@ -105,11 +105,12 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
       const n2Lights = getOverlap(flightStart, flightEnd, todaySun.sunset, tomorrowSun.sunrise);
 
       const totalFlightTime = (flightEnd.getTime() - flightStart.getTime()) / (1000 * 60 * 60);
+      const loggingNightTime = n1Logging + n2Logging;
 
       setResults({
-        totalFlightTime: totalFlightTime,
-        loggingNightTime: Number((n1Logging + n2Logging).toFixed(1)),
-        currencyNightTime: Number((n1Currency + n2Currency).toFixed(1)),
+        totalFlightTime: Number(totalFlightTime.toFixed(1)),
+        loggingNightTime: Number(loggingNightTime.toFixed(1)),
+        dayTime: Number(Math.max(0, totalFlightTime - loggingNightTime).toFixed(1)),
         lightsTime: Number((n1Lights + n2Lights).toFixed(1))
       });
     } else {
@@ -186,11 +187,11 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
               <div className="grid grid-cols-3 gap-2 text-center border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div className="bg-blue-50 dark:bg-slate-800/50 p-2 rounded border border-blue-100 dark:border-slate-700">
                   <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Log Night</div>
-                  <div className="text-xl font-black text-blue-600 dark:text-blue-400">{results.loggingNightTime}</div>
+                  <div className="text-xl font-black text-blue-600 dark:text-blue-400">{results.loggingNightTime.toFixed(1)}</div>
                 </div>
-                <div className="bg-purple-50 dark:bg-slate-800/50 p-2 rounded border border-purple-100 dark:border-slate-700">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Currency</div>
-                  <div className="text-xl font-black text-purple-600 dark:text-purple-400">{results.currencyNightTime}</div>
+                <div className="bg-orange-50 dark:bg-slate-800/50 p-2 rounded border border-orange-100 dark:border-slate-700">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Log Day</div>
+                  <div className="text-xl font-black text-orange-600 dark:text-orange-400">{results.dayTime.toFixed(1)}</div>
                 </div>
                 <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
                   <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Total Flt</div>
@@ -263,9 +264,12 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
                 )}
               </div>
 
-              <div className="text-[10px] text-slate-400 flex items-center gap-1 mt-2 mb-4 justify-center">
-                 <HelpCircle size={10} />
-                 Times calculated for Cedar City, UT (KCDC) Base
+              <div className="text-[10px] text-slate-400 flex flex-col items-center gap-1 mt-2 mb-4 justify-center text-center">
+                 <div className="flex items-center gap-1">
+                   <HelpCircle size={10} />
+                   <span>Times calculated for Cedar City, UT (KCDC) Base</span>
+                 </div>
+                 <span className="opacity-75">Astronomical data mathematically calculated using the <strong>suncalc</strong> library.</span>
               </div>
 
             </div>
