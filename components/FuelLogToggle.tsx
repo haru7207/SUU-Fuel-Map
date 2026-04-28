@@ -101,7 +101,24 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
     };
   };
 
-  const [formData, setFormData] = useState<FuelLogData>(getEmptyForm());
+  const [formData, setFormData] = useState<FuelLogData>(() => {
+    const savedDraft = localStorage.getItem('suu_fuel_log_form_draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        return { ...getEmptyForm(), ...parsed };
+      } catch (e) {
+        console.error("Failed to parse saved fuel draft", e);
+      }
+    }
+    return getEmptyForm();
+  });
+
+  useEffect(() => {
+    if (!editingId && view === 'form') {
+      localStorage.setItem('suu_fuel_log_form_draft', JSON.stringify(formData));
+    }
+  }, [formData, editingId, view]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isFormatting, setIsFormatting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -229,6 +246,7 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
     // Switch to list
     setEditingId(null);
     setFormData(getEmptyForm());
+    localStorage.removeItem('suu_fuel_log_form_draft');
     setView('list');
   };
 
@@ -249,6 +267,7 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
           if (editingId === id) {
               setEditingId(null);
               setFormData(getEmptyForm());
+              localStorage.removeItem('suu_fuel_log_form_draft');
               setView('list');
           }
       }
@@ -256,6 +275,17 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
 
   const handleNewEntry = () => {
       setEditingId(null);
+      
+      const savedDraft = localStorage.getItem('suu_fuel_log_form_draft');
+      if (savedDraft) {
+          try {
+              const parsed = JSON.parse(savedDraft);
+              setFormData({ ...getEmptyForm(), ...parsed });
+              setView('form');
+              return;
+          } catch (e) {}
+      }
+
       setFormData(getEmptyForm());
       if (currentAirportId) {
           setFormData(prev => ({...prev, airport: currentAirportId}));
@@ -269,6 +299,7 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
           if (currentAirportId) {
              setFormData(prev => ({...prev, airport: currentAirportId}));
           }
+          localStorage.removeItem('suu_fuel_log_form_draft');
       }
   };
 

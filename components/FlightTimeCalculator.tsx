@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calculator, X, Clock, Plane, Edit2, History, Save, Trash2, Plus } from 'lucide-react';
+import { Calculator, X, Clock, Plane, Edit2, History, Save, Trash2, Plus, Target } from 'lucide-react';
 
 interface FlightTimeCalculatorProps {
   isOpen: boolean;
@@ -57,6 +57,18 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
   const [endTach, setEndTach] = useState<string>(draft?.endTach || '');
   const [startHobbs, setStartHobbs] = useState<string>(draft?.startHobbs || '');
   const [endHobbs, setEndHobbs] = useState<string>(draft?.endHobbs || '');
+
+  const [targetStartHobbs, setTargetStartHobbs] = useState<string>('');
+  const [desiredHours, setDesiredHours] = useState<string>('');
+
+  const targetEndTime = React.useMemo(() => {
+    const s = parseFloat(targetStartHobbs);
+    const d = parseFloat(desiredHours);
+    if (!isNaN(s) && !isNaN(d)) {
+      return (s + d).toFixed(1);
+    }
+    return '0.0';
+  }, [targetStartHobbs, desiredHours]);
 
   // Save records map
   useEffect(() => {
@@ -210,6 +222,41 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
                             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold placeholder:font-normal uppercase"
                             placeholder="e.g. N12345"
                         />
+                    </div>
+
+                    {/* Pre-Flight Target Time Calculator */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                           <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">🎯 PRE-FLIGHT: TARGET TIME</h4>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                           <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Starting Hobbs/Tach</label>
+                               <input
+                                   type="number"
+                                   step="0.1"
+                                   value={targetStartHobbs}
+                                   onChange={(e) => setTargetStartHobbs(e.target.value)}
+                                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                   placeholder="0.0"
+                               />
+                           </div>
+                           <div>
+                               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Desired Flight Hours</label>
+                               <input
+                                   type="number"
+                                   step="0.1"
+                                   value={desiredHours}
+                                   onChange={(e) => setDesiredHours(e.target.value)}
+                                   className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                   placeholder="0.0"
+                               />
+                           </div>
+                        </div>
+                        <div className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 p-3 rounded-lg flex justify-between items-center">
+                           <span className="font-bold text-indigo-800 dark:text-indigo-300">Target End Time:</span>
+                           <span className="font-mono text-xl font-bold text-indigo-700 dark:text-indigo-400">{targetEndTime}</span>
+                        </div>
                     </div>
 
                     {/* Tach & Hobbs Sections in a grid on larger screens */}
