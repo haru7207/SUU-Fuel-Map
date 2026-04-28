@@ -147,7 +147,7 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
   return (
     <>
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-96 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
           
           {/* Header */}
           <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">
@@ -212,75 +212,78 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
                         />
                     </div>
 
-                    {/* Tach Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-                        <Clock size={16} className="text-slate-500" />
-                        <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tach Time</h4>
+                    {/* Tach & Hobbs Sections in a grid on larger screens */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Tach Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <Clock size={16} className="text-slate-500" />
+                            <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Tach Time</h4>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start</label>
+                                <input
+                                type="number"
+                                step="0.1"
+                                value={startTach}
+                                onChange={(e) => setStartTach(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                placeholder="0.0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End</label>
+                                <input
+                                type="number"
+                                step="0.1"
+                                value={endTach}
+                                onChange={(e) => setEndTach(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                placeholder="0.0"
+                                />
+                            </div>
+                            </div>
+                            <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 p-3 rounded-lg flex justify-between items-center">
+                            <span className="font-bold text-blue-800 dark:text-blue-300">Total Tach:</span>
+                            <span className="font-mono text-xl font-bold text-blue-700 dark:text-blue-400">{tachTime} <span className="text-sm text-blue-600 dark:text-blue-500">hrs</span></span>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start</label>
-                            <input
-                            type="number"
-                            step="0.1"
-                            value={startTach}
-                            onChange={(e) => setStartTach(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                            placeholder="0.0"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End</label>
-                            <input
-                            type="number"
-                            step="0.1"
-                            value={endTach}
-                            onChange={(e) => setEndTach(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                            placeholder="0.0"
-                            />
-                        </div>
-                        </div>
-                        <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 p-3 rounded-lg flex justify-between items-center">
-                        <span className="font-bold text-blue-800 dark:text-blue-300">Total Tach:</span>
-                        <span className="font-mono text-xl font-bold text-blue-700 dark:text-blue-400">{tachTime} <span className="text-sm text-blue-600 dark:text-blue-500">hrs</span></span>
-                        </div>
-                    </div>
 
-                    {/* Hobbs Section */}
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
-                        <Clock size={16} className="text-slate-500" />
-                        <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Hobbs Time</h4>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start</label>
-                            <input
-                            type="number"
-                            step="0.1"
-                            value={startHobbs}
-                            onChange={(e) => setStartHobbs(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                            placeholder="0.0"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End</label>
-                            <input
-                            type="number"
-                            step="0.1"
-                            value={endHobbs}
-                            onChange={(e) => setEndHobbs(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
-                            placeholder="0.0"
-                            />
-                        </div>
-                        </div>
-                        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 p-3 rounded-lg flex justify-between items-center">
-                        <span className="font-bold text-emerald-800 dark:text-emerald-300">Total Hobbs:</span>
-                        <span className="font-mono text-xl font-bold text-emerald-700 dark:text-emerald-400">{hobbsTime} <span className="text-sm text-emerald-600 dark:text-emerald-500">hrs</span></span>
+                        {/* Hobbs Section */}
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+                            <Clock size={16} className="text-slate-500" />
+                            <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">Hobbs Time</h4>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Start</label>
+                                <input
+                                type="number"
+                                step="0.1"
+                                value={startHobbs}
+                                onChange={(e) => setStartHobbs(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                placeholder="0.0"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">End</label>
+                                <input
+                                type="number"
+                                step="0.1"
+                                value={endHobbs}
+                                onChange={(e) => setEndHobbs(e.target.value)}
+                                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                                placeholder="0.0"
+                                />
+                            </div>
+                            </div>
+                            <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-100 dark:border-emerald-800 p-3 rounded-lg flex justify-between items-center">
+                            <span className="font-bold text-emerald-800 dark:text-emerald-300">Total Hobbs:</span>
+                            <span className="font-mono text-xl font-bold text-emerald-700 dark:text-emerald-400">{hobbsTime} <span className="text-sm text-emerald-600 dark:text-emerald-500">hrs</span></span>
+                            </div>
                         </div>
                     </div>
                     

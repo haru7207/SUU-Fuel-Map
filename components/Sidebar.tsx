@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType } from '../types';
-import { Search, Plane, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet } from 'lucide-react';
+import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -119,7 +119,14 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
       <div className="p-5 bg-[#0f172a] text-white flex-shrink-0 border-b border-slate-800">
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-             <Plane className="text-red-500 fill-current" size={22} />
+             <img 
+               src="/regenerated_image_1777310555290.png" 
+               alt="SUU Aviation Logo" 
+               className="h-8 w-auto object-contain transition-all duration-300 hover:scale-110 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] cursor-pointer"
+               onError={(e) => {
+                 (e.target as HTMLImageElement).src = "https://www.suu.edu/_files/images/footer-birdhead-combo.webp";
+               }}
+             />
              <h1 className="text-xl font-bold tracking-tight text-white">SUU <span className="text-slate-400 font-light">Fuel Map</span></h1>
           </div>
           <div className="flex items-center gap-2">

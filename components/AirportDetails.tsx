@@ -109,7 +109,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
           const response = await ai.models.generateContent({
-              model: 'gemini-3-flash-preview',
+              model: 'gemini-2.5-flash',
               contents: `Find the 7-day weather forecast for ${airport.city}, ${airport.state} (near airport ${airport.id}). Provide a concise summary for each day, focusing on aerial/aviation relevant info if possible (e.g., wind, visibility, precipitation). Format as a simple markdown list or short paragraphs.`,
               config: {
                   tools: [{ googleSearch: {} }],
@@ -120,9 +120,13 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
           } else {
               setForecastError("Could not retrieve forecast.");
           }
-      } catch (error) {
+      } catch (error: any) {
           console.error("Error fetching forecast:", error);
-          setForecastError("Failed to fetch forecast. Please try again later.");
+          if (error?.status === 429 || error?.message?.includes("429")) {
+              setForecastError("Our weather service is currently busy (Rate Limit). Please try again in a minute.");
+          } else {
+              setForecastError("Failed to fetch forecast. Please try again later.");
+          }
       } finally {
           setLoadingForecast(false);
       }

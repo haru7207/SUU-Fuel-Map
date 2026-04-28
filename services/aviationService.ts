@@ -697,34 +697,19 @@ export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Reco
     const fetchChunk = async (chunk: string[], index: number): Promise<boolean> => {
         try {
             const response = await ai.models.generateContent({
-                model: 'gemini-3-flash-preview',
-                contents: `Find the current real-time FAA NOTAMs for the following airports: ${chunk.join(', ')}. Return ONLY a JSON object where the keys are the airport ICAO codes and the values are objects with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations) and 'hasFuelAlert' (boolean, true ONLY if a NOTAM mentions fuel, fueling, self-serve, avgas, or jet a being out of service or having issues). If an airport has no NOTAMs, return an empty array for rawNotams.`,
+                model: 'gemini-2.5-flash',
+                contents: `Find the current real-time FAA NOTAMs for the following airports: ${chunk.join(', ')}. Return ONLY a raw JSON object where the keys are the airport ICAO codes and the values are objects with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations) and 'hasFuelAlert' (boolean, true ONLY if a NOTAM mentions fuel, fueling, self-serve, avgas, or jet a being out of service or having issues). If an airport has no NOTAMs, return an empty array for rawNotams. Provide the JSON inside a markdown code block (\`\`\`json ... \`\`\`). Do not include any other text outside the code block.`,
                 config: {
-                    tools: [{ googleSearch: {} }],
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: Object.fromEntries(chunk.map(icao => [
-                            icao,
-                            {
-                                type: Type.OBJECT,
-                                properties: {
-                                    rawNotams: {
-                                        type: Type.ARRAY,
-                                        items: { type: Type.STRING }
-                                    },
-                                    hasFuelAlert: { type: Type.BOOLEAN }
-                                },
-                                required: ["rawNotams", "hasFuelAlert"]
-                            }
-                        ]))
-                    }
+                    tools: [{ googleSearch: {} }]
                 }
             });
 
             if (response.text) {
                 try {
-                    const data = JSON.parse(response.text);
+                    const text = response.text;
+                    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    const jsonText = jsonMatch ? jsonMatch[1] : text;
+                    const data = JSON.parse(jsonText);
                     for (const icao of chunk) {
                         if (data[icao]) {
                             notamMap[icao] = data[icao];

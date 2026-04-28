@@ -7,11 +7,12 @@ import FuelLogToggle from './components/FuelLogToggle';
 import { FlightTimeCalculator } from './components/FlightTimeCalculator';
 import { PivotalAltitudeCalculator } from './components/PivotalAltitudeCalculator';
 import { NightTimeCalculator } from './components/NightTimeCalculator';
+import { HoldingCalculator } from './components/HoldingCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass } from 'lucide-react';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
 const App: React.FC = () => {
@@ -44,6 +45,7 @@ const App: React.FC = () => {
   const [isFlightTimeOpen, setIsFlightTimeOpen] = useState(false);
   const [isPivotalAltOpen, setIsPivotalAltOpen] = useState(false);
   const [isNightTimeOpen, setIsNightTimeOpen] = useState(false);
+  const [isHoldingOpen, setIsHoldingOpen] = useState(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
@@ -339,6 +341,11 @@ const App: React.FC = () => {
           onClose={() => setIsCheatSheetOpen(false)}
         />
 
+        <HoldingCalculator
+          isOpen={isHoldingOpen}
+          onClose={() => setIsHoldingOpen(false)}
+        />
+
         {/* Toolbar */}
         <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
           
@@ -359,10 +366,10 @@ const App: React.FC = () => {
                 <button
                   onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
                   className={`flex items-center justify-center gap-2 font-bold py-1.5 px-3 text-xs md:text-sm rounded shadow-md border transition-all active:scale-95 w-full ${
-                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                   }`}
                 >
-                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isCheatSheetOpen ? 'text-white' : 'text-blue-500'}`} />
+                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen ? 'text-white' : 'text-blue-500'}`} />
                   <span>CFI Tools</span>
                 </button>
 
@@ -400,6 +407,7 @@ const App: React.FC = () => {
                         setIsFlightTimeOpen(false);
                         setIsPivotalAltOpen(false);
                         setIsCheatSheetOpen(false);
+                        setIsHoldingOpen(false);
                         setIsInstructorToolsMenuOpen(false);
                       }}
                       className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
@@ -409,7 +417,22 @@ const App: React.FC = () => {
                     </button>
                     <button
                       onClick={() => {
+                        setIsHoldingOpen(true);
+                        setIsCheatSheetOpen(false);
+                        setIsNightTimeOpen(false);
+                        setIsFlightTimeOpen(false);
+                        setIsPivotalAltOpen(false);
+                        setIsInstructorToolsMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                    >
+                      <Compass size={16} className="text-rose-500" />
+                      Holding Entry Calc
+                    </button>
+                    <button
+                      onClick={() => {
                         setIsCheatSheetOpen(true);
+                        setIsHoldingOpen(false);
                         setIsNightTimeOpen(false);
                         setIsFlightTimeOpen(false);
                         setIsPivotalAltOpen(false);
