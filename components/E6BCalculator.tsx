@@ -11,6 +11,8 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
   const [tas, setTas] = useState<string>('145');
   const [wd, setWd] = useState<string>('270');
   const [ws, setWs] = useState<string>('25');
+  const [magVarVal, setMagVarVal] = useState<string>('11');
+  const [magVarDir, setMagVarDir] = useState<string>('E');
   const [dist, setDist] = useState<string>('120');
   const [gph, setGph] = useState<string>('11.5');
   
@@ -18,6 +20,7 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
 
   let wca = 0;
   let th = 0;
+  let mh = 0;
   let gs = 0;
   let flightTimeStr = "00:00:00";
   let reqFuel = 0;
@@ -27,6 +30,7 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
   const tasNum = Number(tas);
   const wdNum = Number(wd);
   const wsNum = Number(ws);
+  const varNum = Number(magVarVal);
   
   if (!isNaN(tcNum) && !isNaN(tasNum) && !isNaN(wdNum) && !isNaN(wsNum) && tasNum > 0) {
      const waRad = (wdNum - tcNum) * Math.PI / 180;
@@ -38,6 +42,14 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
          
          th = (tcNum + wca) % 360;
          if (th < 0) th += 360;
+         
+         if (!isNaN(varNum)) {
+             const varMulti = magVarDir === 'E' ? -1 : 1;
+             mh = (th + (varNum * varMulti)) % 360;
+             if (mh < 0) mh += 360;
+         } else {
+             mh = th;
+         }
          
          gs = tasNum * Math.cos(wcaRad) - wsNum * Math.cos(waRad);
      }
@@ -112,21 +124,28 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
 
     let courseDeg = Number(tc) || 0;
     let headingDeg = th || 0;
+    let magHeadingDeg = mh || 0;
     let windDirDeg = Number(wd) || 0;
 
     const rad = Math.PI / 180;
     
     // Helper to draw vectors from center
-    const drawVector = (fromX: number, fromY: number, angleDeg: number, length: number, color: string, width: number = 3) => {
+    const drawVector = (fromX: number, fromY: number, angleDeg: number, length: number, color: string, width: number = 3, dashed: boolean = false) => {
        const toX = fromX + length * Math.sin(angleDeg * rad);
        const toY = fromY - length * Math.cos(angleDeg * rad);
        
        ctx.beginPath();
+       if (dashed) {
+           ctx.setLineDash([5, 5]);
+       } else {
+           ctx.setLineDash([]);
+       }
        ctx.moveTo(fromX, fromY);
        ctx.lineTo(toX, toY);
        ctx.strokeStyle = color;
        ctx.lineWidth = width;
        ctx.stroke();
+       ctx.setLineDash([]);
        
        // Arrow head
        const headlen = 10;
@@ -145,8 +164,11 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
     // Draw Course (Red)
     drawVector(cx, cy, courseDeg, maxLen, '#ef4444', 3); 
 
-    // Draw Heading (White/Light Slate)
+    // Draw True Heading (White/Light Slate)
     drawVector(cx, cy, headingDeg, maxLen * 0.9, '#e2e8f0', 3);
+
+    // Draw Mag Heading (Indigo) dashed
+    drawVector(cx, cy, magHeadingDeg, maxLen * 0.8, '#6366f1', 2, true);
 
     // Draw Wind (Blue)
     // Wind is pointing from its direction towards the center.
@@ -156,7 +178,7 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
     const windStartY = cy - (r + 15) * Math.cos(windDirDeg * rad);
     drawVector(windStartX, windStartY, windDirDeg + 180, 45, '#3b82f6', 4);
 
-  }, [isOpen, tc, tas, wd, ws, wca, th]);
+  }, [isOpen, tc, tas, wd, ws, wca, th, mh, magVarVal, magVarDir]);
 
   if (!isOpen) return null;
 
@@ -186,9 +208,9 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                  <Navigation size={16} /> Heading, Ground Speed & WCA
                </h3>
                
-               <div className="grid grid-cols-2 gap-4">
+               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Course</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">True Course</label>
                       <input
                           type="number"
                           value={tc}
@@ -206,7 +228,7 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                       />
                   </div>
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Wind Dir</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Wind Dir (True)</label>
                       <input
                           type="number"
                           value={wd}
@@ -223,9 +245,28 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                           className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
+                  <div className="col-span-2 md:col-span-1">
+                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Mag Variation</label>
+                      <div className="flex gap-2">
+                          <input
+                              type="number"
+                              value={magVarVal}
+                              onChange={(e) => setMagVarVal(e.target.value)}
+                              className="w-2/3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          />
+                          <select
+                              value={magVarDir}
+                              onChange={(e) => setMagVarDir(e.target.value)}
+                              className="w-1/3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                          >
+                              <option value="E">E</option>
+                              <option value="W">W</option>
+                          </select>
+                      </div>
+                  </div>
                </div>
 
-               <div className="grid grid-cols-3 gap-2 mt-4">
+               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
                    <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
                        <span className="block text-xs font-bold text-slate-500 uppercase mb-1">WCA</span>
                        <span className="font-mono text-lg font-bold text-slate-800 dark:text-slate-200">
@@ -233,9 +274,15 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                        </span>
                    </div>
                    <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                       <span className="block text-xs font-bold text-slate-500 uppercase mb-1">Heading</span>
+                       <span className="block text-xs font-bold text-slate-500 uppercase mb-1">True Hdg</span>
                        <span className="font-mono text-lg font-bold text-slate-800 dark:text-slate-200">
                            {th.toFixed(0).padStart(3, '0')}
+                       </span>
+                   </div>
+                   <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
+                       <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase mb-1">Mag Hdg</span>
+                       <span className="font-mono text-lg font-bold text-indigo-800 dark:text-indigo-300">
+                           {mh.toFixed(0).padStart(3, '0')}
                        </span>
                    </div>
                    <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
@@ -335,7 +382,11 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 bg-slate-200 rounded-sm outline outline-1 outline-slate-400"></span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">Heading: {th.toFixed(0).padStart(3, '0')}</span>
+                       <span className="font-mono text-slate-700 dark:text-slate-300">T Hdg: {th.toFixed(0).padStart(3, '0')}</span>
+                   </div>
+                   <div className="flex items-center gap-2">
+                       <span className="w-4 h-4 bg-indigo-500 rounded-sm"></span>
+                       <span className="font-mono text-slate-700 dark:text-slate-300">M Hdg: {mh.toFixed(0).padStart(3, '0')}</span>
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 bg-blue-500 rounded-sm"></span>
