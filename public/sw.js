@@ -48,10 +48,15 @@ self.addEventListener('activate', (evt) => {
 self.addEventListener('fetch', (evt) => {
   const url = new URL(evt.request.url);
 
-  // 1. Handle Aviation Weather API Requests (Stale-While-Revalidate / Network First Fallback)
+  // Do not cache non-GET requests
+  if (evt.request.method !== 'GET') {
+    return;
+  }
+
+  // 1. Handle Aviation Weather API Requests, Fuel Data, and Proxies (Stale-While-Revalidate / Network First Fallback)
   // We use Network First strategy here for Aviation data to prioritize safety (fresh data),
   // but fall back to cache if offline.
-  if (url.hostname.includes('aviationweather.gov') || url.hostname.includes('corsproxy.io') || url.hostname.includes('allorigins.win')) {
+  if (url.hostname.includes('aviationweather.gov') || url.hostname.includes('script.google.com') || url.hostname.includes('script.googleusercontent.com') || url.hostname.includes('corsproxy.io') || url.hostname.includes('allorigins.win')) {
     evt.respondWith(
       caches.open(DATA_CACHE_NAME).then((cache) => {
         return fetch(evt.request)
