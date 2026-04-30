@@ -58,8 +58,8 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
   const [startHobbs, setStartHobbs] = useState<string>(draft?.startHobbs || '');
   const [endHobbs, setEndHobbs] = useState<string>(draft?.endHobbs || '');
 
-  const [targetStartHobbs, setTargetStartHobbs] = useState<string>('');
-  const [desiredHours, setDesiredHours] = useState<string>('');
+  const [targetStartHobbs, setTargetStartHobbs] = useState<string>(draft?.targetStartHobbs || '');
+  const [desiredHours, setDesiredHours] = useState<string>(draft?.desiredHours || '');
 
   const targetEndTime = React.useMemo(() => {
     const s = parseFloat(targetStartHobbs);
@@ -83,10 +83,12 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
         startTach,
         endTach,
         startHobbs,
-        endHobbs
+        endHobbs,
+        targetStartHobbs,
+        desiredHours
     };
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(activeDraft));
-  }, [editingId, tailNumber, startTach, endTach, startHobbs, endHobbs]);
+  }, [editingId, tailNumber, startTach, endTach, startHobbs, endHobbs, targetStartHobbs, desiredHours]);
 
   // Calculate functions
   const calculateChange = (start: string, end: string) => {
