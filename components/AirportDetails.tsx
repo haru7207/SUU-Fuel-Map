@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Airport, CardType, WeatherData, UserNote, FuelType, NotamData } from '../types';
 import { fetchWeather, fetchPilotNotes, savePilotNote } from '../services/aviationService';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 
@@ -474,6 +474,15 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
           </div>
         </div>
         <div className="flex items-center gap-1 -mr-2">
+            <a 
+               href={`https://www.airnav.com/airport/${airport.id}`} 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               className="p-2 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-full transition-colors flex items-center gap-1" 
+               title="View on AirNav"
+            >
+                <ExternalLink size={20} />
+            </a>
             <button onClick={onOpenFuelLog} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors flex items-center gap-1" title="Log Fuel">
                 <Fuel size={20} />
             </button>
