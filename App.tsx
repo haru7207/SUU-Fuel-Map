@@ -6,7 +6,6 @@ import AirportDetails from './components/AirportDetails';
 import FuelLogToggle from './components/FuelLogToggle';
 import { FlightTimeCalculator } from './components/FlightTimeCalculator';
 import { VORCheckLog } from './components/VORCheckLog';
-import { KCDCNotamModal } from './components/KCDCNotamModal';
 import { PivotalAltitudeCalculator } from './components/PivotalAltitudeCalculator';
 import { NightTimeCalculator } from './components/NightTimeCalculator';
 import { HoldingCalculator } from './components/HoldingCalculator';
@@ -52,7 +51,6 @@ const App: React.FC = () => {
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [isVORCheckOpen, setIsVORCheckOpen] = useState(false);
   const [isE6BOpen, setIsE6BOpen] = useState(false);
-  const [isKCDCNotamOpen, setIsKCDCNotamOpen] = useState(false);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
 
@@ -323,9 +321,6 @@ const App: React.FC = () => {
         {/* VOR Check Log Modal */}
         <VORCheckLog isOpen={isVORCheckOpen} onClose={() => setIsVORCheckOpen(false)} />
 
-        {/* KCDC Notam Modal */}
-        <KCDCNotamModal isOpen={isKCDCNotamOpen} onClose={() => setIsKCDCNotamOpen(false)} />
-
         {/* Flight Time Calculator Panel */}
         <FlightTimeCalculator
           isOpen={isFlightTimeOpen}
@@ -383,10 +378,10 @@ const App: React.FC = () => {
                 <button
                   onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
                   className={`flex items-center justify-center gap-2 font-bold py-1.5 px-3 text-xs md:text-sm rounded shadow-md border transition-all active:scale-95 w-full ${
-                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isKCDCNotamOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                   }`}
                 >
-                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isKCDCNotamOpen ? 'text-white' : 'text-blue-500'}`} />
+                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen ? 'text-white' : 'text-blue-500'}`} />
                   <span>CFI Tools</span>
                 </button>
 
@@ -518,23 +513,6 @@ const App: React.FC = () => {
                     >
                       <Radio size={16} className="text-cyan-500" />
                       VOR Receiver Check (14 CFR 91.171)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsKCDCNotamOpen(true);
-                        setIsVORCheckOpen(false);
-                        setIsCheatSheetOpen(false);
-                        setIsE6BOpen(false);
-                        setIsHoldingOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsFlightTimeOpen(false);
-                        setIsPivotalAltOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <AlertTriangle size={16} className="text-orange-500" />
-                      KCDC NOTAM Viewer
                     </button>
                   </div>
                 )}
