@@ -107,30 +107,61 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
       setLoadingForecast(true);
       setForecastError(null);
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          const response = await ai.models.generateContent({
-              model: 'gemini-2.5-flash',
-              contents: `Find the 7-day weather forecast for ${airport.city}, ${airport.state} (near airport ${airport.id}). Provide a concise summary for each day, focusing on aerial/aviation relevant info if possible (e.g., wind, visibility, precipitation). Format as a simple markdown list or short paragraphs.`,
-              config: {
-                  tools: [{ googleSearch: {} }],
+          const url = `https://api.open-meteo.com/v1/forecast?latitude=${airport.lat}&longitude=${airport.lon}&daily=weathercode,temperature_2m_max,temperature_2m_min,precipitation_probability_max,windspeed_10m_max,winddirection_10m_dominant&temperature_unit=fahrenheit&windspeed_unit=mph&precipitation_unit=inch&timezone=auto`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("API responded with an error");
+          
+          const data = await response.json();
+          const { time, weathercode, temperature_2m_max, temperature_2m_min, precipitation_probability_max, windspeed_10m_max, winddirection_10m_dominant } = data.daily;
+          
+          const getWeatherString = (code: number) => {
+              switch(true) {
+                  case code === 0: return '☀️ Clear sky';
+                  case code === 1: return '🌤️ Mainly clear';
+                  case code === 2: return '⛅ Partly cloudy';
+                  case code === 3: return '☁️ Overcast';
+                  case code === 45 || code === 48: return '🌫️ Fog';
+                  case code >= 51 && code <= 57: return '🌧️ Drizzle';
+                  case code >= 61 && code <= 65: return '🌧️ Rain';
+                  case code === 66 || code === 67: return '🌨️ Freezing Rain';
+                  case code >= 71 && code <= 77: return '❄️ Snow';
+                  case code >= 80 && code <= 82: return '🌦️ Rain Showers';
+                  case code === 85 || code === 86: return '🌨️ Snow Showers';
+                  case code >= 95: return '⛈️ Thunderstorm';
+                  default: return '☁️ Unknown';
               }
-          });
-          if (response.text) {
-              setForecast(response.text);
-          } else {
-              setForecastError("Could not retrieve forecast.");
+          };
+
+          const getWindDirection = (deg: number) => { 
+              const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']; 
+              return dirs[Math.round(deg / 45) % 8]; 
+          };
+
+          let md = "";
+          for (let i = 0; i < time.length; i++) {
+              const dateObj = new Date(time[i] + 'T00:00:00');
+              const dateStr = dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
+              
+              const code = weathercode[i];
+              const wx = getWeatherString(code);
+              const maxT = Math.round(temperature_2m_max[i]);
+              const minT = Math.round(temperature_2m_min[i]);
+              const windS = Math.round(windspeed_10m_max[i]);
+              const windD = getWindDirection(winddirection_10m_dominant[i]);
+              const precip = precipitation_probability_max[i];
+
+              md += `**${dateStr}**  \n`;
+              md += `${wx} • 🌡️ ${maxT}° / ${minT}° • 💨 ${windS} mph ${windD} • 🌧️ ${precip}% chance of precip\n\n`;
           }
+          
+          setForecast(md.trim());
       } catch (error: any) {
           console.error("Error fetching forecast:", error);
-          if (error?.status === 429 || error?.message?.includes("429")) {
-              setForecastError("Our weather service is currently busy (Rate Limit). Please try again in a minute.");
-          } else {
-              setForecastError("Failed to fetch forecast. Please try again later.");
-          }
+          setForecastError("Failed to fetch forecast. Please try again later.");
       } finally {
           setLoadingForecast(false);
       }
-  }, [airport.id, airport.city, airport.state]);
+  }, [airport.id, airport.city, airport.state, airport.lat, airport.lon]);
 
   useEffect(() => {
       if (activeTab === 'weather' && !forecast && !loadingForecast && !forecastError) {
