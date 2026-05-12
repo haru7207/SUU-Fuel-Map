@@ -49,13 +49,11 @@ const getWeatherColor = (category?: string) => {
 // Custom Pin Icon Generator
 const createPinIcon = (color: string, isSelected: boolean, weatherCategory?: string) => {
   return new L.DivIcon({
-    className: `custom-pin-icon ${isSelected ? 'z-[1000]' : ''}`,
+    className: `custom-pin-icon transition-all duration-300 ${isSelected ? 'z-[1000]' : 'hover:z-[1000]'}`,
     html: `
-      <div class="${isSelected ? 'animate-pin-bounce pulse-ring' : ''}" style="
+      <div class="${isSelected ? 'animate-pin-bounce pulse-ring drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]' : 'drop-shadow-md hover:-translate-y-1 hover:scale-110 hover:drop-shadow-[0_10px_10px_rgba(0,0,0,0.4)]'} transition-all duration-300 ease-out" style="
           position: relative;
           color: ${color};
-          filter: drop-shadow(0px ${isSelected ? '8px' : '3px'} ${isSelected ? '8px' : '3px'} rgba(0,0,0,${isSelected ? '0.5' : '0.4'})); 
-          transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           transform-origin: bottom center;
           width: ${isSelected ? '48px' : '36px'};
           height: ${isSelected ? '48px' : '36px'};

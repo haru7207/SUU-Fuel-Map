@@ -296,10 +296,12 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
                 <div className="pt-3 border-t border-slate-200 dark:border-slate-700">
                   <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">Technical Notes & Disclaimers</h5>
                   <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5 list-disc pl-3">
-                    <li>Weather data (METAR, TAF, G-AIRMET) is sourced from the FAA AWC API.</li>
-                    <li>Runway crosswind calculations are based on current METAR data.</li>
-                    <li>FBO & airport data are aggregated from various free APIs.</li>
-                    <li className="text-red-600/80 dark:text-red-400/80 font-medium">All weather data provided here is advisory only. Never use this application as an official weather source for flight planning.</li>
+                    <li>Weather data (METAR, TAF, G-AIRMET) is sourced from the FAA AWC API. 7-day forecasts are fetched from Open-Meteo.</li>
+                    <li>CFI tools calculations use standard aeronautical formulas. Runway crosswind calculations are based on current METAR data.</li>
+                    <li>FBO & airport data are aggregated from various free APIs. For comprehensive airport data, visit <a href="https://www.airnav.com" target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-600 underline">AirNav.com</a>.</li>
+                    <li>The Airport Cheat Sheet is under active development; data may be inaccurate.</li>
+                    <li>NOTAM integration is currently pending FAA API approval.</li>
+                    <li className="text-red-600/80 dark:text-red-400/80 font-medium mt-2">All weather data provided here is advisory only. Never use this application as an official weather source for flight planning.</li>
                   </ul>
                 </div>
               </div>
@@ -309,8 +311,9 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
             <div className="space-y-3 pt-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">About</h3>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-                <p>SUU Fuel Map v1.2.0</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.2.1</p>
                 <p>Designed for SUU Aviation Instructors.</p>
+                <p className="italic font-medium text-slate-500 dark:text-slate-400">Fly Safe!</p>
               </div>
             </div>
 
