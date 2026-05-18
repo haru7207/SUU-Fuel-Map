@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    function isValidId(id) { 
+        return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+
+    function isValidUser(data) {
+        return data.keys().hasAll(['id', 'email']) &&
+               data.id is string && data.id.size() <= 128 &&
+               data.email is string && data.email.size() <= 128 &&
+               data.id == request.auth.uid &&
+               (data.displayName == null || (data.displayName is string && data.displayName.size() <= 200)) &&
+               (data.profilePhotoUrl == null || (data.profilePhotoUrl is string && data.profilePhotoUrl.size() <= 1000));
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow list: if false; // No blanket listing of PII
+      allow create: if isSignedIn() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming());
+      allow update: if isSignedIn() && isValidId(userId) && userId == request.auth.uid && isValidUser(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'profilePhotoUrl']);
+      allow delete: if false;
+    }
+
+    function isValidPilotNote(data) {
+        return data.keys().hasAll(['airportId', 'authorId', 'authorName', 'content', 'createdAt']) &&
+               data.airportId is string && data.airportId.size() <= 20 && data.airportId.size() > 0 &&
+               data.authorId is string && data.authorId == request.auth.uid &&
+               data.authorName is string && data.authorName.size() <= 200 &&
+               data.content is string && data.content.size() <= 2000 &&
+               data.createdAt == request.time &&
+               (data.authorProfilePhoto == null || (data.authorProfilePhoto is string && data.authorProfilePhoto.size() <= 1000));
+    }
+
+    match /pilotNotes/{noteId} {
+      // Any signed in user can read notes.
+      allow get: if isSignedIn() && isValidId(noteId);
+      // For list: MUST explicitly evaluate resource.data to prevent blanket reads without filters if needed, 
+      // but notes are public to all signed in users. We'll require airportId to be a string.
+      // Or we can just use `resource.data.airportId is string` to ensure the client is querying by something.
+      allow list: if isSignedIn() && resource.data.airportId is string;
+      
+      allow create: if isSignedIn() && isValidId(noteId) && isValidPilotNote(incoming()) && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if false; // Notes are immutable
+      allow delete: if isSignedIn() && isValidId(noteId) && existing().authorId == request.auth.uid;
+    }
+  }
+}

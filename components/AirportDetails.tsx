@@ -1,8 +1,11 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { Airport, CardType, WeatherData, UserNote, FuelType, NotamData } from '../types';
-import { fetchWeather, fetchPilotNotes, savePilotNote } from '../services/aviationService';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink } from 'lucide-react';
+import { fetchWeather } from '../services/aviationService';
+import { fetchFirebasePilotNotes, saveFirebasePilotNote, deleteFirebasePilotNote } from '../services/notesService';
+import { auth, signInWithGoogle, logOut } from '../services/firebase';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 
@@ -47,6 +50,16 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
   const [loadingNotams, setLoadingNotams] = useState(false);
   const [notamError, setNotamError] = useState<string | null>(null);
   const [notamSource, setNotamSource] = useState<'preloaded' | 'live' | null>(null);
+
+  // Auth State
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
       if (notamMap && notamMap[airport.id]) {
@@ -200,6 +213,11 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
   }, [airport.id, airport.weatherSource, weatherMap]);
 
   const loadNotes = async () => {
+    if (!currentUser) {
+        setNotes([]);
+        return;
+    }
+
     if (isOffline) {
         // Fallback to just static notes if offline
         setNotes(airport.userNotes || []);
@@ -208,8 +226,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
 
     setLoadingNotes(true);
     try {
-        // Fetch real-time notes from API
-        const apiNotes = await fetchPilotNotes(airport.id);
+        const apiNotes = await fetchFirebasePilotNotes(airport.id);
         
         // Merge with static notes (deduplicating by ID just in case)
         const staticNotes = airport.userNotes || [];
@@ -233,37 +250,31 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
   };
 
   const handleAddNote = async () => {
-      if (!newNoteText.trim()) return;
+      if (!newNoteText.trim() || !currentUser) return;
       
       setSubmittingNote(true);
-      const authorName = isAnonymous ? 'Anonymous' : (newNoteAuthor.trim() || 'Instructor');
-
-      const note: UserNote = {
-          id: `note-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          text: newNoteText,
-          author: authorName,
-          type: newNoteType,
-          date: new Date().toISOString(),
-          replies: []
-      };
       
-      // Optimistic Update: Add to UI immediately before fetch completes
-      setNotes(prev => [note, ...prev]);
-      setNewNoteText('');
-      setNewNoteAuthor('');
-      setNewNoteType('general');
-      setIsAnonymous(false);
-      setShowNoteForm(false);
-
-      const success = await savePilotNote(note, airport.id);
-      
-      if (success) {
-          // Background refresh to sync with server state
-          loadNotes(); 
-      } else {
-          alert("Note saved locally but sync failed. Please check connection.");
+      try {
+          const createdNote = await saveFirebasePilotNote(airport.id, newNoteText);
+          
+          setNotes(prev => [createdNote, ...prev]);
+          setNewNoteText('');
+          setShowNoteForm(false);
+      } catch (error) {
+          alert("Failed to save note. Please try again.");
+      } finally {
+          setSubmittingNote(false);
       }
-      setSubmittingNote(false);
+  };
+
+  const handleDeleteNote = async (noteId: string) => {
+      if (!window.confirm("Are you sure you want to delete this note?")) return;
+      try {
+          await deleteFirebasePilotNote(noteId);
+          setNotes(prev => prev.filter(n => n.id !== noteId));
+      } catch (error) {
+          alert("Failed to delete note. You can only delete your own notes.");
+      }
   };
 
   const handleAddReply = async (parentId: string) => {
@@ -308,20 +319,21 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
   };
 
   useEffect(() => {
-    // Reset states
+    // Reset states when airport changes
     setShowNoteForm(false);
     setNewNoteText('');
     setReplyingTo(null);
     setIsAnonymous(false);
     setIsReplyAnonymous(false);
     
-    // Load data
-    loadNotes();
-    
     if (airport.runways.length > 0) {
       setSelectedRunway(airport.runways[0]);
     }
   }, [airport]);
+
+  useEffect(() => {
+    loadNotes();
+  }, [airport, currentUser]);
 
   useEffect(() => {
     loadWeather();
@@ -364,7 +376,16 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
   const formatNoteDate = (dateStr: string) => {
       try {
           const d = new Date(dateStr);
-          if (isNaN(d.getTime())) return dateStr; // Return raw string if parse fails
+          if (isNaN(d.getTime())) return dateStr;
+          
+          const now = new Date();
+          const diffInSeconds = Math.floor((now.getTime() - d.getTime()) / 1000);
+          
+          if (diffInSeconds < 60) return "Just now";
+          if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+          if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+          if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+          
           return d.toLocaleString([], { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
       } catch (e) {
           return dateStr || 'Unknown Date';
@@ -753,7 +774,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                         <div className="flex justify-between items-start">
                             <div>
                                 <p className="text-sm font-bold text-slate-800">Katie Baca</p>
-                                <p className="text-[10px] text-slate-500 uppercase font-bold">Finance Manager</p>
+                                <p className="text-[10px] text-slate-500 uppercase font-bold">Business Manager</p>
                             </div>
                             <div className="text-right">
                                 <a href="tel:435-922-5107" className="block text-xs font-bold text-blue-600 hover:underline">
@@ -1126,8 +1147,22 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                     </div>
                 </div>
 
-                {/* List of Notes */}
-                <div className="space-y-4">
+                {!currentUser ? (
+                    <div className="flex flex-col items-center justify-center p-8 border border-dashed border-slate-200 rounded-lg bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
+                        <LogIn size={32} className="text-slate-400 mb-3" />
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">Sign in to view notes</h4>
+                        <p className="text-xs text-slate-500 text-center mb-6 max-w-xs">You must be logged in to view, create, or delete pilot notes for {airport.id}.</p>
+                        <button 
+                            onClick={signInWithGoogle}
+                            className="bg-red-500 hover:bg-red-600 text-white font-bold text-sm py-2 px-6 rounded shadow transition-all flex items-center gap-2"
+                        >
+                            Sign in with Google
+                        </button>
+                    </div>
+                ) : (
+                    <>
+                        {/* List of Notes */}
+                        <div className="space-y-4">
                     {loadingNotes && notes.length === 0 ? (
                          <div className="flex flex-col items-center justify-center py-10 text-slate-400">
                              <Loader2 size={24} className="animate-spin mb-2 text-indigo-500" />
@@ -1169,15 +1204,21 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                                         
                                         <div className="mt-3 flex justify-between items-end border-t border-black/5 pt-2">
                                             <div className="flex items-center gap-1.5 text-xs font-bold opacity-70">
-                                                {note.author === 'Anonymous' ? <EyeOff size={12} /> : <User size={12} />}
+                                                {note.authorProfilePhoto ? (
+                                                    <img src={note.authorProfilePhoto} alt={note.author} className="w-4 h-4 rounded-full" />
+                                                ) : note.author === 'Anonymous' ? <EyeOff size={12} /> : <User size={12} />}
                                                 <span>{note.author}</span>
                                             </div>
-                                            <button 
-                                                onClick={() => setReplyingTo(replyingTo === note.id ? null : note.id)}
-                                                className="text-xs font-bold text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition-colors"
-                                            >
-                                                {replyingTo === note.id ? 'Cancel Reply' : 'Reply'}
-                                            </button>
+                                            <div className="flex gap-2">
+                                                {currentUser && note.authorId === currentUser.uid && (
+                                                    <button 
+                                                        onClick={() => handleDeleteNote(note.id)}
+                                                        className="text-xs font-bold text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1273,27 +1314,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                         </div>
                         
                         <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Author</label>
-                                    <div className="flex gap-2">
-                                        <input 
-                                            type="text" 
-                                            placeholder="Your Name"
-                                            disabled={isAnonymous}
-                                            className={`w-full text-sm p-2 rounded border border-slate-200 focus:border-indigo-500 focus:outline-none ${isAnonymous ? 'bg-slate-100 text-slate-400' : 'bg-slate-50'}`}
-                                            value={isAnonymous ? 'Anonymous' : newNoteAuthor}
-                                            onChange={(e) => setNewNoteAuthor(e.target.value)}
-                                        />
-                                        <button 
-                                            onClick={() => setIsAnonymous(!isAnonymous)}
-                                            className={`p-2 rounded border transition-colors ${isAnonymous ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-400 border-slate-200 hover:bg-slate-50'}`}
-                                            title="Post Anonymously"
-                                        >
-                                            {isAnonymous ? <EyeOff size={18} /> : <User size={18} />}
-                                        </button>
-                                    </div>
-                                </div>
+                            <div className="grid grid-cols-1 gap-3">
                                 <div>
                                     <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Type</label>
                                     <select 
@@ -1330,6 +1351,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                             </button>
                         </div>
                     </div>
+                )}
+                </>
                 )}
 
             </div>

@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "profilePhotoUrl": { "type": "string" }
+      },
+      "required": ["id", "email"]
+    },
+    "PilotNote": {
+      "title": "Pilot Note",
+      "description": "Notes shared by pilots on airports",
+      "type": "object",
+      "properties": {
+        "airportId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "authorProfilePhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["airportId", "authorId", "authorName", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User data"
+    },
+    "/pilotNotes/{noteId}": {
+      "schema": { "$ref": "#/entities/PilotNote" },
+      "description": "Pilot notes collection"
+    }
+  }
+}

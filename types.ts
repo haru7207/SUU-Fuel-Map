@@ -18,6 +18,8 @@ export interface UserNote {
   text: string;
   date: string; // ISO string
   author: string;
+  authorProfilePhoto?: string;
+  authorId?: string;
   type?: 'discrepancy' | 'general' | 'tip' | 'urgent';
   replies?: UserNote[];
 }
