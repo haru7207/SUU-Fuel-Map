@@ -44,10 +44,7 @@ service cloud.firestore {
     match /pilotNotes/{noteId} {
       // Any signed in user can read notes.
       allow get: if isSignedIn() && isValidId(noteId);
-      // For list: MUST explicitly evaluate resource.data to prevent blanket reads without filters if needed, 
-      // but notes are public to all signed in users. We'll require airportId to be a string.
-      // Or we can just use `resource.data.airportId is string` to ensure the client is querying by something.
-      allow list: if isSignedIn() && resource.data.airportId is string;
+      allow list: if isSignedIn();
       
       allow create: if isSignedIn() && isValidId(noteId) && isValidPilotNote(incoming()) && exists(/databases/$(database)/documents/users/$(request.auth.uid));
       allow update: if false; // Notes are immutable
