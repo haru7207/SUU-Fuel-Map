@@ -1158,7 +1158,11 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                                     await signInWithGoogle();
                                 } catch (error: any) {
                                     console.error(error);
-                                    alert(`Login failed: ${error?.message || "Unknown error"}\n\nIf you are using the AI Studio preview, please open the app in a new tab (click the ↗ icon in the top right) to authenticate with Google.`);
+                                    if (error?.code === 'auth/unauthorized-domain') {
+                                        alert(`Login failed: Unauthorized domain.\n\nPlease go to your Firebase Console -> Authentication -> Settings -> Authorized domains, and add "${window.location.hostname}" to the list.`);
+                                    } else {
+                                        alert(`Login failed: ${error?.message || "Unknown error"}\n\nIf you are using the AI Studio preview, please open the app in a new tab (click the ↗ icon in the top right) to authenticate with Google.`);
+                                    }
                                 }
                             }}
                             className="bg-red-500 hover:bg-red-600 text-white font-bold text-sm py-2 px-6 rounded shadow transition-all flex items-center gap-2"
