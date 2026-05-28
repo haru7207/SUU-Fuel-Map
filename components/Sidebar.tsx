@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType } from '../types';
-import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet } from 'lucide-react';
+import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -15,9 +15,25 @@ interface SidebarProps {
   setThemeMode: (mode: 'day' | 'night' | 'auto') => void;
   isMobile: boolean;
   onClose: () => void;
+  isRefreshingFuel?: boolean;
+  onRefreshFuelPrices?: () => Promise<void>;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searchTerm, setSearchTerm, onOpenGlobalNotes, onOpenCheatSheet, themeMode, setThemeMode, isMobile, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ 
+  airports, 
+  selectedId, 
+  onSelect, 
+  searchTerm, 
+  setSearchTerm, 
+  onOpenGlobalNotes, 
+  onOpenCheatSheet, 
+  themeMode, 
+  setThemeMode, 
+  isMobile, 
+  onClose,
+  isRefreshingFuel = false,
+  onRefreshFuelPrices
+}) => {
   const [showSettings, setShowSettings] = useState(false);
   const [cardFilter, setCardFilter] = useState<CardType | 'ALL'>('ALL');
   
@@ -185,15 +201,17 @@ const Sidebar: React.FC<SidebarProps> = ({ airports, selectedId, onSelect, searc
           </div>
         )}
 
-        {/* Global Notes Button */}
+        {/* Global Action Controls */}
         {!showSettings && (
-          <button 
-              onClick={onOpenGlobalNotes}
-              className="w-full py-2 bg-indigo-900/50 hover:bg-indigo-900 border border-indigo-800 rounded text-xs font-bold text-indigo-200 hover:text-white transition-all flex items-center justify-center gap-2"
-          >
-              <MessageSquare size={14} />
-              View All Pilot Notes
-          </button>
+          <div className="flex flex-col gap-2">
+            <button 
+                onClick={onOpenGlobalNotes}
+                className="w-full py-2 bg-indigo-900/50 hover:bg-indigo-900 border border-indigo-800 rounded text-xs font-bold text-indigo-200 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+                <MessageSquare size={14} />
+                View All Pilot Notes
+            </button>
+          </div>
         )}
       </div>
 

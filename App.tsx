@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from './components/Sidebar';
 import Map from './components/Map';
 import AirportDetails from './components/AirportDetails';
@@ -12,7 +13,7 @@ import { HoldingCalculator } from './components/HoldingCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
-import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini } from './services/aviationService';
+import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
@@ -53,6 +54,7 @@ const App: React.FC = () => {
   const [isE6BOpen, setIsE6BOpen] = useState(false);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
+
 
   // Theme Effect
   useEffect(() => {
@@ -190,6 +192,47 @@ const App: React.FC = () => {
             } catch (e) {
                 console.error("Failed to fetch NOTAM data", e);
             }
+
+            // Fetch live fuel prices via Gemini
+            try {
+                console.log("Fetching live fuel prices via Gemini...");
+                fetchLiveFuelPricesWithGemini(currentAirports.map(a => a.id)).then(livePrices => {
+                    if (livePrices && Object.keys(livePrices).length > 0) {
+                        setAirports(prev => {
+                            return prev.map(airport => {
+                                const pricesForAirport = livePrices[airport.id];
+                                if (pricesForAirport) {
+                                    const updatedPrices = { ...(airport.fuelPrices || {}) };
+                                    let updated = false;
+                                    
+                                    if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                                        updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                                        updated = true;
+                                    }
+                                    if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                                        updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                                        updated = true;
+                                    }
+                                    
+                                    if (updated) {
+                                        return {
+                                            ...airport,
+                                            fuelPrices: updatedPrices,
+                                            fuelPricesLastUpdated: new Date().toISOString()
+                                        };
+                                    }
+                                }
+                                return airport;
+                            });
+                        });
+                        console.log("Live fuel prices updated successfully via Gemini.");
+                    }
+                }).catch(err => {
+                    console.error("Error in live fuel price background fetch:", err);
+                });
+            } catch (e) {
+                console.error("Failed to start live fuel prices fetch", e);
+            }
         };
 
         loadData();
@@ -230,6 +273,54 @@ const App: React.FC = () => {
       if (isMobile) setIsSidebarOpen(false);
   };
 
+  // Automatically check cache & refresh live fuel prices every 15 minutes.
+  // Since the cache lifespan is 2 hours, this periodically updates prices without user interaction.
+  useEffect(() => {
+    if (airports.length === 0) return;
+
+    const checkAndRefreshPrices = async () => {
+      try {
+        console.log("[Auto-Refresh] Checking live fuel prices...");
+        const livePrices = await fetchLiveFuelPricesWithGemini(airports.map(a => a.id), false);
+        if (livePrices && Object.keys(livePrices).length > 0) {
+          setAirports(prev => {
+            return prev.map(airport => {
+              const pricesForAirport = livePrices[airport.id];
+              if (pricesForAirport) {
+                const updatedPrices = { ...(airport.fuelPrices || {}) };
+                let updated = false;
+                
+                if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                  updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                  updated = true;
+                }
+                if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                  updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                  updated = true;
+                }
+                
+                if (updated) {
+                  return {
+                    ...airport,
+                    fuelPrices: updatedPrices,
+                    fuelPricesLastUpdated: new Date().toISOString()
+                  };
+                }
+              }
+              return airport;
+            });
+          });
+          console.log("[Auto-Refresh] Fuel prices checked/updated successfully.");
+        }
+      } catch (err) {
+        console.error("[Auto-Refresh] Error checking live fuel prices:", err);
+      }
+    };
+
+    const intervalId = setInterval(checkAndRefreshPrices, 15 * 60 * 1000);
+    return () => clearInterval(intervalId);
+  }, [airports.length]);
+
   const selectedAirport = airports.find(a => a.id === selectedId);
 
   return (
@@ -269,8 +360,7 @@ const App: React.FC = () => {
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } ${!isOnline ? 'pt-6 md:pt-0' : ''}`}>
          <div className="h-full w-80 md:w-96 relative">
-           <Sidebar 
-            airports={airports} 
+           <Sidebar airports={airports} 
             selectedId={selectedId} 
             onSelect={handleSelect}
             searchTerm={searchTerm}
@@ -521,35 +611,49 @@ const App: React.FC = () => {
         </div>
 
         {/* Airport Details Panel */}
-        {selectedAirport && (
-            <div className={`absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
-                md:top-4 md:right-4 md:bottom-4 md:w-96 md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
-                inset-x-0 bottom-0 top-10 rounded-t-2xl md:inset-auto
-                ${isMobile ? 'animate-slide-in-up' : 'animate-slide-in-right'}
-            `}>
-                <AirportDetails 
-                    airport={selectedAirport} 
-                    onClose={() => setSelectedId(null)} 
-                    onOpenFuelLog={() => setIsFuelLogOpen(true)}
-                    weatherMap={weatherMap}
-                    notamMap={notamMap}
-                />
-            </div>
-        )}
+        <AnimatePresence>
+          {selectedAirport && (
+              <motion.div 
+                  key="airport-details-panel"
+                  initial={isMobile ? { y: '100%' } : { x: '100%' }}
+                  animate={{ y: 0, x: 0 }}
+                  exit={isMobile ? { y: '100%' } : { x: '100%' }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 240 }}
+                  className="absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
+                      md:top-4 md:right-4 md:bottom-4 md:w-96 md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
+                      inset-x-0 bottom-0 top-10 rounded-t-2xl md:inset-auto"
+              >
+                  <AirportDetails 
+                      airport={selectedAirport} 
+                      onClose={() => setSelectedId(null)} 
+                      onOpenFuelLog={() => setIsFuelLogOpen(true)}
+                      weatherMap={weatherMap}
+                      notamMap={notamMap}
+                  />
+              </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Global Notes Panel */}
-        {showGlobalNotes && (
-             <div className={`absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
-                md:top-4 md:right-4 md:bottom-4 md:w-96 md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
-                inset-x-0 bottom-0 top-10 rounded-t-2xl md:inset-auto
-                ${isMobile ? 'animate-slide-in-up' : 'animate-slide-in-right'}
-            `}>
-                <GlobalNotesFeed 
-                    onClose={() => setShowGlobalNotes(false)} 
-                    onSelectAirport={handleSelect}
-                />
-            </div>
-        )}
+        <AnimatePresence>
+          {showGlobalNotes && (
+              <motion.div 
+                  key="global-notes-panel"
+                  initial={isMobile ? { y: '100%' } : { x: '100%' }}
+                  animate={{ y: 0, x: 0 }}
+                  exit={isMobile ? { y: '100%' } : { x: '100%' }}
+                  transition={{ type: 'spring', damping: 30, stiffness: 240 }}
+                  className="absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
+                      md:top-4 md:right-4 md:bottom-4 md:w-96 md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
+                      inset-x-0 bottom-0 top-10 rounded-t-2xl md:inset-auto"
+              >
+                  <GlobalNotesFeed 
+                      onClose={() => setShowGlobalNotes(false)} 
+                      onSelectAirport={handleSelect}
+                  />
+              </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -17,8 +17,8 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.JETA]: '435-590-2565'   // Truck
     },
     fuelPrices: {
-      [FuelType.LL100]: 5.15,
-      [FuelType.JETA]: 4.85
+      [FuelType.LL100]: 5.95,
+      [FuelType.JETA]: 5.65
     },
     runways: ['02/20', '08/26'],
     runwayLengths: {
@@ -48,7 +48,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: 'N/A',
     fuelTypes: [FuelType.LL100],
     fuelPrices: {
-      [FuelType.LL100]: 5.95
+      [FuelType.LL100]: 6.25
     },
     runways: ['13/31'],
     runwayLengths: { '13/31': 3990 },
@@ -75,7 +75,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '435-635-4343',
     fuelTypes: [FuelType.LL100],
     fuelPrices: {
-       [FuelType.LL100]: 5.65
+      [FuelType.LL100]: 5.85
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 3400 },
@@ -102,7 +102,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '435-477-3331',
     fuelTypes: [FuelType.LL100],
     fuelPrices: {
-       [FuelType.LL100]: 5.45
+      [FuelType.LL100]: 5.75
     },
     runways: ['04/22'],
     runwayLengths: { '04/22': 4900 },
@@ -128,8 +128,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '435-438-2451',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-       [FuelType.LL100]: 5.65,
-       [FuelType.JETA]: 5.25
+      [FuelType.LL100]: 5.95,
+      [FuelType.JETA]: 5.45
     },
     runways: ['07/25', '13/31'],
     runwayLengths: { '07/25': 4700, '13/31': 3200 },
@@ -155,8 +155,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '435-743-5700',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-       [FuelType.LL100]: 5.75,
-       [FuelType.JETA]: 5.35
+      [FuelType.LL100]: 6.05,
+      [FuelType.JETA]: 5.55
     },
     runways: ['04/22'],
     runwayLengths: { '04/22': 5040 },
@@ -181,7 +181,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '435-387-2711',
     fuelTypes: [FuelType.LL100],
     fuelPrices: {
-       [FuelType.LL100]: 5.85
+      [FuelType.LL100]: 6.15
     },
     runways: ['16/34'],
     runwayLengths: { '16/34': 5000 },
@@ -206,8 +206,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 723-5702',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 5.85,
-      [FuelType.JETA]: 5.45
+      [FuelType.LL100]: 6.15,
+      [FuelType.JETA]: 5.65
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 8900 },
@@ -232,8 +232,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 259-7421',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 7.15,
-      [FuelType.JETA]: 6.85
+      [FuelType.LL100]: 7.45,
+      [FuelType.JETA]: 7.15
     },
     runways: ['03/21', '15/33'],
     runwayLengths: { '03/21': 7100, '15/33': 4060 },
@@ -258,8 +258,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 637-9556',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.25,
-      [FuelType.JETA]: 5.95
+      [FuelType.LL100]: 6.45,
+      [FuelType.JETA]: 6.15
     },
     runways: ['01/19', '08/26'],
     runwayLengths: { '01/19': 8300, '08/26': 4500 },
@@ -284,8 +284,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 834-5239',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.75,
-      [FuelType.JETA]: 6.25
+      [FuelType.LL100]: 6.95,
+      [FuelType.JETA]: 6.45
     },
     runways: ['03/21'],
     runwayLengths: { '03/21': 7400 },
@@ -310,8 +310,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 688-8009',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 7.45,
-      [FuelType.JETA]: 6.95
+      [FuelType.LL100]: 7.65,
+      [FuelType.JETA]: 7.15
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 9300 },
@@ -337,8 +337,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(702) 261-3806',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.85,
-      [FuelType.JETA]: 6.45
+      [FuelType.LL100]: 6.95,
+      [FuelType.JETA]: 6.55
     },
     runways: ['12L/30R', '12R/30L', '07/25'],
     runwayLengths: { '12L/30R': 5000, '12R/30L': 4200, '07/25': 4200 },
@@ -365,8 +365,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: 'N/A',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 9.85,
-      [FuelType.JETA]: 8.95
+      [FuelType.LL100]: 9.95,
+      [FuelType.JETA]: 9.15
     },
     runways: ['04/22', '13/31'],
     runwayLengths: { '04/22': 6900, '13/31': 4400 },
@@ -392,8 +392,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(801) 295-3877',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.05,
-      [FuelType.JETA]: 5.55
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.75
     },
     runways: ['16/34'],
     runwayLengths: { '16/34': 4700 },
@@ -419,9 +419,9 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(801) 627-0040',
     fuelTypes: [FuelType.LL100, FuelType.JETA, FuelType.JETA_PLUS],
     fuelPrices: {
-      [FuelType.LL100]: 5.95,
-      [FuelType.JETA]: 5.65,
-      [FuelType.JETA_PLUS]: 5.75
+      [FuelType.LL100]: 6.15,
+      [FuelType.JETA]: 5.85,
+      [FuelType.JETA_PLUS]: 5.95
     },
     runways: ['03/21', '17/35', '07/25'],
     runwayLengths: { '03/21': 8150, '17/35': 5200, '07/25': 4300 },
@@ -447,8 +447,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 843-3360',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.15,
-      [FuelType.JETA]: 5.85
+      [FuelType.LL100]: 6.35,
+      [FuelType.JETA]: 6.05
     },
     runways: ['08/26', '12/30'],
     runwayLengths: { '08/26': 10000, '12/30': 8000 },
@@ -473,8 +473,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 896-9413',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 5.95,
-      [FuelType.JETA]: 5.55
+      [FuelType.LL100]: 6.15,
+      [FuelType.JETA]: 5.75
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 6600 },
@@ -509,8 +509,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(928) 645-2987',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 7.25,
-      [FuelType.JETA]: 6.85
+      [FuelType.LL100]: 7.45,
+      [FuelType.JETA]: 7.05
     },
     runways: ['15/33', '07/25'],
     runwayLengths: { '15/33': 5950, '07/25': 5500 },
@@ -555,8 +555,8 @@ export const AIRPORT_DATABASE: Airport[] = [
         [FuelType.JETA]: '(385) 715-7192'  // Atlantic
     },
     fuelPrices: {
-      [FuelType.LL100]: 8.95,
-      [FuelType.JETA]: 8.25
+      [FuelType.LL100]: 9.15,
+      [FuelType.JETA]: 8.45
     },
     runways: ['16L/34R', '16R/34L', '17/35', '14/32'],
     runwayLengths: { '16L/34R': 12000, '16R/34L': 12000, '17/35': 9600, '14/32': 4900 },
@@ -588,8 +588,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(702) 261-4800',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 7.85,
-      [FuelType.JETA]: 7.35
+      [FuelType.LL100]: 7.95,
+      [FuelType.JETA]: 7.45
     },
     runways: ['17R/35L', '17L/35R'],
     runwayLengths: { '17R/35L': 6500, '17L/35R': 5000 },
@@ -621,8 +621,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(801) 852-6715',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 7.35,
-      [FuelType.JETA]: 6.95
+      [FuelType.LL100]: 7.55,
+      [FuelType.JETA]: 7.15
     },
     runways: ['13/31', '18/36'],
     runwayLengths: { '13/31': 8600, '18/36': 6600 },
@@ -648,8 +648,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 752-5955',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.15,
-      [FuelType.JETA]: 5.75
+      [FuelType.LL100]: 6.35,
+      [FuelType.JETA]: 5.95
     },
     runways: ['17/35', '10/28'],
     runwayLengths: { '17/35': 9000, '10/28': 5000 },
@@ -674,8 +674,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(801) 804-4593',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.05,
-      [FuelType.JETA]: 5.65
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.85
     },
     runways: ['12/30'],
     runwayLengths: { '12/30': 6500 },
@@ -701,8 +701,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(435) 843-3440',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 5.95,
-      [FuelType.JETA]: 5.45
+      [FuelType.LL100]: 6.15,
+      [FuelType.JETA]: 5.65
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 5500 },
@@ -727,8 +727,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     phone: '(307) 789-9477',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 6.25,
-      [FuelType.JETA]: 5.85
+      [FuelType.LL100]: 6.45,
+      [FuelType.JETA]: 6.05
     },
     runways: ['05/23', '16/34'],
     runwayLengths: { '05/23': 7300, '16/34': 3900 },
@@ -752,6 +752,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Freedom Fuels',
     phone: '(801) 828-7211',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.35,
+      [FuelType.JETA]: 5.95
+    },
     runways: ['17/35'],
     runwayLengths: { '17/35': 5800 },
     weatherSource: 'KCNY',
@@ -775,6 +779,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Nephi Jet Center',
     phone: '(435) 262-9669',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.85
+    },
     runways: ['17/35'],
     runwayLengths: { '17/35': 6400 },
     weatherSource: 'KPVU',
@@ -798,6 +806,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Roughrock Aviation',
     phone: '(435) 684-2419',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.45,
+      [FuelType.JETA]: 6.05
+    },
     runways: ['01/19'],
     runwayLengths: { '01/19': 5700 },
     weatherSource: 'KPGA',
@@ -821,6 +833,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Signature',
     phone: '(928) 754-3020',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.85,
+      [FuelType.JETA]: 6.35
+    },
     runways: ['16/34'],
     runwayLengths: { '16/34': 8500 },
     frequencies: [
@@ -844,6 +860,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'City of Mesquite',
     phone: '(702) 346-2841',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.55,
+      [FuelType.JETA]: 6.15
+    },
     runways: ['01/19'],
     runwayLengths: { '01/19': 5100 },
     weatherSource: 'KIFP',
@@ -867,6 +887,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Wiseman Aviation',
     phone: '(928) 638-2359',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 7.75,
+      [FuelType.JETA]: 7.25
+    },
     runways: ['03/21'],
     runwayLengths: { '03/21': 9000 },
     frequencies: [
@@ -890,6 +914,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'City of Kanab',
     phone: '(435) 644-2299',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.75
+    },
     runways: ['01/19'],
     runwayLengths: { '01/19': 6200 },
     frequencies: [
@@ -911,6 +939,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Monticello',
     phone: '(435) 587-2271',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.45,
+      [FuelType.JETA]: 5.95
+    },
     runways: ['16/34'],
     runwayLengths: { '16/34': 6000 },
     frequencies: [
@@ -931,6 +963,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Utah Aviation',
     phone: '(801) 804-4593',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.85
+    },
     runways: ['12/30'],
     runwayLengths: { '12/30': 6500 },
     frequencies: [
@@ -952,6 +988,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Delta',
     phone: '(435) 864-2759',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.15,
+      [FuelType.JETA]: 5.65
+    },
     runways: ['17/35'],
     runwayLengths: { '17/35': 5500 },
     frequencies: [
@@ -972,6 +1012,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Manti',
     phone: '(435) 283-4631',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.75
+    },
     runways: ['03/21'],
     runwayLengths: { '03/21': 5000 },
     frequencies: [
@@ -992,6 +1036,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Kingman',
     phone: '(928) 757-2134',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.45,
+      [FuelType.JETA]: 5.95
+    },
     runways: ['03/21'],
     runwayLengths: { '03/21': 6800 },
     frequencies: [
@@ -1012,6 +1060,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'West Wing Aviation',
     phone: '(702) 578-3348',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.35,
+      [FuelType.JETA]: 5.85
+    },
     runways: ['11/29'],
     runwayLengths: { '11/29': 5100 },
     frequencies: [
@@ -1032,6 +1084,10 @@ export const AIRPORT_DATABASE: Airport[] = [
     fbo: 'Boulder',
     phone: '(801) 359-2086',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
+    fuelPrices: {
+      [FuelType.LL100]: 6.25,
+      [FuelType.JETA]: 5.75
+    },
     runways: ['08/26'],
     runwayLengths: { '08/26': 4100 },
     frequencies: [

@@ -760,3 +760,100 @@ export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Reco
     
     return notamMap;
 };
+
+const FUEL_PRICES_CACHE_KEY = 'suu_fuel_prices_cache';
+const FUEL_PRICES_CACHE_EXPIRY = 2 * 60 * 60 * 1000; // 2 hours
+
+export const fetchLiveFuelPricesWithGemini = async (airports: string[], forceRefresh = false): Promise<Record<string, Record<string, number>>> => {
+    const pricesMap: Record<string, Record<string, number>> = {};
+    
+    // Check cache first
+    try {
+        if (!forceRefresh) {
+            const cachedStr = localStorage.getItem(FUEL_PRICES_CACHE_KEY);
+            if (cachedStr) {
+                const cached = JSON.parse(cachedStr);
+                if (Date.now() - cached.timestamp < FUEL_PRICES_CACHE_EXPIRY) {
+                    console.log("Using cached live fuel prices");
+                    return cached.data;
+                }
+            }
+        } else {
+            console.log("Forcing refresh of live fuel prices");
+        }
+    } catch (e) {
+        console.warn("Failed to read fuel prices cache", e);
+    }
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    
+    // Chunk airports to avoid reaching model inputs or rate limits
+    // Since search grounding takes time, 10-15 per chunk is ideal
+    const chunkSize = 15;
+    const chunks: string[][] = [];
+    for (let i = 0; i < airports.length; i += chunkSize) {
+        chunks.push(airports.slice(i, i + chunkSize));
+    }
+
+    const fetchChunk = async (chunk: string[], index: number): Promise<boolean> => {
+        try {
+            const response = await ai.models.generateContent({
+                model: 'gemini-3.5-flash',
+                contents: `Find the actual, absolute current real-time general aviation fuel prices for the following airport codes: ${chunk.join(', ')}. Use Google Search to query real-time fuel prices or FBO listings on websites like AirNav, iFlightPlanner, or FBO web portals. Gather current cost per gallon for 100LL (sold as Avgas or 100LL) and Jet A (sold as Jet A or Jet-A) at each airport. Return ONLY a raw JSON object mapping where the keys are the airport codes, and the values are objects with fuel type keys ('100LL' and/or 'Jet A') and their price per gallon as numbers (e.g. {"KCDC": {"100LL": 5.15, "Jet A": 4.85}}). Only return the JSON inside a markdown code block (\`\`\`json ... \`\`\`), with no other text around it. If you can't find real-time prices for an airport, omit it from the JSON.`,
+                config: {
+                    tools: [{ googleSearch: {} }]
+                }
+            });
+
+            if (response.text) {
+                try {
+                    const text = response.text;
+                    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+                    const jsonText = jsonMatch ? jsonMatch[1] : text;
+                    const data = JSON.parse(jsonText);
+                    for (const icao of chunk) {
+                        if (data[icao]) {
+                            pricesMap[icao] = data[icao];
+                        }
+                    }
+                } catch (e) {
+                    console.error(`Failed to parse fuel prices JSON for chunk ${index}`, e);
+                }
+            }
+            return true;
+        } catch (error: any) {
+            if (error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota')) {
+                console.warn(`Quota exceeded fetching fuel prices for chunk ${index}. Aborting Gemini fetch.`);
+                return false;
+            }
+            console.error(`Error fetching fuel prices for chunk ${index}:`, error?.message || error);
+            return true;
+        }
+    };
+
+    let aborted = false;
+    for (let i = 0; i < chunks.length; i++) {
+        const shouldContinue = await fetchChunk(chunks[i], i);
+        if (!shouldContinue) {
+            aborted = true;
+            break;
+        }
+        if (i < chunks.length - 1) {
+            // Larger delay between chunks to avoid rate limits
+            await new Promise(resolve => setTimeout(resolve, 8000));
+        }
+    }
+
+    if (!aborted || Object.keys(pricesMap).length > 0) {
+        try {
+            localStorage.setItem(FUEL_PRICES_CACHE_KEY, JSON.stringify({
+                timestamp: Date.now(),
+                data: pricesMap
+            }));
+        } catch (e) {
+            console.warn("Failed to write fuel prices cache", e);
+        }
+    }
+
+    return pricesMap;
+};

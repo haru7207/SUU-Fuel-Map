@@ -15,11 +15,21 @@ interface AirportDetailsProps {
   onOpenFuelLog: () => void;
   weatherMap: Record<string, WeatherData>;
   notamMap?: Record<string, NotamData>;
+  isRefreshingFuel?: boolean;
+  onRefreshFuelPrices?: () => Promise<void>;
 }
 
 type Tab = 'info' | 'weather' | 'notam' | 'notes';
 
-const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpenFuelLog, weatherMap, notamMap }) => {
+const AirportDetails: React.FC<AirportDetailsProps> = ({ 
+  airport, 
+  onClose, 
+  onOpenFuelLog, 
+  weatherMap, 
+  notamMap,
+  isRefreshingFuel = false,
+  onRefreshFuelPrices
+}) => {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
@@ -392,6 +402,17 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
       }
   };
 
+  const formatLastUpdated = (isoStr?: string) => {
+      if (!isoStr) return '';
+      try {
+          const d = new Date(isoStr);
+          if (isNaN(d.getTime())) return '';
+          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (e) {
+          return '';
+      }
+  };
+
   // --- Wind Data (Direct from API now) ---
   const windData = useMemo(() => {
     if (!weather?.wind) {
@@ -618,7 +639,18 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                             <p className="text-base font-bold text-slate-800">{airport.fbo}</p>
                         </div>
                         <div className="text-right flex-1 ml-4">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Fuel & Contact</span>
+                            <div className="flex flex-col items-end mb-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Fuel & Contact</span>
+                                {airport.fuelPricesLastUpdated ? (
+                                    <span className="text-[8px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1 py-0.5 rounded mt-0.5 border border-emerald-100 dark:border-emerald-900/40 flex items-center gap-1">
+                                        <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span> Live (Fetched {formatLastUpdated(airport.fuelPricesLastUpdated)})
+                                    </span>
+                                ) : (
+                                    <span className="text-[8px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-950/20 px-1 py-0.5 rounded mt-0.5 border border-slate-100 dark:border-slate-800/40">
+                                        Original DB
+                                    </span>
+                                )}
+                            </div>
                             <div className="flex flex-col gap-2">
                                 {airport.fuelTypes.map(f => (
                                     <div key={f} className="flex items-center justify-end gap-2 border-b border-slate-50 last:border-0 pb-1 last:pb-0">
@@ -642,6 +674,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({ airport, onClose, onOpe
                                     </div>
                                 ))}
                             </div>
+                            {/* Auto-updated every two hours */}
                         </div>
                     </div>
 

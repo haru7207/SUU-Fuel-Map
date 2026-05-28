@@ -36,6 +36,7 @@ export interface Airport {
   fuelTypes: FuelType[];
   fuelPhones?: Record<string, string>; // Map of FuelType to specific phone number
   fuelPrices?: Record<string, number>; // Map of FuelType to price per gallon
+  fuelPricesLastUpdated?: string; // ISO string when live prices were last fetched/updated
   runways: string[]; // e.g. ["02/20", "08/26"]
   runwayLengths?: Record<string, number>; // Length in feet, mapped by runway ID "02/20"
   weatherSource?: string; // If this airport has no weather, use this airport's ID (e.g., 'KCDC' for '1L9')
