@@ -17,8 +17,8 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.JETA]: '435-590-2565'   // Truck
     },
     fuelPrices: {
-      [FuelType.LL100]: 5.95,
-      [FuelType.JETA]: 5.65
+      [FuelType.LL100]: 7.18,
+      [FuelType.JETA]: 8.88
     },
     runways: ['02/20', '08/26'],
     runwayLengths: {
