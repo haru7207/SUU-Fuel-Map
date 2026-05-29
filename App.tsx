@@ -10,11 +10,14 @@ import { VORCheckLog } from './components/VORCheckLog';
 import { PivotalAltitudeCalculator } from './components/PivotalAltitudeCalculator';
 import { NightTimeCalculator } from './components/NightTimeCalculator';
 import { HoldingCalculator } from './components/HoldingCalculator';
+import { VaCalculator } from './components/VaCalculator';
+import { ISACalculator } from './components/ISACalculator';
+import { WindComponentsCalculator } from './components/WindComponentsCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
@@ -49,6 +52,9 @@ const App: React.FC = () => {
   const [isPivotalAltOpen, setIsPivotalAltOpen] = useState(false);
   const [isNightTimeOpen, setIsNightTimeOpen] = useState(false);
   const [isHoldingOpen, setIsHoldingOpen] = useState(false);
+  const [isVaOpen, setIsVaOpen] = useState(false);
+  const [isIsaOpen, setIsIsaOpen] = useState(false);
+  const [isWindOpen, setIsWindOpen] = useState(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [isVORCheckOpen, setIsVORCheckOpen] = useState(false);
   const [isE6BOpen, setIsE6BOpen] = useState(false);
@@ -442,6 +448,18 @@ const App: React.FC = () => {
           isOpen={isHoldingOpen}
           onClose={() => setIsHoldingOpen(false)}
         />
+        <VaCalculator
+          isOpen={isVaOpen}
+          onClose={() => setIsVaOpen(false)}
+        />
+        <ISACalculator
+          isOpen={isIsaOpen}
+          onClose={() => setIsIsaOpen(false)}
+        />
+        <WindComponentsCalculator
+          isOpen={isWindOpen}
+          onClose={() => setIsWindOpen(false)}
+        />
 
         <E6BCalculator
           isOpen={isE6BOpen}
@@ -468,142 +486,246 @@ const App: React.FC = () => {
                 <button
                   onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
                   className={`flex items-center justify-center gap-2 font-bold py-1.5 px-3 text-xs md:text-sm rounded shadow-md border transition-all active:scale-95 w-full ${
-                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                   }`}
                 >
-                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen ? 'text-white' : 'text-blue-500'}`} />
+                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen ? 'text-white' : 'text-blue-500'}`} />
                   <span>CFI Tools</span>
                 </button>
 
                 {isInstructorToolsMenuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1050]">
+                  <div className="absolute top-full right-0 mt-2 w-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1050] origin-top-right">
                     
-                    {/* Time Category */}
-                    <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Time
+                    {/* Header */}
+                    <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
+                      <div className="bg-blue-100 dark:bg-blue-900/40 p-2 rounded-lg text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+                        <Briefcase size={20} />
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">CFI Digital Toolkit</div>
+                        <div className="text-xs text-slate-500 font-medium mt-0.5">Quick reference tools for instructors</div>
+                      </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        setIsFlightTimeOpen(true);
-                        setIsPivotalAltOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsCheatSheetOpen(false);
-                        setIsHoldingOpen(false);
-                        setIsE6BOpen(false);
-                        setIsVORCheckOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <Clock size={16} className="text-blue-500" />
-                      Flight Time Calc
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsNightTimeOpen(true);
-                        setIsFlightTimeOpen(false);
-                        setIsPivotalAltOpen(false);
-                        setIsCheatSheetOpen(false);
-                        setIsHoldingOpen(false);
-                        setIsE6BOpen(false);
-                        setIsVORCheckOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <Moon size={16} className="text-purple-500" />
-                      Night Time Calc
-                    </button>
 
-                    {/* Navigation Category */}
-                    <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Navigation
-                    </div>
-                    <button
-                      onClick={() => {
-                        setIsPivotalAltOpen(true);
-                        setIsFlightTimeOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsCheatSheetOpen(false);
-                        setIsHoldingOpen(false);
-                        setIsE6BOpen(false);
-                        setIsVORCheckOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <Target size={16} className="text-indigo-500" />
-                      Pivotal Altitude
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsHoldingOpen(true);
-                        setIsCheatSheetOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsFlightTimeOpen(false);
-                        setIsPivotalAltOpen(false);
-                        setIsE6BOpen(false);
-                        setIsVORCheckOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <Compass size={16} className="text-rose-500" />
-                      Holding Entry Calc
-                    </button>
+                    <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 max-h-[65vh] overflow-y-auto custom-scrollbar">
+                      
+                      {/* Column 1 */}
+                      <div className="space-y-4">
+                        {/* Time & Logs */}
+                        <div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Time & Logs</div>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(true);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-blue-100 dark:bg-blue-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Clock size={16} className="text-blue-600 dark:text-blue-400" /></div>
+                            Flight Time Calc
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(true);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-purple-100 dark:bg-purple-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Moon size={16} className="text-purple-600 dark:text-purple-400" /></div>
+                            Night Time Calc
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(true);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-cyan-100 dark:bg-cyan-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Radio size={16} className="text-cyan-600 dark:text-cyan-400" /></div>
+                            VOR Receiver Check
+                          </button>
+                        </div>
+                        
+                        {/* Performance & Weather */}
+                        <div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Performance & WX</div>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(true);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-emerald-100 dark:bg-emerald-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Plane size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
+                            SR20 Maneuvering Speed
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(true);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-orange-100 dark:bg-orange-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><ThermometerSun size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                            ISA Dev & Atmosphere
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsWindOpen(true);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-sky-100 dark:bg-sky-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Wind size={16} className="text-sky-600 dark:text-sky-400" /></div>
+                            Wind Components
+                          </button>
+                        </div>
+                      </div>
 
-                    {/* Others Category */}
-                    <div className="px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Others
+                      {/* Column 2 */}
+                      <div className="space-y-4">
+                        {/* Navigation */}
+                        <div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Navigation</div>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(true);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-rose-100 dark:bg-rose-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Compass size={16} className="text-rose-600 dark:text-rose-400" /></div>
+                            Holding Pattern Entry
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(true);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-indigo-100 dark:bg-indigo-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
+                            Pivotal Altitude
+                          </button>
+                        </div>
+
+                        {/* Preflight & Ref */}
+                        <div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Preflight & Ref</div>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(true);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-amber-100 dark:bg-amber-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Calculator size={16} className="text-amber-600 dark:text-amber-400" /></div>
+                            E6B Flight Computer
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(true);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-teal-100 dark:bg-teal-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
+                            Airport Cheat Sheet
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
-                    <button
-                      onClick={() => {
-                        setIsE6BOpen(true);
-                        setIsHoldingOpen(false);
-                        setIsCheatSheetOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsFlightTimeOpen(false);
-                        setIsPivotalAltOpen(false);
-                        setIsVORCheckOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <Calculator size={16} className="text-orange-500" />
-                      E6B Flight Computer
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsCheatSheetOpen(true);
-                        setIsE6BOpen(false);
-                        setIsHoldingOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsFlightTimeOpen(false);
-                        setIsPivotalAltOpen(false);
-                        setIsVORCheckOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 border-b border-slate-100 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <FileSpreadsheet size={16} className="text-emerald-500" />
-                      Airport Cheat Sheet
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsVORCheckOpen(true);
-                        setIsCheatSheetOpen(false);
-                        setIsE6BOpen(false);
-                        setIsHoldingOpen(false);
-                        setIsNightTimeOpen(false);
-                        setIsFlightTimeOpen(false);
-                        setIsPivotalAltOpen(false);
-                        setIsInstructorToolsMenuOpen(false);
-                      }}
-                      className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-                    >
-                      <Radio size={16} className="text-cyan-500" />
-                      VOR Receiver Check (14 CFR 91.171)
-                    </button>
                   </div>
                 )}
               </div>
