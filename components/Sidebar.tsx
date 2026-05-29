@@ -329,7 +329,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-3 pt-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">About</h3>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.2.1</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.5.5</p>
                 <p>Designed for SUU Aviation Instructors.</p>
                 <p className="italic font-medium text-slate-500 dark:text-slate-400">Fly Safe!</p>
               </div>

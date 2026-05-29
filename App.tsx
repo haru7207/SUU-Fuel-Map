@@ -14,6 +14,7 @@ import { VaCalculator } from './components/VaCalculator';
 import { ISACalculator } from './components/ISACalculator';
 import { WindComponentsCalculator } from './components/WindComponentsCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
+import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
@@ -776,6 +777,8 @@ const App: React.FC = () => {
               </motion.div>
           )}
         </AnimatePresence>
+        
+        <ReleaseNotesModal />
       </div>
     </div>
   );
