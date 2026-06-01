@@ -9,7 +9,6 @@ interface SidebarProps {
   onSelect: (id: string) => void;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
-  onOpenGlobalNotes: () => void;
   onOpenCheatSheet?: (query: string) => void;
   themeMode: 'day' | 'night' | 'auto';
   setThemeMode: (mode: 'day' | 'night' | 'auto') => void;
@@ -25,7 +24,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   onSelect, 
   searchTerm, 
   setSearchTerm, 
-  onOpenGlobalNotes, 
   onOpenCheatSheet, 
   themeMode, 
   setThemeMode, 
@@ -202,17 +200,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
 
         {/* Global Action Controls */}
-        {!showSettings && (
-          <div className="flex flex-col gap-2">
-            <button 
-                onClick={onOpenGlobalNotes}
-                className="w-full py-2 bg-indigo-900/50 hover:bg-indigo-900 border border-indigo-800 rounded text-xs font-bold text-indigo-200 hover:text-white transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-                <MessageSquare size={14} />
-                View All Pilot Notes
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
@@ -329,7 +316,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-3 pt-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">About</h3>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.5.5</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.6.0</p>
                 <p>Designed for SUU Aviation Instructors.</p>
                 <p className="italic font-medium text-slate-500 dark:text-slate-400">Fly Safe!</p>
               </div>

@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { X, Moon, Compass, Calculator, Wind, ThermometerSun, Sparkles } from 'lucide-react';
+import { X, Moon, Compass, Calculator, Wind, ThermometerSun, Sparkles, Fuel, Info, Clock, Database } from 'lucide-react';
 
 export const ReleaseNotesModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if the user has already seen the v2.5.5 release notes
-    const hasSeen = localStorage.getItem('saw_release_notes_v2_5_5');
+    // Check if the user has already seen the v2.6.0 release notes
+    const hasSeen = localStorage.getItem('saw_release_notes_v2_6_0');
     if (!hasSeen) {
       setIsOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('saw_release_notes_v2_5_5', 'true');
+    localStorage.setItem('saw_release_notes_v2_6_0', 'true');
     setIsOpen(false);
   };
 
@@ -34,9 +34,9 @@ export const ReleaseNotesModal: React.FC = () => {
               <Sparkles size={16} />
               <span className="text-xs font-bold uppercase tracking-widest">What's New</span>
             </div>
-            <h2 className="text-2xl font-black">SUU Fuel Map v2.5.5</h2>
+            <h2 className="text-2xl font-black">SUU Fuel Map v2.6.0</h2>
             <p className="text-sm font-medium text-sky-100 mt-1">
-              Introducing five new instructor tools to enhance your briefings and teaching workflows.
+              Optimizing application performance, enhancing instructor utilities, and delivering offline-first Local Remarks.
             </p>
           </div>
           <button 
@@ -52,61 +52,61 @@ export const ReleaseNotesModal: React.FC = () => {
           <ul className="space-y-4">
             
             <li className="flex gap-4">
-              <div className="shrink-0 bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 p-3 rounded-xl h-fit">
-                <Moon size={20} />
+              <div className="shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 p-3 rounded-xl h-fit">
+                <Database size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Night Time Calculator</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Local Remarks Database (Form 5010)</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Easily calculate official civil twilight times to determine loggable night flight and night currency periods for any active airport pin.
+                  We have added a comprehensive offline-first Local Airport Remarks database. The Skyvector/FAA remarks for all main airfields load instantly and reliably without relying on external Google Sheets.
                 </p>
               </div>
             </li>
 
             <li className="flex gap-4">
-              <div className="shrink-0 bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400 p-3 rounded-xl h-fit">
-                <Calculator size={20} />
+              <div className="shrink-0 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400 p-3 rounded-xl h-fit">
+                <Clock size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Interactive E6B Flight Computer</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Flight Time & Night Time Calculator</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  A digital E6B to solve time-speed-distance, fuel consumption, CAS/TAS conversions, and groundspeed right from your dashboard.
+                  Plan briefings with official civil twilight times, loggable night periods, and student solo dual hour splits right on your active map sidebar.
+                </p>
+              </div>
+            </li>
+
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 p-3 rounded-xl h-fit">
+                <ThermometerSun size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">ISA Deviation Calculator</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Visualize International Standard Atmosphere deviations. Teach students how temperature variations affect density altitude and power output with full visual indicators.
                 </p>
               </div>
             </li>
 
             <li className="flex gap-4">
               <div className="shrink-0 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl h-fit">
-                <Compass size={20} />
+                <Calculator size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">SR20 Maneuvering Speed (Va)</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">E6B Flight Computer</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Instantly calculate the correct V<sub>a</sub> for any given weight in the Cirrus SR20. Includes instructional visualization for student briefings.
+                  Run standard aeronautical math calculations (speed, fuel burns, density/pressure heights, and unit conversions) dynamically inside the briefing tools.
                 </p>
               </div>
             </li>
 
             <li className="flex gap-4">
               <div className="shrink-0 bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400 p-3 rounded-xl h-fit">
-                <ThermometerSun size={20} />
+                <Sparkles size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">ISA Deviation Calculator</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Grounded Live AI Search</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Check International Standard Atmosphere variations. Understand how temperature and pressure affect aircraft performance visually.
-                </p>
-              </div>
-            </li>
-
-            <li className="flex gap-4">
-              <div className="shrink-0 bg-sky-100 dark:bg-sky-900/40 text-sky-600 dark:text-sky-400 p-3 rounded-xl h-fit">
-                <Wind size={20} />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Instructional Wind Components</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  A visual tool displaying crosswind and headwind components. Features a classic POH-style vector chart and an auto-fill option from current METARs.
+                  For smaller regional fields, click "Sync Live" to trigger a highly accurate AI Search using current FAA datasets securely proxying live details.
                 </p>
               </div>
             </li>

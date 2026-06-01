@@ -15,7 +15,6 @@ import { ISACalculator } from './components/ISACalculator';
 import { WindComponentsCalculator } from './components/WindComponentsCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
-import GlobalNotesFeed from './components/GlobalNotesFeed';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind } from 'lucide-react';
@@ -34,9 +33,6 @@ const App: React.FC = () => {
   const [themeMode, setThemeMode] = useState<'day' | 'night' | 'auto'>(() => {
     return (localStorage.getItem('suu_theme_mode') as 'day' | 'night' | 'auto') || 'auto';
   });
-  
-  // New State for Global Notes Panel
-  const [showGlobalNotes, setShowGlobalNotes] = useState(false);
   
   // G-AIRMET State
   const [showAirmet, setShowAirmet] = useState(false);
@@ -270,14 +266,7 @@ const App: React.FC = () => {
 
   const handleSelect = (id: string) => {
     setSelectedId(id);
-    setShowGlobalNotes(false); // Close global notes if opening an airport
     if (isMobile) setIsSidebarOpen(false);
-  };
-
-  const handleOpenGlobalNotes = () => {
-      setShowGlobalNotes(true);
-      setSelectedId(null); // Close airport details if opening global notes
-      if (isMobile) setIsSidebarOpen(false);
   };
 
   // Automatically check cache & refresh live fuel prices every 15 minutes.
@@ -353,7 +342,7 @@ const App: React.FC = () => {
       )}
       
       {/* Mobile Toggle Button */}
-      {isMobile && !isSidebarOpen && !selectedId && !showGlobalNotes && (
+      {isMobile && !isSidebarOpen && !selectedId && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
           className={`absolute top-4 left-4 z-[1000] p-2 md:p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 ${!isOnline ? 'mt-6' : ''}`}
@@ -372,7 +361,6 @@ const App: React.FC = () => {
             onSelect={handleSelect}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
-            onOpenGlobalNotes={handleOpenGlobalNotes}
             onOpenCheatSheet={(query) => {
               setCheatSheetQuery(query);
               setIsCheatSheetOpen(true);
@@ -410,9 +398,10 @@ const App: React.FC = () => {
           isOnline={isOnline} 
           isOpen={isFuelLogOpen}
           setIsOpen={setIsFuelLogOpen}
-          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+          isHidden={isMobile && (!!selectedId || isSidebarOpen)}
           onOpenFlightTime={() => setIsFlightTimeOpen(true)}
           isFlightTimeOpen={isFlightTimeOpen}
+          airports={airports}
         />
 
         {/* VOR Check Log Modal */}
@@ -422,21 +411,21 @@ const App: React.FC = () => {
         <FlightTimeCalculator
           isOpen={isFlightTimeOpen}
           setIsOpen={setIsFlightTimeOpen}
-          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+          isHidden={isMobile && (!!selectedId || isSidebarOpen)}
         />
 
         {/* Pivotal Altitude Calculator Panel */}
         <PivotalAltitudeCalculator
           isOpen={isPivotalAltOpen}
           setIsOpen={setIsPivotalAltOpen}
-          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+          isHidden={isMobile && (!!selectedId || isSidebarOpen)}
         />
 
         {/* Night Time Calculator Panel */}
         <NightTimeCalculator
           isOpen={isNightTimeOpen}
           setIsOpen={setIsNightTimeOpen}
-          isHidden={isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)}
+          isHidden={isMobile && (!!selectedId || isSidebarOpen)}
         />
 
         <AirportCheatSheet
@@ -482,7 +471,7 @@ const App: React.FC = () => {
             </button>
 
             {/* Instructor Tools Dropdown */}
-            {!(isMobile && (!!selectedId || showGlobalNotes || isSidebarOpen)) && (
+            {!(isMobile && (!!selectedId || isSidebarOpen)) && (
               <div className="relative w-full">
                 <button
                   onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
@@ -757,27 +746,6 @@ const App: React.FC = () => {
           )}
         </AnimatePresence>
 
-        {/* Global Notes Panel */}
-        <AnimatePresence>
-          {showGlobalNotes && (
-              <motion.div 
-                  key="global-notes-panel"
-                  initial={isMobile ? { y: '100%' } : { x: '100%' }}
-                  animate={{ y: 0, x: 0 }}
-                  exit={isMobile ? { y: '100%' } : { x: '100%' }}
-                  transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-                  className="absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
-                      md:top-4 md:right-4 md:bottom-4 md:w-96 md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
-                      inset-x-0 bottom-0 top-10 rounded-t-2xl md:inset-auto"
-              >
-                  <GlobalNotesFeed 
-                      onClose={() => setShowGlobalNotes(false)} 
-                      onSelectAirport={handleSelect}
-                  />
-              </motion.div>
-          )}
-        </AnimatePresence>
-        
         <ReleaseNotesModal />
       </div>
     </div>

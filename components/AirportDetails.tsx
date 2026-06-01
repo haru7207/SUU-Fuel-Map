@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { Airport, CardType, WeatherData, UserNote, FuelType, NotamData } from '../types';
+import { Airport, CardType, WeatherData, FuelType, NotamData } from '../types';
 import { fetchWeather } from '../services/aviationService';
-import { fetchFirebasePilotNotes, saveFirebasePilotNote, deleteFirebasePilotNote } from '../services/notesService';
 import { auth, signInWithGoogle, logOut } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, MessageSquarePlus, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
+import { REMARKS_DATABASE } from './remarksDb';
 
 interface AirportDetailsProps {
   airport: Airport;
@@ -19,7 +19,7 @@ interface AirportDetailsProps {
   onRefreshFuelPrices?: () => Promise<void>;
 }
 
-type Tab = 'info' | 'weather' | 'notam' | 'notes';
+type Tab = 'info' | 'weather' | 'notam';
 
 const AirportDetails: React.FC<AirportDetailsProps> = ({ 
   airport, 
@@ -35,31 +35,41 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-  // Pilot Notes State
-  const [notes, setNotes] = useState<UserNote[]>([]);
-  const [loadingNotes, setLoadingNotes] = useState(false);
-  const [submittingNote, setSubmittingNote] = useState(false);
-  
-  const [newNoteText, setNewNoteText] = useState('');
-  const [newNoteAuthor, setNewNoteAuthor] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [newNoteType, setNewNoteType] = useState<'general' | 'discrepancy' | 'tip' | 'urgent'>('general');
-  const [showNoteForm, setShowNoteForm] = useState(false);
-  
-  // Reply State
-  const [replyingTo, setReplyingTo] = useState<string | null>(null); // Note ID
-  const [replyText, setReplyText] = useState('');
-  const [replyAuthor, setReplyAuthor] = useState('');
-  const [isReplyAnonymous, setIsReplyAnonymous] = useState(false);
-  
   // Crosswind Calculator State
   const [selectedRunway, setSelectedRunway] = useState<string>(airport.runways[0] || '18/36');
+
+  // Airport Fuel Price Estimator State
+  const [estFuelType, setEstFuelType] = useState<string>(airport.fuelTypes[0] || '');
+  const [estGallons, setEstGallons] = useState<string>('50');
+  const [estCustomPrice, setEstCustomPrice] = useState<string>('');
+  const [estUseCustom, setEstUseCustom] = useState<boolean>(false);
+
+  // Sync preferred fuel type when selected airport changes
+  useEffect(() => {
+    if (airport.fuelTypes && airport.fuelTypes.length > 0) {
+      setEstFuelType(airport.fuelTypes[0]);
+    }
+  }, [airport]);
+
+  // Calculation variables
+  const estPricePerG = airport.fuelPrices?.[estFuelType] || null;
+  const activeEstRate = estUseCustom && estCustomPrice && !isNaN(parseFloat(estCustomPrice)) ? parseFloat(estCustomPrice) : (estPricePerG || 0);
+  const finalEstCost = activeEstRate && estGallons && !isNaN(parseFloat(estGallons)) ? (activeEstRate * parseFloat(estGallons)) : 0;
+
+  useEffect(() => {
+    if (estPricePerG !== null) {
+      setEstCustomPrice(estPricePerG.toString());
+    } else {
+      setEstCustomPrice('');
+    }
+    setEstUseCustom(false);
+  }, [estFuelType, estPricePerG]);
   
-  // NOTAM State
-  const [notams, setNotams] = useState<string[]>([]);
-  const [loadingNotams, setLoadingNotams] = useState(false);
-  const [notamError, setNotamError] = useState<string | null>(null);
-  const [notamSource, setNotamSource] = useState<'preloaded' | 'live' | null>(null);
+  // Remarks State
+  const [remarks, setRemarks] = useState<string | null>(null);
+  const [loadingRemarks, setLoadingRemarks] = useState(false);
+  const [remarksError, setRemarksError] = useState<string | null>(null);
+  const [remarksSource, setRemarksSource] = useState<'local' | 'gemini' | null>(null);
 
   // Auth State
   const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
@@ -71,55 +81,75 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-      if (notamMap && notamMap[airport.id]) {
-          setNotams(notamMap[airport.id].rawNotams || []);
-          setNotamSource('preloaded');
-      }
-  }, [notamMap, airport.id]);
-
-  const fetchNotams = useCallback(async () => {
-      setLoadingNotams(true);
-      setNotamError(null);
+  const fetchRemarksLive = useCallback(async (icao: string) => {
+      setLoadingRemarks(true);
+      setRemarksError(null);
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          const key = process.env.GEMINI_API_KEY;
+          if (!key) {
+              throw new Error("No Gemini API key available.");
+          }
+          const ai = new GoogleGenAI({ apiKey: key });
+          
+          const prompt = `You are an expert aviation tool. Find the official, actual FAA Form 5010 (Chart Supplement) "Other Remarks" or airport operational remarks for the airport code "${icao}".
+Use Google Search grounding to retrieve real, exact remarks (e.g. traffic patterns, helipads, wildlife hazards, noise abatement, or restrictions).
+Format the remarks as a clean, direct list of bullet points.
+Return ONLY the bulleted points, with each point on a standalone line starting with a dash (e.g. "- GA ACFT NOT PERMITTED ON ACR RAMP.").
+Do not include any greeting, preamble, or markdown surrounding text. If no remarks can be found, reply exactly with "- NoRemarksPublished"`;
+
           const response = await ai.models.generateContent({
-              model: 'gemini-3-flash-preview',
-              contents: `Find the current real-time FAA NOTAMs for airport ${airport.id} (${airport.name}). Return ONLY a JSON object with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations). If there are no NOTAMs, return an empty array.`,
+              model: 'gemini-3.5-flash',
+              contents: prompt,
               config: {
                   tools: [{ googleSearch: {} }],
-                  responseMimeType: "application/json",
               }
           });
-          if (response.text) {
-              try {
-                  const data = JSON.parse(response.text);
-                  setNotams(data.rawNotams || []);
-                  setNotamSource('live');
-              } catch (e) {
-                  setNotamError("Could not parse NOTAMs.");
-              }
+          
+          const text = response.text || "";
+          if (text.includes("NoRemarksPublished") || text.trim() === "") {
+              setRemarksError("No remarks published for this location.");
           } else {
-              setNotamError("Could not retrieve NOTAMs.");
+              setRemarks(text.trim());
+              setRemarksSource('gemini');
           }
-      } catch (error: any) {
-          if (error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota')) {
-              console.warn("Error fetching NOTAMs: API quota exceeded.");
-              setNotamError("API quota exceeded. Please try again later.");
-          } else {
-              console.error("Error fetching NOTAMs:", error);
-              setNotamError("Failed to fetch NOTAMs. Please try again later.");
-          }
+      } catch (error) {
+          console.error("Gemini Search Grounding Error", error);
+          setRemarksError("No remarks published for this location. (Live search unavailable)");
       } finally {
-          setLoadingNotams(false);
+          setLoadingRemarks(false);
       }
-  }, [airport.id, airport.name]);
+  }, []);
+
+  const fetchRemarks = useCallback(async (icao: string) => {
+      setLoadingRemarks(true);
+      setRemarksError(null);
+      setRemarks(null);
+      setRemarksSource(null);
+
+      // 1. Check local preloaded database first (covers all main airports like KCDC, KSLC, etc.)
+      const cleanedIcao = icao.trim().toUpperCase();
+      const simpleIcao = cleanedIcao.replace(/^K/, ''); // e.g. CDC or 1L7
+      const localKey = REMARKS_DATABASE[cleanedIcao] ? cleanedIcao : (REMARKS_DATABASE[simpleIcao] ? simpleIcao : null);
+      
+      if (localKey && REMARKS_DATABASE[localKey]) {
+          setRemarks(REMARKS_DATABASE[localKey].join('\n'));
+          setRemarksSource('local');
+          setLoadingRemarks(false);
+          return;
+      }
+
+      // 2. Fallback to Gemini Grounded Live search (acts as robust free FAA Form 5010 API)
+      if (process.env.GEMINI_API_KEY) {
+          fetchRemarksLive(icao);
+      } else {
+          setRemarksError("No remarks published for this location.");
+          setLoadingRemarks(false);
+      }
+  }, [fetchRemarksLive]);
 
   useEffect(() => {
-      if (activeTab === 'notam' && notamSource === null && !notamMap?.[airport.id] && !notamError && !loadingNotams) {
-          fetchNotams();
-      }
-  }, [activeTab, fetchNotams, notamSource, notamMap, airport.id, notamError, loadingNotams]);
+      fetchRemarks(airport.id);
+  }, [airport.id, fetchRemarks]);
 
   // Forecast State
   const [forecast, setForecast] = useState<string | null>(null);
@@ -222,128 +252,11 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       }
   }, [airport.id, airport.weatherSource, weatherMap]);
 
-  const loadNotes = async () => {
-    if (!currentUser) {
-        setNotes([]);
-        return;
-    }
-
-    if (isOffline) {
-        // Fallback to just static notes if offline
-        setNotes(airport.userNotes || []);
-        return;
-    }
-
-    setLoadingNotes(true);
-    try {
-        const apiNotes = await fetchFirebasePilotNotes(airport.id);
-        
-        // Merge with static notes (deduplicating by ID just in case)
-        const staticNotes = airport.userNotes || [];
-        const apiIds = new Set(apiNotes.map(n => n.id));
-        
-        // Only keep static notes that aren't in the API (to avoid duplicates if migrated)
-        const uniqueStatic = staticNotes.filter(n => !apiIds.has(n.id));
-        
-        const combined = [...apiNotes, ...uniqueStatic].sort((a, b) => 
-            new Date(b.date).getTime() - new Date(a.date).getTime()
-        );
-        
-        setNotes(combined);
-    } catch (e) {
-        console.error("Failed to load notes", e);
-        // Fallback to static on error
-        setNotes(airport.userNotes || []);
-    } finally {
-        setLoadingNotes(false);
-    }
-  };
-
-  const handleAddNote = async () => {
-      if (!newNoteText.trim() || !currentUser) return;
-      
-      setSubmittingNote(true);
-      
-      try {
-          const createdNote = await saveFirebasePilotNote(airport.id, newNoteText);
-          
-          setNotes(prev => [createdNote, ...prev]);
-          setNewNoteText('');
-          setShowNoteForm(false);
-      } catch (error) {
-          alert("Failed to save note. Please try again.");
-      } finally {
-          setSubmittingNote(false);
-      }
-  };
-
-  const handleDeleteNote = async (noteId: string) => {
-      if (!window.confirm("Are you sure you want to delete this note?")) return;
-      try {
-          await deleteFirebasePilotNote(noteId);
-          setNotes(prev => prev.filter(n => n.id !== noteId));
-      } catch (error) {
-          alert("Failed to delete note. You can only delete your own notes.");
-      }
-  };
-
-  const handleAddReply = async (parentId: string) => {
-      if (!replyText.trim()) return;
-      
-      setSubmittingNote(true);
-      const authorName = isReplyAnonymous ? 'Anonymous' : (replyAuthor.trim() || 'Instructor');
-
-      const reply: UserNote = {
-          id: `reply-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-          text: replyText,
-          author: authorName,
-          date: new Date().toISOString(),
-          type: 'general' 
-      };
-
-      // Optimistic Update: Add reply to local state
-      setNotes(prev => prev.map(n => {
-          if (n.id === parentId) {
-              return {
-                  ...n,
-                  replies: [...(n.replies || []), reply]
-              };
-          }
-          return n;
-      }));
-      
-      setReplyText('');
-      setReplyAuthor('');
-      setIsReplyAnonymous(false);
-      setReplyingTo(null);
-
-      const success = await savePilotNote(reply, airport.id, parentId);
-
-      if (success) {
-          // Background refresh
-          loadNotes(); 
-      } else {
-          alert("Reply saved locally but sync failed. Please check connection.");
-      }
-      setSubmittingNote(false);
-  };
-
   useEffect(() => {
-    // Reset states when airport changes
-    setShowNoteForm(false);
-    setNewNoteText('');
-    setReplyingTo(null);
-    setIsAnonymous(false);
-    setIsReplyAnonymous(false);
-    
     if (airport.runways.length > 0) {
       setSelectedRunway(airport.runways[0]);
     }
   }, [airport]);
-
-  useEffect(() => {
-    loadNotes();
-  }, [airport, currentUser]);
 
   useEffect(() => {
     loadWeather();
@@ -493,23 +406,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
     };
   }, [windData, selectedRunway]);
 
-  const getNoteTypeStyles = (type?: string) => {
-      switch(type) {
-          case 'discrepancy': return 'bg-red-50 border-red-200 text-red-800';
-          case 'urgent': return 'bg-orange-50 border-orange-200 text-orange-800';
-          case 'tip': return 'bg-blue-50 border-blue-200 text-blue-800';
-          default: return 'bg-white border-slate-200 text-slate-800';
-      }
-  };
-  
-  const getNoteIcon = (type?: string) => {
-      switch(type) {
-          case 'discrepancy': return <AlertCircle size={16} className="text-red-500" />;
-          case 'urgent': return <AlertTriangle size={16} className="text-orange-500" />;
-          case 'tip': return <Lightbulb size={16} className="text-blue-500" />;
-          default: return <MessageCircle size={16} className="text-slate-400" />;
-      }
-  };
+
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden relative font-sans">
@@ -583,17 +480,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
             onClick={() => setActiveTab('notam')}
             className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'notam' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
-            NOTAM
-            {notamMap && notamMap[airport.id]?.hasFuelAlert && (
-                <AlertTriangle size={12} className="text-orange-500" />
-            )}
-        </button>
-        <button 
-            onClick={() => setActiveTab('notes')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'notes' ? 'border-indigo-600 dark:border-indigo-400 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-        >
-            Pilot Notes
-            {notes.length > 0 && <span className="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 px-1.5 rounded-full">{notes.length}</span>}
+            Remarks
         </button>
       </div>
 
@@ -603,25 +490,6 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
         {/* TAB: INFO */}
         {activeTab === 'info' && (
             <div className="space-y-4 animate-fadeIn">
-                {/* NOTAM Fuel Alert */}
-                {notamMap && notamMap[airport.id]?.hasFuelAlert && (
-                    <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 p-4 rounded-lg flex gap-3 items-start shadow-sm">
-                        <AlertTriangle className="h-5 w-5 text-orange-600 dark:text-orange-500 flex-shrink-0 mt-0.5 animate-pulse" />
-                        <div>
-                            <p className="text-sm text-orange-800 dark:text-orange-400 font-bold uppercase tracking-wide">Fueling NOTAM Alert</p>
-                            <p className="text-sm text-orange-700 dark:text-orange-300 font-medium mt-1">
-                                There is an active NOTAM regarding fueling or self-serve availability at this airport. Please check the NOTAM tab for details.
-                            </p>
-                            <button 
-                                onClick={() => setActiveTab('notam')}
-                                className="mt-2 text-xs font-bold text-orange-600 dark:text-orange-400 hover:text-orange-800 dark:hover:text-orange-300 underline"
-                            >
-                                View NOTAMs
-                            </button>
-                        </div>
-                    </div>
-                )}
-
                 {airport.cardRules.critical && (
                 <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex gap-3 items-start">
                     <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
@@ -728,6 +596,149 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                 )}
                             </div>
                         )}
+                    </div>
+
+                    {/* Estimated Fuel Price Calculator Card */}
+                    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 space-y-4 shadow-sm">
+                        <div className="flex items-center gap-2 border-b border-slate-200/60 dark:border-slate-800 pb-2">
+                            <Calculator size={16} className="text-amber-500" />
+                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-350 uppercase tracking-wider">
+                                Airport Est. Fuel Price Calculator
+                            </h4>
+                        </div>
+
+                        {/* Choices - Stacked vertically for optimal responsive spacing */}
+                        <div className="space-y-4">
+                            <div className="space-y-1">
+                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                                    Fuel Type
+                                </span>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {airport.fuelTypes.map((t) => {
+                                        const rate = airport.fuelPrices?.[t];
+                                        return (
+                                            <button
+                                                key={t}
+                                                type="button"
+                                                onClick={() => setEstFuelType(t)}
+                                                className={`py-1.5 px-3 text-xs font-bold rounded-lg border text-left flex justify-between items-center transition-all ${
+                                                    estFuelType === t
+                                                    ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                                                    : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300'
+                                                }`}
+                                            >
+                                                <span>{t}</span>
+                                                <span className="font-mono text-[10px]">
+                                                    {rate ? `$${rate.toFixed(2)}` : 'N/A'}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <div className="space-y-1">
+                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                                        Gallons
+                                    </span>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            value={estGallons}
+                                            onChange={(e) => setEstGallons(e.target.value)}
+                                            placeholder="0.0"
+                                            className="flex-1 min-w-0 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
+                                        />
+                                        <div className="flex gap-1 shrink-0 items-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const current = parseFloat(estGallons || '0');
+                                                    const newVal = Math.max(0, current - 0.5);
+                                                    setEstGallons(Number(newVal.toFixed(1)).toString());
+                                                }}
+                                                className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-350 text-[9px] font-bold h-7 px-2.5 rounded-md transition-colors"
+                                                title="Decrease by 0.5G"
+                                            >
+                                                -0.5
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const current = parseFloat(estGallons || '0');
+                                                    const newVal = current + 0.5;
+                                                    setEstGallons(Number(newVal.toFixed(1)).toString());
+                                                }}
+                                                className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-350 text-[9px] font-bold h-7 px-2.5 rounded-md transition-colors"
+                                                title="Increase by 0.5G"
+                                            >
+                                                +0.5
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-1 overflow-x-auto py-0.5">
+                                    {['10', '20', '25', '30', '35', '40', '50'].map((amt) => (
+                                        <button
+                                            key={amt}
+                                            type="button"
+                                            onClick={() => setEstGallons(amt)}
+                                            className="bg-slate-200 hover:bg-slate-305 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-350 text-[9px] font-bold px-2 py-0.5 rounded transition-colors whitespace-nowrap"
+                                        >
+                                            {amt}G
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Custom Price Toggle */}
+                        <div className="border-t border-slate-200/55 dark:border-slate-800 pt-3">
+                            <label className="flex items-center gap-2 cursor-pointer mb-2">
+                                <input
+                                    type="checkbox"
+                                    checked={estUseCustom}
+                                    onChange={(e) => {
+                                        setEstUseCustom(e.target.checked);
+                                    }}
+                                    className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-3 w-3"
+                                />
+                                <span className="text-[9px] uppercase font-bold text-slate-400 select-none tracking-wide">
+                                    Override Price Per Gallon
+                                </span>
+                            </label>
+
+                            {estUseCustom && (
+                                <div className="flex items-center gap-1.5 animate-fade-in pl-1">
+                                    <span className="text-xs font-bold text-slate-400">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={estCustomPrice}
+                                        onChange={(e) => setEstCustomPrice(e.target.value)}
+                                        placeholder="0.00"
+                                        className="w-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
+                                    />
+                                    <span className="text-[10px] text-slate-400 font-bold">/ gal</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Calculated Output */}
+                        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-lg p-3.5 flex flex-col items-center justify-center text-center">
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
+                                Est. Total Cost
+                            </span>
+                            <span className="text-2xl font-black text-amber-400 font-mono tracking-tight">
+                                ${finalEstCost.toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                            <span className="text-[9px] text-slate-300 mt-1 font-medium bg-white/10 px-1.5 py-0.5 rounded">
+                                {estUseCustom ? `Custom Override: $${parseFloat(estCustomPrice || '0').toFixed(2)}/gal` : estPricePerG ? (airport.fuelPricesLastUpdated ? `Live rate: $${estPricePerG}/gal` : `DB rate: $${estPricePerG}/gal`) : 'No price data'}
+                            </span>
+                        </div>
                     </div>
 
                     {/* Runway Info */}
@@ -1081,326 +1092,111 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
             </div>
         )}
 
-        {/* TAB: NOTAM */}
-        {activeTab === 'notam' && (
-            <div className="flex flex-col h-full animate-fadeIn">
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle size={18} className="text-amber-500" />
-                        <h3 className="font-bold text-slate-800 dark:text-slate-200">Real-time NOTAMs</h3>
-                        {notamSource && !loadingNotams && (
-                            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${
-                                notamSource === 'preloaded' 
-                                ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' 
-                                : 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800'
-                            }`}>
-                                {notamSource === 'preloaded' ? 'Pre-loaded' : 'Live Fetched'}
-                            </span>
+        {/* TAB: REMARKS */}
+        {activeTab === 'notam' && (() => {
+            const remarksList = remarks 
+                ? (remarks.includes('\n') ? remarks.split('\n') : remarks.split(/;\s+/))
+                    .map(line => line.trim().replace(/^[\s\-\*•\d\.\)]+/, '').trim())
+                    .filter(line => line.length > 0 && line !== '-')
+                : [];
+
+            return (
+                <div className="flex flex-col h-full animate-fadeIn">
+                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                        <div className="flex items-center gap-2">
+                            <Info size={18} className="text-blue-500" />
+                            <h3 className="font-bold text-slate-800 dark:text-slate-200">Airport Remarks (Form 5010)</h3>
+                        </div>
+                        {remarksSource && !loadingRemarks && (
+                            <div className="flex items-center gap-2">
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
+                                    remarksSource === 'local' 
+                                    ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' 
+                                    : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800'
+                                }`}>
+                                    {remarksSource === 'local' ? 'Local DB' : 'Live Grounded AI'}
+                                </span>
+                                {process.env.GEMINI_API_KEY && (
+                                    <button
+                                        onClick={() => fetchRemarksLive(airport.id)}
+                                        className="p-1 px-2 rounded bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 shadow-xs"
+                                        title="Fetch live official remarks using Google Search Grounding"
+                                    >
+                                        <Sparkles size={11} className="text-purple-500" />
+                                        <span>Sync Live</span>
+                                    </button>
+                                )}
+                            </div>
                         )}
                     </div>
-                    <button 
-                        onClick={() => fetchNotams()}
-                        disabled={loadingNotams}
-                        className="p-2 text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
-                        title="Refresh NOTAMs"
-                    >
-                        <RefreshCw size={16} className={loadingNotams ? "animate-spin" : ""} />
-                    </button>
-                </div>
 
-                <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    {loadingNotams ? (
-                        <div className="space-y-3 w-full">
-                            <div className="flex items-center justify-center mb-4 text-slate-500 gap-2">
-                                <Loader2 size={16} className="animate-spin text-blue-500" />
-                                <span className="text-sm font-medium">Fetching latest NOTAMs...</span>
+                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+                        {loadingRemarks ? (
+                            <div className="space-y-3 w-full">
+                                <div className="flex items-center justify-center mb-4 text-slate-500 gap-2">
+                                    <Loader2 size={16} className="animate-spin text-blue-500" />
+                                    <span className="text-xs font-bold uppercase tracking-wider">Syncing airport remarks...</span>
+                                </div>
+                                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-5 rounded-xl shadow-xs space-y-3 animate-pulse">
+                                    <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded w-3/4"></div>
+                                    <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded w-1/2"></div>
+                                    <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded w-5/6"></div>
+                                </div>
                             </div>
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded shadow-sm animate-pulse">
-                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4 mb-2"></div>
-                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2 mb-2"></div>
-                                    <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded w-5/6"></div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : notamError ? (
-                        <div className="flex flex-col items-center justify-center h-40 text-center">
-                            <AlertCircle size={32} className="text-red-400 mb-3" />
-                            <p className="text-sm text-slate-600 dark:text-slate-400">{notamError}</p>
-                            <button 
-                                onClick={fetchNotams}
-                                className="mt-4 px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded transition-colors"
-                            >
-                                Try Again
-                            </button>
-                        </div>
-                    ) : notams && notams.length > 0 ? (
-                        <div className="space-y-3 text-left">
-                            {notams.map((notam, idx) => (
-                                <div key={idx} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded shadow-sm">
-                                    <p className="text-sm font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-words">
-                                        {notam}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center h-40 text-slate-500">
-                            <span className="text-sm">No NOTAMs available.</span>
-                        </div>
-                    )}
-                </div>
-                
-                <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
-                    <a 
-                        href={`https://notams.aim.faa.gov/notamSearch/nsapp.html#/results?searchType=0&designators=${airport.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
-                    >
-                        Open Official FAA NOTAM Search
-                        <CornerDownRight size={16} className="-rotate-90" />
-                    </a>
-                </div>
-            </div>
-        )}
-
-        {/* TAB: PILOT NOTES (Replaces NOTAMs) */}
-        {activeTab === 'notes' && (
-            <div className="space-y-4 animate-fadeIn">
-                
-                {/* Header / Intro */}
-                <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3 flex gap-3 items-start mb-4">
-                    <MessageSquarePlus className="h-5 w-5 text-indigo-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <h4 className="text-xs font-bold text-indigo-800 uppercase">Instructor Communications</h4>
-                        <p className="text-xs text-indigo-700 mt-1">
-                            Share fuel discrepancies, tips, or operational notes for this airport. Notes are now synced in real-time.
-                        </p>
-                    </div>
-                </div>
-
-                {!currentUser ? (
-                    <div className="flex flex-col items-center justify-center p-8 border border-dashed border-slate-200 rounded-lg bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
-                        <LogIn size={32} className="text-slate-400 mb-3" />
-                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">Sign in to view notes</h4>
-                        <p className="text-xs text-slate-500 text-center mb-6 max-w-xs">You must be logged in to view, create, or delete pilot notes for {airport.id}.</p>
-                        <button 
-                            onClick={async () => {
-                                try {
-                                    await signInWithGoogle();
-                                } catch (error: any) {
-                                    console.error(error);
-                                    if (error?.code === 'auth/unauthorized-domain') {
-                                        alert(`Login failed: Unauthorized domain.\n\nPlease go to your Firebase Console -> Authentication -> Settings -> Authorized domains, and add "${window.location.hostname}" to the list.`);
-                                    } else {
-                                        alert(`Login failed: ${error?.message || "Unknown error"}\n\nIf you are using the AI Studio preview, please open the app in a new tab (click the ↗ icon in the top right) to authenticate with Google.`);
-                                    }
-                                }
-                            }}
-                            className="bg-red-500 hover:bg-red-600 text-white font-bold text-sm py-2 px-6 rounded shadow transition-all flex items-center gap-2"
-                        >
-                            Sign in with Google
-                        </button>
-                    </div>
-                ) : (
-                    <>
-                        {/* List of Notes */}
-                        <div className="space-y-4">
-                    {loadingNotes && notes.length === 0 ? (
-                         <div className="flex flex-col items-center justify-center py-10 text-slate-400">
-                             <Loader2 size={24} className="animate-spin mb-2 text-indigo-500" />
-                             <span className="text-xs font-bold">Refreshing notes...</span>
-                         </div>
-                    ) : notes.length === 0 ? (
-                        <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-lg">
-                            <MessageCircle size={32} className="mx-auto text-slate-300 mb-2" />
-                            <p className="text-sm font-bold text-slate-400">No notes yet</p>
-                            <button 
-                                onClick={() => setShowNoteForm(true)}
-                                className="mt-3 text-xs font-bold text-indigo-600 hover:underline"
-                            >
-                                Be the first to post
-                            </button>
-                        </div>
-                    ) : (
-                        notes.map(note => {
-                            const isStatic = airport.userNotes?.some(n => n.id === note.id);
-                            
-                            return (
-                                <div key={note.id} className={`rounded-lg border shadow-sm overflow-hidden ${getNoteTypeStyles(note.type)}`}>
-                                    <div className="p-3">
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex items-center gap-2">
-                                                {getNoteIcon(note.type)}
-                                                <span className="text-xs font-bold uppercase tracking-wide opacity-80">
-                                                    {note.type || 'General'}
-                                                </span>
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="text-[10px] font-bold opacity-60 block">
-                                                    {formatNoteDate(note.date)}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        
-                                        <p className="text-sm font-medium whitespace-pre-wrap">{note.text}</p>
-                                        
-                                        <div className="mt-3 flex justify-between items-end border-t border-black/5 pt-2">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold opacity-70">
-                                                {note.authorProfilePhoto ? (
-                                                    <img src={note.authorProfilePhoto} alt={note.author} className="w-4 h-4 rounded-full" />
-                                                ) : note.author === 'Anonymous' ? <EyeOff size={12} /> : <User size={12} />}
-                                                <span>{note.author}</span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                {currentUser && note.authorId === currentUser.uid && (
-                                                    <button 
-                                                        onClick={() => handleDeleteNote(note.id)}
-                                                        className="text-xs font-bold text-red-500 hover:bg-red-50 px-2 py-1 rounded transition-colors"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Replies Section */}
-                                    {note.replies && note.replies.length > 0 && (
-                                        <div className="bg-slate-50/80 p-3 space-y-3 border-t border-black/5">
-                                            {note.replies.map(reply => (
-                                                <div key={reply.id} className="flex gap-2 text-sm text-slate-700">
-                                                    <CornerDownRight size={14} className="text-slate-400 flex-shrink-0 mt-1" />
-                                                    <div className="flex-1 bg-white p-2 rounded border border-slate-200 shadow-sm">
-                                                        <div className="flex justify-between items-center mb-1">
-                                                            <div className="flex items-center gap-1">
-                                                                 {reply.author === 'Anonymous' ? <EyeOff size={10} className="text-slate-400" /> : <User size={10} className="text-slate-400" />}
-                                                                 <span className="text-[10px] font-bold text-slate-500">{reply.author}</span>
-                                                            </div>
-                                                            <span className="text-[9px] text-slate-400">
-                                                                {formatNoteDate(reply.date)}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-xs">{reply.text}</p>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Reply Form */}
-                                    {replyingTo === note.id && (
-                                        <div className="bg-indigo-50 p-3 border-t border-indigo-100 animate-fadeIn">
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Your Name"
-                                                        disabled={isReplyAnonymous}
-                                                        className={`flex-1 text-xs p-2 rounded border border-indigo-200 focus:outline-none focus:border-indigo-400 ${isReplyAnonymous ? 'bg-slate-100 text-slate-400' : 'bg-white'}`}
-                                                        value={isReplyAnonymous ? 'Anonymous' : replyAuthor}
-                                                        onChange={(e) => setReplyAuthor(e.target.value)}
-                                                    />
-                                                    <button 
-                                                        onClick={() => setIsReplyAnonymous(!isReplyAnonymous)}
-                                                        className={`p-2 rounded border text-xs font-bold transition-colors ${isReplyAnonymous ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-500 border-indigo-200 hover:bg-indigo-50'}`}
-                                                        title="Post Anonymously"
-                                                    >
-                                                        {isReplyAnonymous ? <EyeOff size={14} /> : <User size={14} />}
-                                                    </button>
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Write a reply..."
-                                                        className="flex-1 text-xs p-2 rounded border border-indigo-200 focus:outline-none focus:border-indigo-400"
-                                                        value={replyText}
-                                                        onChange={(e) => setReplyText(e.target.value)}
-                                                        onKeyDown={(e) => e.key === 'Enter' && !submittingNote && handleAddReply(note.id)}
-                                                    />
-                                                    <button 
-                                                        onClick={() => handleAddReply(note.id)}
-                                                        disabled={submittingNote}
-                                                        className={`bg-indigo-600 text-white p-2 rounded hover:bg-indigo-700 ${submittingNote ? 'opacity-50' : ''}`}
-                                                    >
-                                                        {submittingNote ? <Loader2 size={14} className="animate-spin"/> : <Send size={14} />}
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-
-                {/* FAB to Add Note */}
-                {!showNoteForm && (
-                    <button 
-                        onClick={() => setShowNoteForm(true)}
-                        className="w-full py-3 mt-4 border-2 border-dashed border-indigo-200 rounded-lg text-indigo-500 font-bold hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
-                    >
-                        <MessageSquarePlus size={18} />
-                        Add New Note
-                    </button>
-                )}
-
-                {/* New Note Form Overlay/Inline */}
-                {showNoteForm && (
-                    <div className="mt-4 bg-white border border-slate-200 rounded-lg shadow-lg p-4 animate-slide-in-up">
-                        <div className="flex justify-between items-center mb-3">
-                            <h4 className="text-sm font-bold text-slate-800">New Instructor Note</h4>
-                            <button onClick={() => setShowNoteForm(false)} className="text-slate-400 hover:text-slate-600">
-                                <X size={16} />
-                            </button>
-                        </div>
-                        
-                        <div className="space-y-3">
-                            <div className="grid grid-cols-1 gap-3">
-                                <div>
-                                    <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Type</label>
-                                    <select 
-                                        className="w-full text-sm p-2 rounded bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:outline-none"
-                                        value={newNoteType}
-                                        onChange={(e) => setNewNoteType(e.target.value as any)}
+                        ) : remarksError ? (
+                            <div className="flex flex-col items-center justify-center h-48 text-center p-6 bg-white dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                                <Info size={32} className="text-slate-400 mb-2" />
+                                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-4">{remarksError}</p>
+                                {process.env.GEMINI_API_KEY && (
+                                    <button
+                                        onClick={() => fetchRemarksLive(airport.id)}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                                     >
-                                        <option value="general">General</option>
-                                        <option value="discrepancy">Discrepancy</option>
-                                        <option value="tip">Fuel Tip</option>
-                                        <option value="urgent">Urgent</option>
-                                    </select>
+                                        <Sparkles size={14} />
+                                        <span>Fetch Live FAA Remarks</span>
+                                    </button>
+                                )}
+                            </div>
+                        ) : remarksList.length > 0 ? (
+                            <div className="space-y-4">
+                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
+                                    <div className="border-b border-slate-100 dark:border-slate-800/70 pb-2 mb-4">
+                                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest font-mono">Other Remarks</h4>
+                                    </div>
+                                    <ul className="space-y-3.5">
+                                        {remarksList.map((item, idx) => (
+                                            <li key={idx} className="flex gap-3 items-start text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 font-sans font-medium">
+                                                <span className="text-blue-500 font-bold text-base leading-none select-none mt-0.5">•</span>
+                                                <span className="flex-1 whitespace-pre-wrap break-words">{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                
+                                <div className="p-3 bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100 dark:border-blue-900/30 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2 leading-relaxed">
+                                    <Lightbulb size={13} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                                    <span>These entries represent actual Form 5010 Chart Supplement records to assist flight crews and flight instructors in executing airport operations safely.</span>
                                 </div>
                             </div>
-                            
-                            <div>
-                                <label className="text-[10px] font-bold text-slate-500 uppercase block mb-1">Message</label>
-                                <textarea 
-                                    rows={3}
-                                    placeholder="Share details about fuel, pumps, gate codes, etc..."
-                                    className="w-full text-sm p-2 rounded bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:outline-none resize-none"
-                                    value={newNoteText}
-                                    onChange={(e) => setNewNoteText(e.target.value)}
-                                />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center h-48 text-center p-6 bg-white dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                                <Info size={32} className="text-slate-400 mb-2" />
+                                <span className="text-sm text-slate-500 mb-4">No remarks published for this location.</span>
+                                {process.env.GEMINI_API_KEY && (
+                                    <button
+                                        onClick={() => fetchRemarksLive(airport.id)}
+                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                                    >
+                                        <Sparkles size={14} />
+                                        <span>Sync Remarks via AI Grounding</span>
+                                    </button>
+                                )}
                             </div>
-
-                            <button 
-                                onClick={handleAddNote}
-                                disabled={submittingNote}
-                                className={`w-full py-2 bg-indigo-600 text-white rounded font-bold text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 ${submittingNote ? 'opacity-75 cursor-wait' : ''}`}
-                            >
-                                {submittingNote ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                                {submittingNote ? 'Posting...' : 'Post Note'}
-                            </button>
-                        </div>
+                        )}
                     </div>
-                )}
-                </>
-                )}
-
-            </div>
-        )}
+                </div>
+            );
+            })()}
 
       </div>
     </div>

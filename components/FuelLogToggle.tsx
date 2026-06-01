@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2, Clock } from 'lucide-react';
+import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2, Clock, Calculator, Sparkles, Search, ChevronDown } from 'lucide-react';
 import { AIRPORT_DATABASE } from '../constants';
 import { GoogleGenAI, Type } from '@google/genai';
+import { Airport, FuelType } from '../types';
 
 interface FuelLogToggleProps {
   currentAirportId: string | null;
@@ -12,6 +13,7 @@ interface FuelLogToggleProps {
   isHidden?: boolean;
   onOpenFlightTime?: () => void;
   isFlightTimeOpen?: boolean;
+  airports?: Airport[];
 }
 
 interface FuelLogData {
@@ -37,10 +39,168 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
   setIsOpen, 
   isHidden = false,
   onOpenFlightTime,
-  isFlightTimeOpen
+  isFlightTimeOpen,
+  airports
 }) => {
-  const [view, setView] = useState<'form' | 'list'>('form');
+  const [view, setView] = useState<'form' | 'list' | 'calc'>('form');
   const [showSavedToast, setShowSavedToast] = useState(false);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+
+  // Calculator states
+  const [calcAirport, setCalcAirport] = useState<string>('');
+  const [calcFuelType, setCalcFuelType] = useState<string>('');
+  const [calcGallons, setCalcGallons] = useState<string>('50');
+  const [customPriceOverride, setCustomPriceOverride] = useState<string>('');
+  const [useCustomPrice, setUseCustomPrice] = useState<boolean>(false);
+
+  // Searchable select states inside the calculator
+  const [airportSearchInput, setAirportSearchInput] = useState<string>('');
+  const [isAirportDropdownOpen, setIsAirportDropdownOpen] = useState<boolean>(false);
+  const [calcSearchHighlightedIndex, setCalcSearchHighlightedIndex] = useState<number>(-1);
+  const airportContainerRef = useRef<HTMLDivElement>(null);
+
+  // Default fallback or live-updated list
+  const activeAirports = airports || AIRPORT_DATABASE;
+
+  // Auto-fill calcAirport from currentAirportId when sidebar or map updates
+  useEffect(() => {
+    if (currentAirportId) {
+      setCalcAirport(currentAirportId);
+    }
+  }, [currentAirportId]);
+
+  // Sync display search input when calcAirport matches an airport
+  useEffect(() => {
+    const found = activeAirports.find(a => a.id === calcAirport);
+    if (found) {
+      setAirportSearchInput(`${found.id} - ${found.name}`);
+    } else {
+      setAirportSearchInput('');
+    }
+  }, [calcAirport, activeAirports]);
+
+  // Click outside to close dropdown and restore search field to selected airport
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (airportContainerRef.current && !airportContainerRef.current.contains(event.target as Node)) {
+        setIsAirportDropdownOpen(false);
+        const found = activeAirports.find(a => a.id === calcAirport);
+        if (found) {
+          setAirportSearchInput(`${found.id} - ${found.name}`);
+        } else {
+          setAirportSearchInput('');
+        }
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [calcAirport, activeAirports]);
+
+  // Filter list of airports matching user search input
+  const filteredAirportsForCalc = activeAirports.filter(a => {
+    const query = airportSearchInput.toLowerCase().trim();
+    const selectedText = calcAirport ? (() => {
+      const found = activeAirports.find(ap => ap.id === calcAirport);
+      return found ? `${found.id} - ${found.name}`.toLowerCase() : '';
+    })() : '';
+
+    if (!query || query === selectedText) return true;
+    return (
+      a.id.toLowerCase().includes(query) ||
+      a.name.toLowerCase().includes(query) ||
+      a.city.toLowerCase().includes(query) ||
+      a.state.toLowerCase().includes(query)
+    );
+  });
+
+  // Reset highlight index when filter query changes
+  useEffect(() => {
+    setCalcSearchHighlightedIndex(-1);
+  }, [airportSearchInput]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isAirportDropdownOpen) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter') {
+        setIsAirportDropdownOpen(true);
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setCalcSearchHighlightedIndex(prev => 
+        prev < filteredAirportsForCalc.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setCalcSearchHighlightedIndex(prev => 
+        prev > 0 ? prev - 1 : filteredAirportsForCalc.length - 1
+      );
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (calcSearchHighlightedIndex >= 0 && calcSearchHighlightedIndex < filteredAirportsForCalc.length) {
+        const selected = filteredAirportsForCalc[calcSearchHighlightedIndex];
+        setCalcAirport(selected.id);
+        setIsAirportDropdownOpen(false);
+      } else if (filteredAirportsForCalc.length > 0) {
+        // Default to first option if enter pressed and no highlighted item
+        setCalcAirport(filteredAirportsForCalc[0].id);
+        setIsAirportDropdownOpen(false);
+      }
+    } else if (e.key === 'Escape') {
+      setIsAirportDropdownOpen(false);
+    }
+  };
+
+  // Find currently selected airport in calculator
+  const selectedCalcAirportObj = activeAirports.find(a => a.id === calcAirport);
+
+  // Automatically adjust default fuel type depending on selected airport
+  useEffect(() => {
+    if (selectedCalcAirportObj) {
+      const types = selectedCalcAirportObj.fuelTypes || [];
+      if (types.length > 0 && !types.includes(calcFuelType as FuelType)) {
+        setCalcFuelType(types[0]);
+      }
+    }
+  }, [calcAirport, selectedCalcAirportObj]);
+
+  // Get fuel price per gallon
+  const fuelPricePerGallon = selectedCalcAirportObj && calcFuelType
+    ? selectedCalcAirportObj.fuelPrices?.[calcFuelType] || null
+    : null;
+
+  // Sync pricing overrides
+  useEffect(() => {
+    if (fuelPricePerGallon !== null) {
+      setCustomPriceOverride(fuelPricePerGallon.toString());
+    } else {
+      setCustomPriceOverride('');
+    }
+    setUseCustomPrice(false);
+  }, [calcAirport, calcFuelType, fuelPricePerGallon]);
+
+  const activeRate = useCustomPrice && customPriceOverride ? parseFloat(customPriceOverride) : (fuelPricePerGallon || 0);
+  const finalCalculatedCost = activeRate && calcGallons ? (activeRate * parseFloat(calcGallons)) : 0;
+
+  const handleApplyToMemo = () => {
+    let cardToUse = "";
+    if (selectedCalcAirportObj) {
+      if (selectedCalcAirportObj.cardRules?.byFuelType?.[calcFuelType]) {
+        cardToUse = selectedCalcAirportObj.cardRules.byFuelType[calcFuelType];
+      } else if (selectedCalcAirportObj.cardRules?.primary) {
+        cardToUse = selectedCalcAirportObj.cardRules.primary;
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      airport: calcAirport,
+      gallons: calcGallons,
+      usedCard: cardToUse || prev.usedCard
+    }));
+    setView('form');
+  };
   
   // Initialize logs state
   const [logs, setLogs] = useState<FuelLogData[]>(() => {
@@ -381,12 +541,25 @@ Notes: ${log.notes || 'None'}
               <button
                 onClick={() => {
                   setIsOpen(true);
+                  setView('form');
                   setIsFuelMenuOpen(false);
                 }}
                 className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
               >
                 <Fuel size={16} className="text-red-500" />
                 Log Fuel
+              </button>
+
+              <button
+                onClick={() => {
+                  setIsOpen(true);
+                  setView('calc');
+                  setIsFuelMenuOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+              >
+                <Calculator size={16} className="text-blue-500" />
+                Fuel Price Calculator
               </button>
               
               <a
@@ -430,24 +603,35 @@ Notes: ${log.notes || 'None'}
           <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
               <button 
                 onClick={() => setView('form')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
                     view === 'form' 
-                    ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400' 
+                    ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400 font-extrabold' 
                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                <Edit2 size={14} />
+                <Edit2 size={13} />
                 {editingId ? 'Edit Memo' : 'New Memo'}
               </button>
               <button 
-                onClick={() => setView('list')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-colors ${
-                    view === 'list' 
-                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400' 
+                onClick={() => setView('calc')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'calc' 
+                    ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border-b-2 border-amber-600 dark:border-amber-400 font-extrabold' 
                     : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                <List size={14} />
+                <Calculator size={13} />
+                Calculator
+              </button>
+              <button 
+                onClick={() => setView('list')}
+                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                    view === 'list' 
+                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-extrabold' 
+                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <List size={13} />
                 Saved ({logs.length})
               </button>
           </div>
@@ -642,6 +826,326 @@ Notes: ${log.notes || 'None'}
                         value={formData.notes}
                         onChange={handleChange}
                     />
+                    </div>
+                </div>
+            )}
+
+            {/* VIEW: CALCULATOR */}
+            {view === 'calc' && (
+                <div className="p-5 space-y-4">
+                    <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 p-3 rounded-r shadow-sm flex gap-3 items-start">
+                        <Calculator size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed">
+                            A dynamic price estimator. Choose an airport, specify your gallons, and calculate the estimated price per gallon using either original DB rates or automatic live data.
+                        </p>
+                    </div>
+
+                    {/* Inputs */}
+                    <div className="space-y-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                        {/* 1. Airport Selector */}
+                        <div className="space-y-1 relative" ref={airportContainerRef}>
+                            <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                <Plane size={10} /> Select Airport
+                            </label>
+                            
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 pl-9 pr-14 text-sm font-bold text-slate-800 dark:text-slate-100 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 transition-all placeholder:text-slate-400 placeholder:font-normal"
+                                    placeholder="Type code, name, city or state..."
+                                    value={airportSearchInput}
+                                    onFocus={() => setIsAirportDropdownOpen(true)}
+                                    onChange={(e) => {
+                                        setAirportSearchInput(e.target.value);
+                                        setIsAirportDropdownOpen(true);
+                                    }}
+                                    onKeyDown={handleKeyDown}
+                                />
+                                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                                    {airportSearchInput && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setAirportSearchInput('');
+                                                setCalcAirport('');
+                                                setIsAirportDropdownOpen(true);
+                                            }}
+                                            className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                                            title="Clear airport selection"
+                                        >
+                                            <X size={12} />
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAirportDropdownOpen(!isAirportDropdownOpen)}
+                                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                                    >
+                                        <ChevronDown size={14} className={`transform transition-transform duration-200 ${isAirportDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Dropdown popup */}
+                            {isAirportDropdownOpen && (
+                                <div className="absolute z-50 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl divide-y divide-slate-100 dark:divide-slate-800">
+                                    {filteredAirportsForCalc.length > 0 ? (
+                                        filteredAirportsForCalc.map((a, idx) => {
+                                            const isSelected = a.id === calcAirport;
+                                            const isHighlighted = idx === calcSearchHighlightedIndex;
+                                            return (
+                                                <button
+                                                    key={a.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCalcAirport(a.id);
+                                                        setIsAirportDropdownOpen(false);
+                                                    }}
+                                                    className={`w-full text-left px-3.5 py-2.5 flex justify-between items-center transition-colors ${
+                                                        isSelected 
+                                                        ? 'bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 font-bold' 
+                                                        : isHighlighted
+                                                        ? 'bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold'
+                                                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
+                                                    }`}
+                                                >
+                                                    <div className="flex-1 min-w-0 pr-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-black tracking-wide text-slate-800 dark:text-slate-100">{a.id}</span>
+                                                            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold max-w-[200px] truncate">{a.name}</span>
+                                                        </div>
+                                                        <div className="text-[9px] text-slate-400 dark:text-slate-500 font-medium">
+                                                            {a.city}, {a.state}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {/* Fuel Types info badge */}
+                                                    <div className="flex gap-1 items-center flex-shrink-0">
+                                                        {(a.fuelTypes || []).map(f => (
+                                                            <span key={f} className="text-[8px] font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded uppercase">
+                                                                {f}
+                                                            </span>
+                                                        ))}
+                                                        {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-amber-500 ml-1.5"></span>}
+                                                    </div>
+                                                </button>
+                                            );
+                                        })
+                                    ) : (
+                                        <div className="p-4 text-xs text-center text-slate-400 dark:text-slate-500 font-medium font-sans">
+                                            No matching regional airports found
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* 2. Fuel Type Selector */}
+                        {selectedCalcAirportObj && (
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                    <Droplets size={10} /> Fuel Type
+                                </label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {selectedCalcAirportObj.fuelTypes.map((type) => {
+                                        const rate = selectedCalcAirportObj.fuelPrices?.[type];
+                                        return (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => setCalcFuelType(type)}
+                                                className={`py-2 px-3 text-xs font-bold rounded-lg border transition-all flex flex-col items-center justify-center ${
+                                                    calcFuelType === type
+                                                    ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
+                                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                                }`}
+                                            >
+                                                <span>{type}</span>
+                                                <span className={`text-[10px] opacity-90 mt-0.5 font-mono`}>
+                                                    {rate ? `$${rate.toFixed(2)}` : 'N/A'}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* 3. Gallons Input with Preset Buttons */}
+                        <div className="space-y-1">
+                            <label className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
+                                <Droplets size={10} /> Gallons to Purchase
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="number"
+                                    step="any"
+                                    value={calcGallons}
+                                    onChange={(e) => setCalcGallons(e.target.value)}
+                                    className="flex-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-2 text-sm font-bold text-slate-800 dark:text-slate-105 outline-none"
+                                    placeholder="0.0"
+                                />
+                                <div className="flex gap-1 shrink-0 items-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const current = parseFloat(calcGallons || '0');
+                                            const newVal = Math.max(0, current - 0.5);
+                                            setCalcGallons(Number(newVal.toFixed(1)).toString());
+                                        }}
+                                        className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-705 text-slate-600 dark:text-slate-300 text-[9px] font-bold h-7 px-2.5 rounded-md border border-slate-200 dark:border-slate-700 transition-colors"
+                                        title="Decrease by 0.5G"
+                                    >
+                                        -0.5G
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const current = parseFloat(calcGallons || '0');
+                                            const newVal = current + 0.5;
+                                            setCalcGallons(Number(newVal.toFixed(1)).toString());
+                                        }}
+                                        className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-705 text-slate-600 dark:text-slate-300 text-[9px] font-bold h-7 px-2.5 rounded-md border border-slate-200 dark:border-slate-700 transition-colors"
+                                        title="Increase by 0.5G"
+                                    >
+                                        +0.5G
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Preset Buttons */}
+                            <div className="flex gap-1 mt-1.5 overflow-x-auto py-1">
+                                {['10', '20', '25', '30', '35', '40', '50'].map((amt) => (
+                                    <button
+                                        key={amt}
+                                        type="button"
+                                        onClick={() => setCalcGallons(amt)}
+                                        className="bg-slate-100 dark:bg-slate-850 hover:bg-slate-200 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-300 text-[10px] font-bold px-2 py-1 rounded transition-colors whitespace-nowrap min-w-[32px] text-center"
+                                    >
+                                        {amt}G
+                                    </button>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={() => setCalcGallons('')}
+                                    className="bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold px-2 py-1 rounded transition-colors"
+                                >
+                                    Clear
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* 4. Price overrides */}
+                        <div className="border-t border-slate-200/50 dark:border-slate-700/50 pt-2.5 mt-1">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={useCustomPrice}
+                                    onChange={(e) => setUseCustomPrice(e.target.checked)}
+                                    className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-3.5 w-3.5"
+                                />
+                                <span className="text-[10px] uppercase font-bold text-slate-500 select-none">
+                                    Override Price Per Gallon
+                                </span>
+                            </label>
+                            
+                            {useCustomPrice && (
+                                <div className="mt-1.5 flex items-center gap-1.5 animate-fade-in">
+                                    <span className="text-sm font-bold text-slate-500">$</span>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={customPriceOverride}
+                                        onChange={(e) => setCustomPriceOverride(e.target.value)}
+                                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-3 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-105 outline-none"
+                                        placeholder="0.00"
+                                    />
+                                    <span className="text-xs text-slate-400 font-bold whitespace-nowrap">/ gal</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Cost breakdown Display Card */}
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-950 dark:from-slate-950 dark:to-slate-905 text-white rounded-xl p-5 shadow-lg border border-slate-700/30 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                        {/* Subtle background glow */}
+                        <div className="absolute top-0 right-0 -mr-8 -mt-8 w-16 h-16 rounded-full bg-amber-500/10 blur-xl"></div>
+                        <div className="absolute bottom-0 left-0 -ml-10 -mb-10 w-24 h-24 rounded-full bg-blue-500/10 blur-xl"></div>
+
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                            Estimated Total Cost
+                        </span>
+                        
+                        <div className="text-3xl font-black font-mono text-amber-400 tracking-tight flex items-baseline">
+                            ${finalCalculatedCost.toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+
+                        <div className="text-xs text-slate-300 mt-2 font-medium flex items-center gap-1.5">
+                            {useCustomPrice ? (
+                                <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-300 px-2 py-0.5 rounded border border-amber-500/20 text-[10px]">
+                                    Override Price: ${parseFloat(customPriceOverride || '0').toFixed(2)}/gal
+                                </span>
+                            ) : selectedCalcAirportObj && fuelPricePerGallon !== null ? (
+                                selectedCalcAirportObj.fuelPricesLastUpdated ? (
+                                    <span className="inline-flex items-center gap-1 bg-emerald-500/15 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/20 text-[10px]">
+                                        Live Price: ${fuelPricePerGallon.toFixed(2)}/gal
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 bg-slate-500/15 text-slate-300 px-2 py-0.5 rounded border border-slate-500/20 text-[10px]">
+                                        DB Price: ${fuelPricePerGallon.toFixed(2)}/gal
+                                    </span>
+                                )
+                            ) : (
+                                <span className="text-[10px] text-red-300 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20">
+                                    No price data found for selected fuel type
+                                </span>
+                            )}
+                        </div>
+
+                        {selectedCalcAirportObj && (
+                            <p className="text-[9px] text-slate-500 mt-3 font-semibold uppercase tracking-wide">
+                                {selectedCalcAirportObj.fbo}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="grid grid-cols-2 gap-3.5 pt-1">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const rateStr = useCustomPrice ? `${parseFloat(customPriceOverride || '0').toFixed(2)} (Custom)` : `$${(fuelPricePerGallon || 0).toFixed(2)}`;
+                                const text = `Fuel Estimate for ${calcAirport || 'N/A'}:\n--------------------\nFuel Rate: ${rateStr}/gal\nGallons: ${calcGallons || '0'}G\nEstimated Cost: $${finalCalculatedCost.toFixed(2)}`;
+                                navigator.clipboard.writeText(text);
+                                setIsCopied(true);
+                                setTimeout(() => setIsCopied(false), 2000);
+                            }}
+                            className={`py-2.5 px-4 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all ${
+                                isCopied 
+                                ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm'
+                                : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-705 text-slate-700 dark:text-slate-205'
+                            }`}
+                        >
+                            {isCopied ? (
+                                <>
+                                    <CheckCircle size={14} className="animate-fade-in" />
+                                    Copied!
+                                </>
+                            ) : (
+                                "Copy Estimate"
+                            )}
+                        </button>
+                        
+                        <button
+                            type="button"
+                            disabled={!calcAirport}
+                            onClick={handleApplyToMemo}
+                            className="py-2.5 px-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-sm hover:shadow-md"
+                        >
+                            Apply to Memo
+                        </button>
                     </div>
                 </div>
             )}
