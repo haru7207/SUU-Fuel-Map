@@ -4,7 +4,7 @@ import { Airport, CardType, WeatherData, FuelType, NotamData } from '../types';
 import { fetchWeather } from '../services/aviationService';
 import { auth, signInWithGoogle, logOut } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
@@ -17,6 +17,8 @@ interface AirportDetailsProps {
   notamMap?: Record<string, NotamData>;
   isRefreshingFuel?: boolean;
   onRefreshFuelPrices?: () => Promise<void>;
+  isFavorite?: boolean;
+  onToggleFavorite?: (id: string) => void;
 }
 
 type Tab = 'info' | 'weather' | 'notam';
@@ -28,7 +30,9 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   weatherMap, 
   notamMap,
   isRefreshingFuel = false,
-  onRefreshFuelPrices
+  onRefreshFuelPrices,
+  isFavorite = false,
+  onToggleFavorite
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -444,6 +448,17 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
           </div>
         </div>
         <div className="flex items-center gap-1 -mr-2">
+            <button 
+               onClick={() => onToggleFavorite && onToggleFavorite(airport.id)} 
+               className={`p-2 rounded-full transition-all duration-300 flex items-center gap-1 ${
+                 isFavorite 
+                   ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30' 
+                   : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30'
+               }`} 
+               title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+            >
+                <Star size={20} className={isFavorite ? "fill-amber-500 text-amber-500 animate-pulse-once" : ""} />
+            </button>
             <a 
                href={`https://www.airnav.com/airport/${airport.id}`} 
                target="_blank" 

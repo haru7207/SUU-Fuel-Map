@@ -17,7 +17,7 @@ import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
@@ -57,6 +57,65 @@ const App: React.FC = () => {
   const [isE6BOpen, setIsE6BOpen] = useState(false);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
+
+  // Favorites State
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('suu_favorite_airports');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('suu_favorite_airports', JSON.stringify(favorites));
+  }, [favorites]);
+
+  const handleToggleFavorite = (id: string) => {
+    setFavorites(prev => 
+      prev.includes(id) ? prev.filter(fId => fId !== id) : [...prev, id]
+    );
+  };
+
+  // Layers Menu Open State
+  const [isLayersMenuOpen, setIsLayersMenuOpen] = useState(false);
+
+  // Layer Settings State (defaults to showing nothing)
+  const [mapLayers, setMapLayers] = useState<{
+    fuelPrices: boolean;
+    weatherOverlay: boolean;
+    notamWarnings: boolean;
+    wildfires: boolean;
+  }>(() => {
+    try {
+      const saved = localStorage.getItem('suu_map_layers_v3');
+      return saved ? JSON.parse(saved) : {
+        fuelPrices: false,
+        weatherOverlay: false,
+        notamWarnings: false,
+        wildfires: false
+      };
+    } catch {
+      return {
+        fuelPrices: false,
+        weatherOverlay: false,
+        notamWarnings: false,
+        wildfires: false
+      };
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('suu_map_layers_v3', JSON.stringify(mapLayers));
+  }, [mapLayers]);
+
+  const toggleMapLayer = (layerKey: 'fuelPrices' | 'weatherOverlay' | 'notamWarnings' | 'wildfires') => {
+    setMapLayers(prev => ({
+      ...prev,
+      [layerKey]: !prev[layerKey]
+    }));
+  };
 
 
   // Theme Effect
@@ -359,6 +418,8 @@ const App: React.FC = () => {
            <Sidebar airports={airports} 
             selectedId={selectedId} 
             onSelect={handleSelect}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             onOpenCheatSheet={(query) => {
@@ -389,6 +450,8 @@ const App: React.FC = () => {
             onSelect={handleSelect}
             showAirmet={showAirmet}
             weatherMap={weatherMap}
+            notamMap={notamMap}
+            mapLayers={mapLayers}
           />
         </div>
 
@@ -459,18 +522,130 @@ const App: React.FC = () => {
         {/* Toolbar */}
         <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
           
-          {/* G-AIRMET Control */}
-          <button 
-              onClick={() => setShowAirmet(!showAirmet)}
+          {/* Map Layers Dropdown */}
+          <div className="relative w-full">
+            <button
+              onClick={() => setIsLayersMenuOpen(!isLayersMenuOpen)}
               className={`flex items-center justify-center gap-2 font-bold py-1.5 px-3 text-xs md:text-sm rounded shadow-md border transition-all active:scale-95 w-full ${
-                showAirmet ? 'bg-purple-600 text-white border-purple-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                isLayersMenuOpen ? 'bg-indigo-600 text-white border-indigo-600 font-bold' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
               }`}
+              title="Toggle map layers and overlay information"
             >
-              <CloudFog size={14} className={`md:w-4 md:h-4 ${showAirmet ? 'text-white' : 'text-purple-500'}`} />
-              <span>G-AIRMET</span>
+              <Layers size={14} className={`md:w-4 md:h-4 ${isLayersMenuOpen ? 'text-white' : 'text-indigo-500'}`} />
+              <span>Map Layers</span>
             </button>
 
-            {/* Instructor Tools Dropdown */}
+            {isLayersMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col z-[1050] origin-top-right">
+                {/* Header */}
+                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Layers size={14} className="text-indigo-500" />
+                    <span className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">Map Overlays</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsLayersMenuOpen(false)}
+                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {/* Options List */}
+                <div className="p-3 space-y-3">
+                  {/* Layer option: Fuel Prices */}
+                  <label className="flex items-center justify-between cursor-pointer group select-none">
+                    <div className="flex items-center gap-2">
+                      <Fuel size={14} className="text-emerald-500" />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Fuel Prices</span>
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500">100LL Active rates</span>
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                      checked={mapLayers.fuelPrices}
+                      onChange={() => toggleMapLayer('fuelPrices')}
+                    />
+                  </label>
+
+                  {/* Layer option: Wind Overlay */}
+                  <label className="flex items-center justify-between cursor-pointer group select-none">
+                    <div className="flex items-center gap-2">
+                      <Wind size={14} className="text-blue-500 animate-[spin_8s_linear_infinite]" />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Wind Overlay</span>
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500">Speed, gust & direction (METAR)</span>
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                      checked={mapLayers.weatherOverlay}
+                      onChange={() => toggleMapLayer('weatherOverlay')}
+                    />
+                  </label>
+
+                  {/* Layer option: NOTAM Warnings */}
+                  <label className="flex items-center justify-between cursor-pointer group select-none">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle size={14} className="text-red-500" />
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">NOTAM Warnings</span>
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500">Runway & fuel hazards</span>
+                      </div>
+                    </div>
+                    <input 
+                      type="checkbox" 
+                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                      checked={mapLayers.notamWarnings}
+                      onChange={() => toggleMapLayer('notamWarnings')}
+                    />
+                  </label>
+
+                  {/* Layer option: Wildfire Hazards */}
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <label className="flex items-center justify-between cursor-pointer group select-none">
+                      <div className="flex items-center gap-2">
+                        <Flame size={14} className="text-orange-600" />
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">🔥 Wildfire Hazards</span>
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500">NIFC Active Perimeters</span>
+                        </div>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                        checked={mapLayers.wildfires}
+                        onChange={() => toggleMapLayer('wildfires')}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Layer option: G-AIRMET (Integrated toggle!) */}
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <label className="flex items-center justify-between cursor-pointer group select-none">
+                      <div className="flex items-center gap-2">
+                        <CloudFog size={14} className="text-purple-500" />
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">G-AIRMET Areas</span>
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500">Icing / Turbulence grids</span>
+                        </div>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                        checked={showAirmet}
+                        onChange={() => setShowAirmet(!showAirmet)}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Instructor Tools Dropdown */}
             {!(isMobile && (!!selectedId || isSidebarOpen)) && (
               <div className="relative w-full">
                 <button
@@ -738,6 +913,8 @@ const App: React.FC = () => {
                   <AirportDetails 
                       airport={selectedAirport} 
                       onClose={() => setSelectedId(null)} 
+                      isFavorite={favorites.includes(selectedAirport.id)}
+                      onToggleFavorite={handleToggleFavorite}
                       onOpenFuelLog={() => setIsFuelLogOpen(true)}
                       weatherMap={weatherMap}
                       notamMap={notamMap}

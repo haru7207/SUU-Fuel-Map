@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType } from '../types';
-import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw } from 'lucide-react';
+import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -16,6 +16,8 @@ interface SidebarProps {
   onClose: () => void;
   isRefreshingFuel?: boolean;
   onRefreshFuelPrices?: () => Promise<void>;
+  favorites?: string[];
+  onToggleFavorite?: (id: string) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -30,13 +32,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   isMobile, 
   onClose,
   isRefreshingFuel = false,
-  onRefreshFuelPrices
+  onRefreshFuelPrices,
+  favorites = [],
+  onToggleFavorite
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [cardFilter, setCardFilter] = useState<CardType | 'ALL'>('ALL');
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
   
   const filteredAirports = useMemo(() => {
     let filtered = airports;
+
+    if (showOnlyFavorites) {
+      filtered = filtered.filter(a => favorites.includes(a.id));
+    }
 
     if (cardFilter !== 'ALL') {
       filtered = filtered.filter(a => a.cardRules.primary === cardFilter);
@@ -126,7 +135,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       return false;
     });
-  }, [airports, searchTerm, cardFilter]);
+  }, [airports, searchTerm, cardFilter, showOnlyFavorites, favorites]);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 shadow-xl z-20">
@@ -195,6 +204,18 @@ const Sidebar: React.FC<SidebarProps> = ({
                 className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${cardFilter === CardType.WHITE_CARD ? 'bg-red-600 text-white' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
              >
                 White Card
+             </button>
+             <button 
+                onClick={() => setShowOnlyFavorites(!showOnlyFavorites)} 
+                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1 border ${
+                  showOnlyFavorites 
+                    ? 'bg-amber-500 text-slate-900 border-amber-400 font-bold' 
+                    : 'bg-[#1e293b] text-amber-500 hover:text-amber-400 border-slate-700/50'
+                }`}
+                title="Filter to show only starred airports"
+             >
+                <Star size={12} className={showOnlyFavorites ? "fill-current" : ""} />
+                <span>Starred ({favorites.length})</span>
              </button>
           </div>
         )}
@@ -358,6 +379,20 @@ const Sidebar: React.FC<SidebarProps> = ({
                           <span className={`font-bold text-lg ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
                               {airport.id}
                           </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (onToggleFavorite) onToggleFavorite(airport.id);
+                            }}
+                            className={`p-1 rounded transition-colors ${
+                              favorites.includes(airport.id)
+                                ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+                                : 'text-slate-300 dark:text-slate-600 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+                            }`}
+                            title={favorites.includes(airport.id) ? "Remove from Favorites" : "Add to Favorites"}
+                          >
+                            <Star size={14} className={favorites.includes(airport.id) ? "fill-amber-500 text-amber-500" : ""} />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

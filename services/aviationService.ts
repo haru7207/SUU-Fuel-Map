@@ -857,3 +857,31 @@ export const fetchLiveFuelPricesWithGemini = async (airports: string[], forceRef
 
     return pricesMap;
 };
+
+// URL for NIFC WFIGS Interagency Perimeters (Current)
+const NIFC_WFIGS_PERIMETERS_URL = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query';
+
+/**
+ * Fetch current active wildfire perimeters from NIFC Open Data API
+ * @returns GeoJSON Object of fire perimeters
+ */
+export const fetchActiveWildfires = async (): Promise<any> => {
+    try {
+        const url = new URL(NIFC_WFIGS_PERIMETERS_URL);
+        url.searchParams.append('where', "1=1");
+        // poly_IncidentName, poly_Acres_AutoCalc, PercentContained are common in the newer WFIGS perimeters endpoint
+        url.searchParams.append('outFields', 'poly_IncidentName,poly_Acres_AutoCalc,PercentContained'); 
+        url.searchParams.append('f', 'geojson');
+        url.searchParams.append('returnGeometry', 'true');
+
+        const response = await fetch(url.toString(), { cache: 'no-cache' });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch wildfires: ${response.status} ${response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (err) {
+        console.error('Error fetching NIFC wildfires:', err);
+        return null;
+    }
+};
