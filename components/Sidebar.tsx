@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType } from '../types';
-import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star } from 'lucide-react';
+import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star, Layers } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -12,6 +12,8 @@ interface SidebarProps {
   onOpenCheatSheet?: (query: string) => void;
   themeMode: 'day' | 'night' | 'auto';
   setThemeMode: (mode: 'day' | 'night' | 'auto') => void;
+  baseMapType?: 'roadmap' | 'hybrid' | 'satellite' | 'terrain';
+  setBaseMapType?: (type: 'roadmap' | 'hybrid' | 'satellite' | 'terrain') => void;
   isMobile: boolean;
   onClose: () => void;
   isRefreshingFuel?: boolean;
@@ -29,6 +31,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   onOpenCheatSheet, 
   themeMode, 
   setThemeMode, 
+  baseMapType,
+  setBaseMapType,
   isMobile, 
   onClose,
   isRefreshingFuel = false,
@@ -270,6 +274,58 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
+            {/* Map Terrain Style Settings */}
+            {baseMapType && setBaseMapType && (
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <Layers size={13} className="text-slate-400 dark:text-slate-500" />
+                  <span>Map Base View</span>
+                </h3>
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+                  <button 
+                    onClick={() => setBaseMapType('roadmap')}
+                    className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors border-b border-slate-200 dark:border-slate-700 ${baseMapType === 'roadmap' ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-base select-none">🗺️</span>
+                      <span>Google Roadmap</span>
+                    </div>
+                    {baseMapType === 'roadmap' && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                  </button>
+                  <button 
+                    onClick={() => setBaseMapType('hybrid')}
+                    className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors border-b border-slate-200 dark:border-slate-700 ${baseMapType === 'hybrid' ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-base select-none">🛰️</span>
+                      <span>Google Hybrid</span>
+                    </div>
+                    {baseMapType === 'hybrid' && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                  </button>
+                  <button 
+                    onClick={() => setBaseMapType('satellite')}
+                    className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors border-b border-slate-200 dark:border-slate-700 ${baseMapType === 'satellite' ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-base select-none">📷</span>
+                      <span>Google Satellite</span>
+                    </div>
+                    {baseMapType === 'satellite' && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                  </button>
+                  <button 
+                    onClick={() => setBaseMapType('terrain')}
+                    className={`w-full flex items-center justify-between p-3 text-sm font-medium transition-colors ${baseMapType === 'terrain' ? 'bg-white dark:bg-slate-700 text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-base select-none">⛰️</span>
+                      <span>Google Terrain</span>
+                    </div>
+                    {baseMapType === 'terrain' && <div className="w-2 h-2 rounded-full bg-red-500"></div>}
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Data Settings */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Data Management</h3>
@@ -337,7 +393,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <div className="space-y-3 pt-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">About</h3>
               <div className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
-                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.6.1</p>
+                <p className="font-bold text-slate-800 dark:text-slate-200">SUU Fuel Map v2.6.2</p>
                 <p>Designed for SUU Aviation Instructors.</p>
                 <p className="italic font-medium text-slate-500 dark:text-slate-400">Fly Safe!</p>
               </div>

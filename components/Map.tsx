@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl, Polygon, LayerGroup, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, LayerGroup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import { Airport, CardType, Airmet, WeatherData, NotamData } from '../types';
 import { fetchAirmets, fetchActiveWildfires, fetchActiveTfrs } from '../services/aviationService';
@@ -255,6 +255,7 @@ interface MapProps {
     wildfires: boolean;
     tfrs: boolean;
   };
+  baseMapType?: 'roadmap' | 'hybrid' | 'satellite' | 'terrain';
 }
 
 // Helper to fit bounds to selected airport
@@ -307,7 +308,8 @@ const Map: React.FC<MapProps> = ({
   showAirmet, 
   weatherMap,
   notamMap = {},
-  mapLayers = { fuelPrices: false, weatherOverlay: false, notamWarnings: false, wildfires: false, tfrs: false }
+  mapLayers = { fuelPrices: false, weatherOverlay: false, notamWarnings: false, wildfires: false, tfrs: false },
+  baseMapType = 'roadmap'
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [airmets, setAirmets] = useState<Airmet[]>([]);
@@ -322,6 +324,30 @@ const Map: React.FC<MapProps> = ({
   const [isTracking, setIsTracking] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [centerTrigger, setCenterTrigger] = useState(0);
+  const [isLegendOpen, setIsLegendOpen] = useState(true);
+
+  // Track previous states to auto-open legend when these layers are activated
+  const prevLayersRef = React.useRef({
+    wildfires: !!mapLayers.wildfires,
+    tfrs: !!mapLayers.tfrs,
+    showAirmet: !!showAirmet
+  });
+
+  useEffect(() => {
+    const wasWildfiresActivated = mapLayers.wildfires && !prevLayersRef.current.wildfires;
+    const wasTfrsActivated = mapLayers.tfrs && !prevLayersRef.current.tfrs;
+    const wasAirmetActivated = showAirmet && !prevLayersRef.current.showAirmet;
+
+    if (wasWildfiresActivated || wasTfrsActivated || wasAirmetActivated) {
+      setIsLegendOpen(true);
+    }
+
+    prevLayersRef.current = {
+      wildfires: !!mapLayers.wildfires,
+      tfrs: !!mapLayers.tfrs,
+      showAirmet: !!showAirmet
+    };
+  }, [mapLayers.wildfires, mapLayers.tfrs, showAirmet]);
 
   // Fetch Wildfires when layer is enabled
   useEffect(() => {
@@ -496,6 +522,84 @@ const Map: React.FC<MapProps> = ({
         )}
       </div>
 
+      {/* Map Hazard Legend Overlay */}
+      {(mapLayers.wildfires || mapLayers.tfrs || showAirmet) && (
+        <div className="absolute bottom-6 left-4 z-[1000] flex flex-col items-start pointer-events-auto select-none font-sans">
+          {isLegendOpen ? (
+            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-3.5 max-w-[250px] text-xs flex flex-col gap-2.5 transition-all text-slate-800 dark:text-slate-200">
+              <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-1.5 flex items-center justify-between w-full">
+                <span>Map Hazard Legend</span>
+                <button 
+                  onClick={() => setIsLegendOpen(false)} 
+                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-extrabold ml-4 p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center w-4 h-4 line-height-none"
+                  title="Collapse legend"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {mapLayers.tfrs && (
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-6 h-3.5 border-2 border-dashed border-[#db2777] bg-[#f43f5e]/15 rounded-sm self-center"></div>
+                    <div className="flex flex-col">
+                      <span className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] leading-tight flex items-center gap-1">🚫 FAA TFR Airspace</span>
+                      <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">Strict flight restriction zone</p>
+                    </div>
+                  </div>
+                )}
+                {mapLayers.wildfires && (
+                  <>
+                    <div className="flex items-start gap-2.5">
+                      <div className="relative flex items-center justify-center w-5 h-5 bg-red-650 rounded-full border border-amber-300 self-center">
+                        <span className="text-[11px] leading-none select-none">🔥</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] leading-tight">Active Wildfire (WF)</span>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">Emergency wildfire incident</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <div className="relative flex items-center justify-center w-5 h-5 bg-slate-900 rounded-full border border-emerald-400 self-center">
+                        <span className="text-[10px] leading-none select-none">💨</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] leading-tight">Prescribed Burn (RX)</span>
+                        <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">Planned & monitored fire</p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {showAirmet && (
+                  <div className="flex flex-col gap-1.5 mt-0.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">G-AIRMET Advisories</span>
+                    <div className="flex flex-wrap gap-1">
+                      <span className="inline-flex items-center gap-1 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/25 text-[8px] font-bold text-purple-600 dark:text-purple-400 uppercase">
+                        <span className="w-1 h-1 rounded-full bg-purple-500"></span> IFR (Sierra)
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/25 text-[8px] font-bold text-orange-600 dark:text-orange-400 uppercase">
+                        <span className="w-1 h-1 rounded-full bg-orange-500"></span> Turb (Tango)
+                      </span>
+                      <span className="inline-flex items-center gap-1 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/25 text-[8px] font-bold text-blue-600 dark:text-blue-400 uppercase">
+                        <span className="w-1 h-1 rounded-full bg-blue-500"></span> Icing (Zulu)
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <button 
+              onClick={() => setIsLegendOpen(true)}
+              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 py-1.5 px-3 rounded-full shadow-lg text-[10px] font-extrabold flex items-center gap-1 transition-all active:scale-95 border-b-2"
+              title="Expand hazard legend"
+            >
+              <span>ℹ️</span>
+              <span>Map Legend</span>
+            </button>
+          )}
+        </div>
+      )}
+
       <MapContainer 
         center={[37.7009, -113.0988]} 
         zoom={9} 
@@ -503,37 +607,17 @@ const Map: React.FC<MapProps> = ({
         zoomControl={false}
       >
         
-        <LayersControl position="bottomleft">
-          <LayersControl.BaseLayer checked name="Google Roadmap">
-            <TileLayer
-              attribution="&copy; Google"
-              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
-              maxZoom={20}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Google Hybrid">
-            <TileLayer
-              attribution="&copy; Google"
-              url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
-              maxZoom={20}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Google Satellite">
-            <TileLayer
-              attribution="&copy; Google"
-              url="https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
-              maxZoom={20}
-            />
-          </LayersControl.BaseLayer>
-          <LayersControl.BaseLayer name="Google Terrain">
-            <TileLayer
-              attribution="&copy; Google"
-              url="https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}"
-              maxZoom={20}
-            />
-          </LayersControl.BaseLayer>
-
-        </LayersControl>
+        <TileLayer
+          key={baseMapType}
+          attribution="&copy; Google"
+          url={
+            baseMapType === 'hybrid' ? "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" :
+            baseMapType === 'satellite' ? "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" :
+            baseMapType === 'terrain' ? "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}" :
+            "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+          }
+          maxZoom={20}
+        />
         
         {/* G-AIRMET Layer */}
         {showAirmet && (
@@ -642,31 +726,116 @@ const Map: React.FC<MapProps> = ({
             key={wildfiresGeoJson.features?.length || Date.now()}
             data={wildfiresGeoJson}
             style={{
-              color: '#ef4444', // Red stroke
-              weight: 2.5,
-              opacity: 0.9,
-              fillColor: '#ea580c', // Dark orange fill
-              fillOpacity: 0.35,
-              dashArray: '4' // Slightly dashed for hazard look
+              color: '#ea580c', // Bright burning orange stroke for fire perimeters
+              weight: 3,
+              opacity: 0.95,
+              fillColor: '#facc15', // Glowing hot yellow-orange fill
+              fillOpacity: 0.4,
+              dashArray: undefined // Solid boundary line for active perimeters
+            }}
+            pointToLayer={(feature, latlng) => {
+              const isRx = feature.properties?.IncidentTypeCategory === 'RX';
+              if (isRx) {
+                // Prescribed Fire (RX) gets a beautiful controlled amber/smoke icon
+                const rxIcon = L.divIcon({
+                  html: `
+                    <div class="relative flex items-center justify-center w-6 h-6">
+                      <div class="absolute inset-0 bg-amber-500/20 rounded-full animate-pulse"></div>
+                      <div class="w-5 h-5 rounded-full bg-slate-900 border border-emerald-400 shadow flex items-center justify-center text-[10px] select-none">
+                        💨
+                      </div>
+                    </div>
+                  `,
+                  className: '!bg-transparent !border-none', // Override ugly default Leaflet styles
+                  iconSize: [24, 24],
+                  iconAnchor: [12, 12]
+                });
+                return L.marker(latlng, { icon: rxIcon });
+              } else {
+                // Wildfire (WF) gets a magnificent pulsing fiery ember icon
+                const wfIcon = L.divIcon({
+                  html: `
+                    <div class="relative flex items-center justify-center w-8 h-8">
+                      <div class="absolute inset-0 bg-red-600/30 rounded-full animate-ping" style="animation-duration: 2.2s;"></div>
+                      <div class="absolute w-6.5 h-6.5 bg-orange-500/40 rounded-full animate-pulse"></div>
+                      <div class="w-5.5 h-5.5 rounded-full bg-red-600 border border-amber-300 shadow-md flex items-center justify-center text-xs select-none">
+                        🔥
+                      </div>
+                    </div>
+                  `,
+                  className: '!bg-transparent !border-none', // Override ugly default Leaflet styles
+                  iconSize: [32, 32],
+                  iconAnchor: [16, 16]
+                });
+                return L.marker(latlng, { icon: wfIcon });
+              }
             }}
             onEachFeature={(feature, layer) => {
               if (feature.properties) {
-                // Determine fields generically since WFIGS schemas can vary
-                const name = feature.properties.poly_IncidentName || feature.properties.IncidentName || 'Unknown Fire';
-                const acresRaw = feature.properties.poly_Acres_AutoCalc || feature.properties.GISAcres || feature.properties.DailyAcres;
+                const name = feature.properties.IncidentName || feature.properties.poly_IncidentName || 'Unknown Fire';
+                const acresRaw = feature.properties.IncidentSize || feature.properties.poly_Acres_AutoCalc || feature.properties.GISAcres || feature.properties.DailyAcres;
                 const acres = acresRaw ? Number(acresRaw).toLocaleString(undefined, {maximumFractionDigits: 0}) : 'Unknown';
                 const contained = feature.properties.PercentContained !== null && feature.properties.PercentContained !== undefined 
                     ? `${feature.properties.PercentContained}%` 
                     : 'Unknown';
+                const typeCat = feature.properties.IncidentTypeCategory;
+                const typeText = typeCat === 'RX' ? 'Prescribed Fire (RX)' : typeCat === 'WF' ? 'Wildfire (WF)' : 'Active Incident';
+
+                let landowner = '';
+                if (feature.properties.POOLandownerCategory) {
+                  const cat = feature.properties.POOLandownerCategory;
+                  if (cat === 'USFS') landowner = 'U.S. Forest Service (National Forest)';
+                  else if (cat === 'BLM') landowner = 'Bureau of Land Management (BLM)';
+                  else if (cat === 'NPS') landowner = 'National Park Service (NPS)';
+                  else if (cat === 'FWS') landowner = 'U.S. Fish & Wildlife Service';
+                  else if (cat === 'BIA') landowner = 'Bureau of Indian Affairs (BIA)';
+                  else if (cat === 'State') landowner = 'State Forestry / Public Lands';
+                  else if (cat === 'Private') landowner = 'Private Lands';
+                  else landowner = cat;
+                }
+
+                let locationText = '';
+                if (feature.properties.POOCounty || feature.properties.POOState) {
+                  const parts = [];
+                  if (feature.properties.POOCounty) parts.push(`${feature.properties.POOCounty} County`);
+                  if (feature.properties.POOState) {
+                    const st = feature.properties.POOState.replace('US-', '');
+                    parts.push(st);
+                  }
+                  locationText = parts.join(', ');
+                }
+
+                let extraDetailsHtml = '';
+                if (landowner) {
+                  extraDetailsHtml += `<div><strong style="color: #0f172a;">Agency:</strong> ${landowner}</div>`;
+                }
+                if (locationText) {
+                  extraDetailsHtml += `<div><strong style="color: #0f172a;">Location:</strong> ${locationText}</div>`;
+                }
+                if (feature.properties.POOJurisdictionalUnit) {
+                  extraDetailsHtml += `<div><strong style="color: #0f172a;">Unit Code:</strong> ${feature.properties.POOJurisdictionalUnit}</div>`;
+                }
+                if (feature.properties.FireDiscoveryDateTime) {
+                  try {
+                    const dStr = new Date(feature.properties.FireDiscoveryDateTime).toLocaleDateString(undefined, {month: 'short', day: 'numeric', year: 'numeric'});
+                    extraDetailsHtml += `<div><strong style="color: #0f172a;">Discovered:</strong> ${dStr}</div>`;
+                  } catch {}
+                }
+
+                const icon = typeCat === 'RX' ? '💨' : '🔥';
                 
                 layer.bindPopup(`
-                  <div style="font-family: inherit; text-align: center; padding: 4px;">
-                    <div style="font-weight: 800; color: #dc2626; font-size: 14px; margin-bottom: 6px; letter-spacing: -0.2px;">
-                      🔥 ${name} Fire
+                  <div style="font-family: inherit; text-align: left; padding: 4px; min-width: 180px;">
+                    <div style="font-weight: 800; color: #dc2626; font-size: 13px; margin-bottom: 2px; letter-spacing: -0.2px; text-transform: uppercase;">
+                      ${icon} ${name}
                     </div>
-                    <div style="font-size: 12px; color: #475569; line-height: 1.5;">
+                    <div style="font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 6px;">
+                      ${typeText}
+                    </div>
+                    <div style="font-size: 11px; color: #475569; line-height: 1.45; border-top: 1px solid #e2e8f0; padding-top: 4px;">
                       <div><strong style="color: #0f172a;">Size:</strong> ${acres} Acres</div>
                       <div><strong style="color: #0f172a;">Contained:</strong> ${contained}</div>
+                      ${extraDetailsHtml}
                     </div>
                   </div>
                 `);
@@ -681,12 +850,12 @@ const Map: React.FC<MapProps> = ({
             key={tfrGeoJson.features?.length || Date.now()}
             data={tfrGeoJson}
             style={{
-              color: '#dc2626', // Solid red outline
-              weight: 3,
+              color: '#db2777', // Vibrant magenta/pinkish-red outer border to represent strict restricted flight limits
+              weight: 3.5,
               opacity: 0.95,
-              fillColor: '#f59e0b', // Amber/orange semi-transparent fill
-              fillOpacity: 0.35,
-              dashArray: '3, 6' // Distinct dash pattern for airspace boundaries
+              fillColor: '#f43f5e', // Warn rose/crimson interior fill
+              fillOpacity: 0.15, // Highly transparent so details behind remain fully visible
+              dashArray: '10, 8' // Bold spaced dash pattern representing defensive airspace restriction limit
             }}
             onEachFeature={(feature, layer) => {
               if (feature.properties) {
@@ -713,13 +882,13 @@ const Map: React.FC<MapProps> = ({
                 // Formulate target FAA TFR page link
                 let linkUrl = 'https://tfr.faa.gov/';
                 if (notam && notam !== 'Unknown NOTAM' && notam !== 'NDA TFR') {
-                  const sanitizedNotam = notam.replace('/', '_').trim();
-                  linkUrl = `https://tfr.faa.gov/save_pages/detail_${sanitizedNotam}.html`;
+                   const sanitizedNotam = notam.replace('/', '_').trim();
+                   linkUrl = `https://tfr.faa.gov/save_pages/detail_${sanitizedNotam}.html`;
                 }
                 
                 layer.bindPopup(`
                   <div style="font-family: inherit; width: 220px; padding: 4px;">
-                    <div style="font-weight: 800; color: #dc2626; font-size: 13px; margin-bottom: 6px; letter-spacing: -0.2px; display: flex; align-items: center; gap: 4px;">
+                    <div style="font-weight: 800; color: #be185d; font-size: 13px; margin-bottom: 6px; letter-spacing: -0.2px; display: flex; align-items: center; gap: 4px;">
                       🚫 TFR Area (${notam})
                     </div>
                     <div style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 8px;">
@@ -729,7 +898,7 @@ const Map: React.FC<MapProps> = ({
                       ${desc ? `<div style="margin-top: 4px; font-style: italic; font-size: 10px; max-height: 50px; overflow-y: auto; color: #64748b; background-color: #f8fafc; padding: 4px; border-radius: 4px; border: 1px solid #f1f5f9;">"${desc}"</div>` : ''}
                     </div>
                     <div style="border-top: 1px solid #f1f5f9; padding-top: 6px; text-align: center;">
-                      <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 10px; display: inline-block;">
+                      <a href="${linkUrl}" target="blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 10px; display: inline-block;">
                         Official FAA TFR Portal →
                       </a>
                     </div>

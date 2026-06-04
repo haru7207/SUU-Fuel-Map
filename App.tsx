@@ -33,6 +33,15 @@ const App: React.FC = () => {
   const [themeMode, setThemeMode] = useState<'day' | 'night' | 'auto'>(() => {
     return (localStorage.getItem('suu_theme_mode') as 'day' | 'night' | 'auto') || 'auto';
   });
+
+  // Base Map Type State
+  const [baseMapType, setBaseMapType] = useState<'roadmap' | 'hybrid' | 'satellite' | 'terrain'>(() => {
+    return (localStorage.getItem('suu_base_map_type') as 'roadmap' | 'hybrid' | 'satellite' | 'terrain') || 'roadmap';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('suu_base_map_type', baseMapType);
+  }, [baseMapType]);
   
   // G-AIRMET State
   const [showAirmet, setShowAirmet] = useState(false);
@@ -433,6 +442,8 @@ const App: React.FC = () => {
             }}
             themeMode={themeMode}
             setThemeMode={setThemeMode}
+            baseMapType={baseMapType}
+            setBaseMapType={setBaseMapType}
             isMobile={isMobile}
             onClose={() => setIsSidebarOpen(false)}
           />
@@ -456,6 +467,7 @@ const App: React.FC = () => {
             weatherMap={weatherMap}
             notamMap={notamMap}
             mapLayers={mapLayers}
+            baseMapType={baseMapType}
           />
         </div>
 

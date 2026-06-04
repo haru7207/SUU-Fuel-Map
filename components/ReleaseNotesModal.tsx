@@ -5,15 +5,15 @@ export const ReleaseNotesModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if the user has already seen the v2.6.1 release notes
-    const hasSeen = localStorage.getItem('saw_release_notes_v2_6_1');
+    // Check if the user has already seen the v2.6.2 release notes
+    const hasSeen = localStorage.getItem('saw_release_notes_v2_6_2');
     if (!hasSeen) {
       setIsOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('saw_release_notes_v2_6_1', 'true');
+    localStorage.setItem('saw_release_notes_v2_6_2', 'true');
     setIsOpen(false);
   };
 
@@ -34,9 +34,9 @@ export const ReleaseNotesModal: React.FC = () => {
               <Sparkles size={16} className="text-amber-300 animate-pulse" />
               <span className="text-xs font-bold uppercase tracking-widest">What's New</span>
             </div>
-            <h2 className="text-2xl font-black">SUU Fuel Map v2.6.1</h2>
+            <h2 className="text-2xl font-black">SUU Fuel Map v2.6.2</h2>
             <p className="text-sm font-medium text-sky-100 mt-1">
-              Introducing Active Wildfire Hazards, real-time live METAR wind vectors, and offline-first Local Remarks.
+              Introducing Fire & TFR map visualization, flight & night time loggers, E6B & ISA calculators, and new airport reference features.
             </p>
           </div>
           <button 
@@ -52,37 +52,13 @@ export const ReleaseNotesModal: React.FC = () => {
           <ul className="space-y-4">
             
             <li className="flex gap-4">
-              <div className="shrink-0 bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 p-3 rounded-xl h-fit">
+              <div className="shrink-0 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl h-fit">
                 <Flame size={20} className="animate-pulse" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">🔥 Active Wildfire Hazards (NIFC integration)</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">🔥 Active Fire & TFR Map Layers</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Real-time active wildfire perimeter layers fetched directly from the National Interagency Fire Center (NIFC). Displays active burning zones clearly on your interactive briefing map with interactive popup metrics showing incident name, size in acres, and containment percentage.
-                </p>
-              </div>
-            </li>
-
-            <li className="flex gap-4">
-              <div className="shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 p-3 rounded-xl h-fit">
-                <Wind size={20} />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Enhanced Wind Vector Overlay</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  We have replaced basic flight category labels on the map pins with premium METAR wind indices. Instantly read reporting wind direction vector arrows, speed, and severe wind gust cautions.
-                </p>
-              </div>
-            </li>
-
-            <li className="flex gap-4">
-              <div className="shrink-0 bg-slate-100 dark:bg-slate-850 text-slate-700 dark:text-slate-300 p-3 rounded-xl h-fit">
-                <Database size={20} />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Local Remarks Database (Form 5010)</h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Fast offline-first runway, hazard, and airport remarks database. Flight notes load instantly with standard robust formatting without any loading delays.
+                  Toggle real-time National Interagency Fire Center (NIFC) active wildfire boundaries and FAA Temporary Flight Restrictions (TFRs) directly on the map.
                 </p>
               </div>
             </li>
@@ -92,9 +68,45 @@ export const ReleaseNotesModal: React.FC = () => {
                 <Clock size={20} />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">Flight Time & Night Calculator</h3>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">🕒 Flight Time & Night Calculator</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Calculate twilight cycles, loggable night periods, and student hour distributions directly in the briefing view.
+                  Easily calculate precise flight times, day/night distributions, and twilight sequences directly from the briefing tools menu.
+                </p>
+              </div>
+            </li>
+
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 p-3 rounded-xl h-fit">
+                <Calculator size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">✈️ E6B Flight Computer Integration</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Perform critical wind components, heading corrections, GS/TAS calculations, and standard navigation formulas inside the application.
+                </p>
+              </div>
+            </li>
+
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 p-3 rounded-xl h-fit">
+                <ThermometerSun size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">🌡️ ISA Deviation Calculator</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Determine atmospheric temperature differences from the International Standard Atmosphere (ISA) to evaluate aircraft performance accurately.
+                </p>
+              </div>
+            </li>
+
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 p-3 rounded-xl h-fit">
+                <Info size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">ℹ️ Airport Cheat Sheet (Work In Progress)</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-semibold">
+                  We are actively building out the Airport Cheat Sheet reference. Note that figures may currently be inaccurate or incomplete. <span className="text-red-600 dark:text-red-400 font-bold">NEVER use these cheat sheets for real-world navigation yet!</span>
                 </p>
               </div>
             </li>

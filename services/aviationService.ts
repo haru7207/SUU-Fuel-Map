@@ -861,28 +861,89 @@ export const fetchLiveFuelPricesWithGemini = async (airports: string[], forceRef
 // URL for NIFC WFIGS Interagency Perimeters (Current)
 const NIFC_WFIGS_PERIMETERS_URL = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query';
 
+// URL for NIFC WFIGS Incident Locations (Current Point Locations)
+const NIFC_WFIGS_LOCATIONS_URL = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query';
+
 /**
- * Fetch current active wildfire perimeters from NIFC Open Data API
- * @returns GeoJSON Object of fire perimeters
+ * Fetch current active wildfires from NIFC Open Data API
+ * Includes both mapping perimeters (polygons) and point locations (for newly discovered/small fires)
+ * @returns GeoJSON FeatureCollection of fires
  */
 export const fetchActiveWildfires = async (): Promise<any> => {
     try {
-        const url = new URL(NIFC_WFIGS_PERIMETERS_URL);
-        url.searchParams.append('where', "1=1");
-        // poly_IncidentName, poly_Acres_AutoCalc, PercentContained are common in the newer WFIGS perimeters endpoint
-        url.searchParams.append('outFields', 'poly_IncidentName,poly_Acres_AutoCalc,PercentContained'); 
-        url.searchParams.append('f', 'geojson');
-        url.searchParams.append('returnGeometry', 'true');
+        // Build perimeters URL
+        const perimetersUrl = new URL(NIFC_WFIGS_PERIMETERS_URL);
+        perimetersUrl.searchParams.append('where', "1=1");
+        perimetersUrl.searchParams.append('outFields', 'poly_IncidentName,poly_Acres_AutoCalc,PercentContained'); 
+        perimetersUrl.searchParams.append('f', 'geojson');
+        perimetersUrl.searchParams.append('returnGeometry', 'true');
 
-        const response = await fetch(url.toString(), { cache: 'no-cache' });
-        if (!response.ok) {
-            throw new Error(`Failed to fetch wildfires: ${response.status} ${response.statusText}`);
+        // Build point locations URL (where active)
+        const locationsUrl = new URL(NIFC_WFIGS_LOCATIONS_URL);
+        locationsUrl.searchParams.append('where', "ActiveFireCandidate=1");
+        locationsUrl.searchParams.append('outFields', 'IncidentName,IncidentSize,PercentContained,FireDiscoveryDateTime,POOJurisdictionalUnit,POOState,POOCounty,IncidentTypeCategory,POOLandownerCategory,POOLandownerKind'); 
+        locationsUrl.searchParams.append('outSR', '4326');
+        locationsUrl.searchParams.append('f', 'geojson');
+        locationsUrl.searchParams.append('returnGeometry', 'true');
+
+        const [pResponse, lResponse] = await Promise.all([
+            fetch(perimetersUrl.toString(), { cache: 'no-cache' }).catch(e => {
+                console.error("Failed to fetch perimeters", e);
+                return null;
+            }),
+            fetch(locationsUrl.toString(), { cache: 'no-cache' }).catch(e => {
+                console.error("Failed to fetch locations", e);
+                return null;
+            })
+        ]);
+
+        let perimeterFeatures: any[] = [];
+        let locationFeatures: any[] = [];
+
+        if (pResponse && pResponse.ok) {
+            const data = await pResponse.json();
+            if (data && Array.isArray(data.features)) {
+                perimeterFeatures = data.features;
+            }
         }
-        
-        return await response.json();
+        if (lResponse && lResponse.ok) {
+            const data = await lResponse.json();
+            if (data && Array.isArray(data.features)) {
+                locationFeatures = data.features;
+            }
+        }
+
+        // Combine features, normalizing properties
+        const mergedFeatures = [
+            ...perimeterFeatures.map(f => ({
+                ...f,
+                properties: {
+                    ...f.properties,
+                    isPoint: false,
+                    IncidentName: f.properties.poly_IncidentName || 'Unnamed Fire',
+                    IncidentSize: f.properties.poly_Acres_AutoCalc || 0,
+                    PercentContained: f.properties.PercentContained !== undefined ? f.properties.PercentContained : null
+                }
+            })),
+            ...locationFeatures.map(f => ({
+                ...f,
+                properties: {
+                    ...f.properties,
+                    isPoint: true,
+                    IncidentName: f.properties.IncidentName || f.properties.poly_IncidentName || 'Unnamed Fire',
+                    IncidentSize: f.properties.IncidentSize || f.properties.DailyAcres || f.properties.poly_Acres_AutoCalc || 0,
+                    PercentContained: f.properties.PercentContained !== undefined ? f.properties.PercentContained : null
+                }
+            }))
+        ];
+
+        return {
+            type: "FeatureCollection",
+            features: mergedFeatures
+        };
     } catch (err) {
         console.error('Error fetching NIFC wildfires:', err);
-        return null;
+        return { type: "FeatureCollection", features: [] };
     }
 };
 
