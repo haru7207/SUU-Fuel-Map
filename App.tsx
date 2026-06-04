@@ -17,7 +17,7 @@ import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame, ShieldAlert } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
@@ -87,35 +87,39 @@ const App: React.FC = () => {
     weatherOverlay: boolean;
     notamWarnings: boolean;
     wildfires: boolean;
+    tfrs: boolean;
   }>(() => {
     try {
-      const saved = localStorage.getItem('suu_map_layers_v3');
+      const saved = localStorage.getItem('suu_map_layers_v4');
       return saved ? JSON.parse(saved) : {
         fuelPrices: false,
         weatherOverlay: false,
         notamWarnings: false,
-        wildfires: false
+        wildfires: false,
+        tfrs: false
       };
     } catch {
       return {
         fuelPrices: false,
         weatherOverlay: false,
         notamWarnings: false,
-        wildfires: false
+        wildfires: false,
+        tfrs: false
       };
     }
   });
 
   useEffect(() => {
-    localStorage.setItem('suu_map_layers_v3', JSON.stringify(mapLayers));
+    localStorage.setItem('suu_map_layers_v4', JSON.stringify(mapLayers));
   }, [mapLayers]);
 
-  const toggleMapLayer = (layerKey: 'fuelPrices' | 'weatherOverlay' | 'notamWarnings' | 'wildfires') => {
+  const toggleMapLayer = (layerKey: 'fuelPrices' | 'weatherOverlay' | 'notamWarnings' | 'wildfires' | 'tfrs') => {
     setMapLayers(prev => ({
       ...prev,
       [layerKey]: !prev[layerKey]
     }));
   };
+
 
 
   // Theme Effect
@@ -618,6 +622,25 @@ const App: React.FC = () => {
                         className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
                         checked={mapLayers.wildfires}
                         onChange={() => toggleMapLayer('wildfires')}
+                      />
+                    </label>
+                  </div>
+
+                  {/* Layer option: TFR Hazards */}
+                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                    <label className="flex items-center justify-between cursor-pointer group select-none">
+                      <div className="flex items-center gap-2">
+                        <ShieldAlert size={14} className="text-rose-600" />
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">🚫 TFRs (Airspace)</span>
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500">FAA Temporary Restrictions</span>
+                        </div>
+                      </div>
+                      <input 
+                        type="checkbox" 
+                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                        checked={mapLayers.tfrs}
+                        onChange={() => toggleMapLayer('tfrs')}
                       />
                     </label>
                   </div>

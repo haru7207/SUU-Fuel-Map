@@ -885,3 +885,161 @@ export const fetchActiveWildfires = async (): Promise<any> => {
         return null;
     }
 };
+
+// Convert a center point [lng, lat] to a 3 nautical mile circular polygon
+const getCircularPolygon = (lng: number, lat: number, radiusMeters = 5556, numPoints = 16) => {
+    const coords: [number, number][] = [];
+    const earthRadius = 6378137; // Earth's average radius in meters
+    const latRad = lat * Math.PI / 180;
+    const d_div_r = radiusMeters / earthRadius;
+
+    for (let i = 0; i <= numPoints; i++) {
+        const bearing = (i * 360 / numPoints) * Math.PI / 180;
+        
+        const destLatRad = Math.asin(
+            Math.sin(latRad) * Math.cos(d_div_r) +
+            Math.cos(latRad) * Math.sin(d_div_r) * Math.cos(bearing)
+        );
+        const destLngRad = (lng * Math.PI / 180) + Math.atan2(
+            Math.sin(bearing) * Math.sin(d_div_r) * Math.cos(latRad),
+            Math.cos(d_div_r) - Math.sin(latRad) * Math.sin(destLatRad)
+        );
+        
+        const destLat = destLatRad * 180 / Math.PI;
+        const destLng = destLngRad * 180 / Math.PI;
+        coords.push([destLng, destLat]);
+    }
+
+    return {
+        type: "Polygon",
+        coordinates: [coords]
+    };
+};
+
+/**
+ * Fetch current Temporary Flight Restrictions (TFRs) from the official FAA ArcGIS REST API.
+ * Combines multiple flight restriction layers (National Defense TFRs, Prohibited Areas, Stadium Airspace 3NM Circles, and UAS Flight Restrictions).
+ * Uses only the official FAA ArcGIS API.
+ * @returns GeoJSON Object of restriction areas
+ */
+export const fetchActiveTfrs = async (): Promise<any> => {
+    const endpoints = {
+        nda: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/ArcGIS/rest/services/National_Defense_Airspace_TFR_Areas/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&returnGeometry=true',
+        prohibited: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/ArcGIS/rest/services/Prohibited_Areas/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&returnGeometry=true',
+        stadiums: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/ArcGIS/rest/services/Stadiums/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&returnGeometry=true',
+        uas: 'https://services6.arcgis.com/ssFJjBXIUyZDrSYZ/ArcGIS/rest/services/Part_Time_National_Security_UAS_Flight_Restrictions/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson&returnGeometry=true'
+    };
+
+    const finalFeatures: any[] = [];
+
+    try {
+        const fetchPromises = Object.entries(endpoints).map(async ([key, url]) => {
+            try {
+                const response = await fetch(url, { cache: 'no-cache' });
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch ${key}: ${response.status} ${response.statusText}`);
+                }
+                const data: any = await response.json();
+                return { key, data };
+            } catch (err) {
+                console.error(`Error querying ${key} layer:`, err);
+                return { key, data: { type: 'FeatureCollection', features: [] } };
+            }
+        });
+
+        const results = await Promise.all(fetchPromises);
+
+        for (const { key, data } of results) {
+            if (data && Array.isArray(data.features)) {
+                for (const feature of data.features) {
+                    const props = feature.properties || {};
+                    
+                    if (key === 'stadiums') {
+                        const pCoords = feature.geometry?.coordinates;
+                        if (pCoords && pCoords.length === 2) {
+                            const lng = pCoords[0];
+                            const lat = pCoords[1];
+                            const polyGeo = getCircularPolygon(lng, lat, 5556, 16); // 3 NM radius circle
+                            
+                            finalFeatures.push({
+                                type: "Feature",
+                                geometry: polyGeo,
+                                properties: {
+                                    NOTAM: 'FDC NOTAM 9/5151',
+                                    notam: 'FDC NOTAM 9/5151',
+                                    NAME: `${props.NAME || 'Stadium'} Restriction`,
+                                    TYPE: 'Stadium Restrict',
+                                    LOCAL_TYPE: 'STADIUM_TFR',
+                                    CITY: props.CITY,
+                                    STATE: props.STATE,
+                                    AMSL_LWR: 0,
+                                    AMSL_UPR: 3000,
+                                    TFR_DESC: `FDC NOTAM 9/5151 flight restriction: 3 nautical mile radius from the surface up to and including 3,000 feet AGL during major stadium sporting events.`
+                                }
+                            });
+                        }
+                    } else if (key === 'nda') {
+                        finalFeatures.push({
+                            type: "Feature",
+                            geometry: feature.geometry,
+                            properties: {
+                                NOTAM: props.NOTAM_NUM || props.NOTAM || 'NDA TFR',
+                                notam: props.NOTAM_NUM || props.NOTAM || 'NDA TFR',
+                                NAME: props.NAME || 'National Defense TFR',
+                                TYPE: 'National Defense',
+                                LOCAL_TYPE: 'NDA_TFR',
+                                CITY: props.CITY,
+                                STATE: props.STATE,
+                                AMSL_LWR: props.AMSL_LWR !== undefined ? props.AMSL_LWR : 0,
+                                AMSL_UPR: props.AMSL_UPR !== undefined ? props.AMSL_UPR : 'Unlimited',
+                                TFR_DESC: props.WKHR_RMK || props.REMARKS || 'National Security / Airspace Restricted'
+                            }
+                        });
+                    } else if (key === 'prohibited') {
+                        finalFeatures.push({
+                            type: "Feature",
+                            geometry: feature.geometry,
+                            properties: {
+                                NOTAM: props.NAME || 'Prohibited Area',
+                                notam: props.NAME || 'Prohibited Area',
+                                NAME: `Prohibited Area ${props.NAME || ''}`,
+                                TYPE: 'Prohibited Area',
+                                LOCAL_TYPE: 'PROHIBITED',
+                                CITY: props.CITY,
+                                STATE: props.STATE,
+                                AMSL_LWR: props.LOWER_VAL !== undefined ? props.LOWER_VAL : 0,
+                                AMSL_UPR: props.UPPER_VAL !== undefined ? props.UPPER_VAL : 'Unlimited',
+                                TFR_DESC: `Permanent Prohibited Airspace (${props.NAME || ''}). Times of Use: ${props.TIMESOFUSE || 'Continuous'}. Remarks: ${props.REMARKS || 'Flight is completely prohibited.'}`
+                            }
+                        });
+                    } else if (key === 'uas') {
+                        finalFeatures.push({
+                            type: "Feature",
+                            geometry: feature.geometry,
+                            properties: {
+                                NOTAM: props.FAA_ID || 'UAS Restriction',
+                                notam: props.FAA_ID || 'UAS Restriction',
+                                NAME: props.Base || props.Facility || 'UAS Flight Restriction',
+                                TYPE: 'UAS Restriction',
+                                LOCAL_TYPE: 'UAS_TFR',
+                                CITY: props.County,
+                                STATE: props.State,
+                                AMSL_LWR: props.Floor !== undefined ? props.Floor : 0,
+                                AMSL_UPR: props.Ceiling !== undefined ? props.Ceiling : 400,
+                                TFR_DESC: `UAS Flight Restriction: ${props.Reason || 'National Security'}. Active hours: ${props.ALERTYPE || 'Intermittent'}`
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Error fetching combined FAA restrictions:', err);
+    }
+
+    return {
+        type: 'FeatureCollection',
+        features: finalFeatures
+    };
+};
+

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, LayersControl, Polygon, LayerGroup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import { Airport, CardType, Airmet, WeatherData, NotamData } from '../types';
-import { fetchAirmets, fetchActiveWildfires } from '../services/aviationService';
+import { fetchAirmets, fetchActiveWildfires, fetchActiveTfrs } from '../services/aviationService';
 import { CloudFog, Wind, Snowflake, AlertTriangle, Navigation } from 'lucide-react';
 
 // Fix for default Leaflet markers in React
@@ -253,6 +253,7 @@ interface MapProps {
     weatherOverlay: boolean;
     notamWarnings: boolean;
     wildfires: boolean;
+    tfrs: boolean;
   };
 }
 
@@ -306,12 +307,15 @@ const Map: React.FC<MapProps> = ({
   showAirmet, 
   weatherMap,
   notamMap = {},
-  mapLayers = { fuelPrices: false, weatherOverlay: false, notamWarnings: false, wildfires: false }
+  mapLayers = { fuelPrices: false, weatherOverlay: false, notamWarnings: false, wildfires: false, tfrs: false }
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [airmets, setAirmets] = useState<Airmet[]>([]);
   const [wildfiresGeoJson, setWildfiresGeoJson] = useState<any>(null);
   const [isFetchingWildfires, setIsFetchingWildfires] = useState(false);
+  const [tfrGeoJson, setTfrGeoJson] = useState<any>(null);
+  const [isFetchingTfrs, setIsFetchingTfrs] = useState(false);
+  const [tfrsError, setTfrsError] = useState<string | null>(null);
   
   // GPS Tracking State
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number, heading: number | null} | null>(null);
@@ -339,6 +343,29 @@ const Map: React.FC<MapProps> = ({
       });
     }
   }, [mapLayers.wildfires, wildfiresGeoJson, isFetchingWildfires]);
+
+  // Fetch TFRs when layer is enabled
+  useEffect(() => {
+    if (mapLayers.tfrs && !tfrGeoJson && !isFetchingTfrs) {
+      setIsFetchingTfrs(true);
+      setTfrsError(null);
+      fetchActiveTfrs().then(data => {
+        if (data && isValidGeoJSON(data)) {
+          setTfrGeoJson(data);
+        } else {
+          console.warn("Invalid TFR GeoJSON returned from FAA server:", data);
+          setTfrGeoJson({ type: "FeatureCollection", features: [] });
+          setTfrsError("Airspace data is currently unavailable");
+        }
+      }).catch(err => {
+        console.error("Failed to load active TFR perimeters", err);
+        setTfrGeoJson({ type: "FeatureCollection", features: [] });
+        setTfrsError("Airspace data is currently unavailable");
+      }).finally(() => {
+        setIsFetchingTfrs(false);
+      });
+    }
+  }, [mapLayers.tfrs, tfrGeoJson, isFetchingTfrs]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -423,15 +450,31 @@ const Map: React.FC<MapProps> = ({
     <div className="relative h-full w-full group">
       
       {/* Top Center Loading Indicators */}
-      {isFetchingWildfires && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white/90 dark:bg-slate-900/90 backdrop-blur border border-orange-500/50 shadow-lg dark:shadow-orange-900/20 text-orange-600 dark:text-orange-400 py-1.5 px-4 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse">
-           <svg className="animate-spin h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-           </svg>
-           Fetching hazards...
-        </div>
-      )}
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] flex flex-col items-center gap-1.5 pointer-events-none">
+        {isFetchingWildfires && (
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-orange-500/50 shadow-lg dark:shadow-orange-900/20 text-orange-600 dark:text-orange-400 py-1 px-3.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 animate-pulse">
+             <svg className="animate-spin h-3.5 w-3.5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+             </svg>
+             Fetching hazards...
+          </div>
+        )}
+        {isFetchingTfrs && (
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-rose-500/50 shadow-lg dark:shadow-rose-900/20 text-rose-600 dark:text-rose-400 py-1 px-3.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 animate-pulse">
+             <svg className="animate-spin h-3.5 w-3.5 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+             </svg>
+             Fetching TFRs...
+          </div>
+        )}
+        {tfrsError && mapLayers.tfrs && (
+          <div className="bg-red-50 dark:bg-red-950/95 border border-red-200 dark:border-red-900/60 shadow-md text-red-600 dark:text-red-400 py-1.5 px-3.5 rounded-md text-[10px] font-bold flex items-center gap-1 pointer-events-auto">
+             <span className="text-[12px]">⚠️</span> {tfrsError}
+          </div>
+        )}
+      </div>
 
       {/* GPS Tracking Button */}
       <div className="absolute top-4 left-14 md:top-auto md:left-auto md:bottom-6 md:right-4 z-[1000]">
@@ -624,6 +667,71 @@ const Map: React.FC<MapProps> = ({
                     <div style="font-size: 12px; color: #475569; line-height: 1.5;">
                       <div><strong style="color: #0f172a;">Size:</strong> ${acres} Acres</div>
                       <div><strong style="color: #0f172a;">Contained:</strong> ${contained}</div>
+                    </div>
+                  </div>
+                `);
+              }
+            }}
+          />
+        )}
+
+        {/* FAA TFR Hazards GeoJSON Layer */}
+        {mapLayers.tfrs && tfrGeoJson && isValidGeoJSON(tfrGeoJson) && (
+          <GeoJSON 
+            key={tfrGeoJson.features?.length || Date.now()}
+            data={tfrGeoJson}
+            style={{
+              color: '#dc2626', // Solid red outline
+              weight: 3,
+              opacity: 0.95,
+              fillColor: '#f59e0b', // Amber/orange semi-transparent fill
+              fillOpacity: 0.35,
+              dashArray: '3, 6' // Distinct dash pattern for airspace boundaries
+            }}
+            onEachFeature={(feature, layer) => {
+              if (feature.properties) {
+                const props = feature.properties;
+                const notam = props.NOTAM || props.notam || props.NotamNumber || props.NotamID || props.notam_num || props.notamNumber || (props.NAME ? props.NAME.replace(" NATIONAL DEFENSE AIRSPACE TFR", "") : '') || 'NDA TFR';
+                const type = props.TYPE || props.Type || props.tfr_type || props.NOTAM_TYPE || props.tfrType || props.LOCAL_TYPE || 'Airspace Restriction';
+                
+                // Handle altitudes with robust fallbacks
+                let altitudesStr = 'Surface to Unlimited';
+                const low = props.AMSL_LWR !== undefined ? props.AMSL_LWR : (props.LOW_ALT !== undefined ? props.LOW_ALT : (props.BASE_ALT !== undefined ? props.BASE_ALT : '0'));
+                const high = props.AMSL_UPR !== undefined ? props.AMSL_UPR : (props.HI_ALT !== undefined ? props.HI_ALT : (props.TOP_ALT !== undefined ? props.TOP_ALT : 'Unlimited'));
+                
+                if (low !== '0' || high !== 'Unlimited') {
+                  const formatAltitude = (val: any) => {
+                    const num = Number(val);
+                    return isNaN(num) ? val : `${num.toLocaleString()} ft MSL`;
+                  };
+                  altitudesStr = `${formatAltitude(low)} to ${formatAltitude(high)}`;
+                }
+                
+                const desc = props.TFR_DESC || props.Description || props.description || props.remarks || props.NAME || '';
+                const locationStr = props.CITY ? `${props.CITY}, ${props.STATE || ''}` : (props.STATE || '');
+                
+                // Formulate target FAA TFR page link
+                let linkUrl = 'https://tfr.faa.gov/';
+                if (notam && notam !== 'Unknown NOTAM' && notam !== 'NDA TFR') {
+                  const sanitizedNotam = notam.replace('/', '_').trim();
+                  linkUrl = `https://tfr.faa.gov/save_pages/detail_${sanitizedNotam}.html`;
+                }
+                
+                layer.bindPopup(`
+                  <div style="font-family: inherit; width: 220px; padding: 4px;">
+                    <div style="font-weight: 800; color: #dc2626; font-size: 13px; margin-bottom: 6px; letter-spacing: -0.2px; display: flex; align-items: center; gap: 4px;">
+                      🚫 TFR Area (${notam})
+                    </div>
+                    <div style="font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 8px;">
+                      <div><strong style="color: #0f172a;">Type:</strong> ${type}</div>
+                      <div><strong style="color: #0f172a;">Altitudes:</strong> ${altitudesStr}</div>
+                      ${locationStr ? `<div><strong style="color: #0f172a;">Location:</strong> ${locationStr}</div>` : ''}
+                      ${desc ? `<div style="margin-top: 4px; font-style: italic; font-size: 10px; max-height: 50px; overflow-y: auto; color: #64748b; background-color: #f8fafc; padding: 4px; border-radius: 4px; border: 1px solid #f1f5f9;">"${desc}"</div>` : ''}
+                    </div>
+                    <div style="border-top: 1px solid #f1f5f9; padding-top: 6px; text-align: center;">
+                      <a href="${linkUrl}" target="_blank" rel="noopener noreferrer" style="color: #2563eb; font-weight: 700; text-decoration: underline; font-size: 10px; display: inline-block;">
+                        Official FAA TFR Portal →
+                      </a>
                     </div>
                   </div>
                 `);
