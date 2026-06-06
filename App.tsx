@@ -19,10 +19,18 @@ import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame, ShieldAlert } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
+import LiveFleetTracker from './components/LiveFleetTracker';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 
 const App: React.FC = () => {
-  const [airports, setAirports] = useState<Airport[]>(AIRPORT_DATABASE);
+  const [airports, setAirports] = useState<Airport[]>(() => {
+    try {
+      const saved = localStorage.getItem('suu_cached_airports');
+      return saved ? JSON.parse(saved) : AIRPORT_DATABASE;
+    } catch {
+      return AIRPORT_DATABASE;
+    }
+  });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -47,10 +55,43 @@ const App: React.FC = () => {
   const [showAirmet, setShowAirmet] = useState(false);
 
   // Weather State
-  const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>({});
+  const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>(() => {
+    try {
+      const saved = localStorage.getItem('suu_cached_weather');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   
   // NOTAM State
-  const [notamMap, setNotamMap] = useState<Record<string, NotamData>>({});
+  const [notamMap, setNotamMap] = useState<Record<string, NotamData>>(() => {
+    try {
+      const saved = localStorage.getItem('suu_cached_notams');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Cache persistence effects
+  useEffect(() => {
+    if (airports && airports.length > 0) {
+      localStorage.setItem('suu_cached_airports', JSON.stringify(airports));
+    }
+  }, [airports]);
+
+  useEffect(() => {
+    if (weatherMap && Object.keys(weatherMap).length > 0) {
+      localStorage.setItem('suu_cached_weather', JSON.stringify(weatherMap));
+    }
+  }, [weatherMap]);
+
+  useEffect(() => {
+    if (notamMap && Object.keys(notamMap).length > 0) {
+      localStorage.setItem('suu_cached_notams', JSON.stringify(notamMap));
+    }
+  }, [notamMap]);
 
   // Fuel Log State
   const [isFuelLogOpen, setIsFuelLogOpen] = useState(false);
@@ -64,6 +105,8 @@ const App: React.FC = () => {
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [isVORCheckOpen, setIsVORCheckOpen] = useState(false);
   const [isE6BOpen, setIsE6BOpen] = useState(false);
+  const [isFleetTrackerOpen, setIsFleetTrackerOpen] = useState(false);
+  const [trackedAircraft, setTrackedAircraft] = useState<any | null>(null);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
 
@@ -160,7 +203,13 @@ const App: React.FC = () => {
         const loadData = async () => {
             if (!navigator.onLine) return;
             
-            let currentAirports = [...AIRPORT_DATABASE];
+            let currentAirports = [];
+            try {
+                const saved = localStorage.getItem('suu_cached_airports');
+                currentAirports = saved ? JSON.parse(saved) : [...AIRPORT_DATABASE];
+            } catch {
+                currentAirports = [...AIRPORT_DATABASE];
+            }
             
             try {
                 console.log("Fetching live fuel map data...");
@@ -391,6 +440,19 @@ const App: React.FC = () => {
 
   const selectedAirport = airports.find(a => a.id === selectedId);
 
+  const isAnyCfiToolOpen = isFlightTimeOpen || 
+    isPivotalAltOpen || 
+    isNightTimeOpen || 
+    isHoldingOpen || 
+    isVaOpen || 
+    isIsaOpen || 
+    isWindOpen || 
+    isCheatSheetOpen || 
+    isVORCheckOpen || 
+    isE6BOpen || 
+    isFleetTrackerOpen ||
+    (isMobile && isInstructorToolsMenuOpen);
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-900">
       
@@ -468,6 +530,7 @@ const App: React.FC = () => {
             notamMap={notamMap}
             mapLayers={mapLayers}
             baseMapType={baseMapType}
+            trackedAircraft={trackedAircraft}
           />
         </div>
 
@@ -477,7 +540,7 @@ const App: React.FC = () => {
           isOnline={isOnline} 
           isOpen={isFuelLogOpen}
           setIsOpen={setIsFuelLogOpen}
-          isHidden={isMobile && (!!selectedId || isSidebarOpen)}
+          isHidden={isAnyCfiToolOpen || (isMobile && (!!selectedId || isSidebarOpen))}
           onOpenFlightTime={() => setIsFlightTimeOpen(true)}
           isFlightTimeOpen={isFlightTimeOpen}
           airports={airports}
@@ -533,6 +596,12 @@ const App: React.FC = () => {
         <E6BCalculator
           isOpen={isE6BOpen}
           onClose={() => setIsE6BOpen(false)}
+        />
+
+        <LiveFleetTracker
+          isOpen={isFleetTrackerOpen}
+          onClose={() => setIsFleetTrackerOpen(false)}
+          onTrackFlight={(aircraft) => { setTrackedAircraft(aircraft); }}
         />
 
         {/* Toolbar */}
@@ -693,8 +762,8 @@ const App: React.FC = () => {
                   <span>CFI Tools</span>
                 </button>
 
-                {isInstructorToolsMenuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1050] origin-top-right">
+                {!isMobile && isInstructorToolsMenuOpen && (
+                  <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] sm:w-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1050] origin-top-right">
                     
                     {/* Header */}
                     <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
@@ -707,7 +776,7 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="p-3 grid grid-cols-2 gap-x-4 gap-y-2 max-h-[65vh] overflow-y-auto custom-scrollbar">
+                    <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
                       
                       {/* Column 1 */}
                       <div className="space-y-4">
@@ -879,6 +948,26 @@ const App: React.FC = () => {
                             <div className="bg-indigo-100 dark:bg-indigo-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
                             Pivotal Altitude
                           </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsFleetTrackerOpen(true);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-emerald-100 dark:bg-emerald-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><AlertTriangle size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
+                            Live Fleet Tracker
+                          </button>
                         </div>
 
                         {/* Preflight & Ref */}
@@ -955,6 +1044,300 @@ const App: React.FC = () => {
                       notamMap={notamMap}
                   />
               </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Mobile CFI Tools Bottom Sheet */}
+        <AnimatePresence>
+          {isMobile && isInstructorToolsMenuOpen && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                key="cfi-modal-backdrop"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsInstructorToolsMenuOpen(false)}
+                className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[1200]"
+              />
+
+              {/* Drawer Container */}
+              <motion.div
+                key="cfi-modal-drawer"
+                initial={{ y: '100%' }}
+                animate={{ y: 0 }}
+                exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+                className="fixed bottom-0 inset-x-0 bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl border-t border-slate-200 dark:border-slate-700 z-[1210] overflow-hidden flex flex-col max-h-[85vh] select-none"
+              >
+                {/* Drag Handle Indicator */}
+                <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto my-3 shrink-0" />
+
+                {/* Header */}
+                <div className="px-5 pb-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 dark:bg-blue-900/40 p-2.5 rounded-xl text-blue-600 dark:text-blue-400">
+                      <Briefcase size={20} />
+                    </div>
+                    <div>
+                      <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">CFI Digital Toolkit</h2>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">Quick reference tools for instructors</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsInstructorToolsMenuOpen(false)}
+                    aria-label="Close Toolkit"
+                    className="p-2 -mr-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-5 pb-8 space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    
+                    {/* Time & Logs */}
+                    <div className="space-y-2">
+                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Time & Logs</div>
+                      <div className="space-y-1.5">
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(true);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-blue-100 dark:bg-blue-600/20 p-1.5 rounded-lg shrink-0"><Clock size={16} className="text-blue-600 dark:text-blue-400" /></div>
+                          <span>Flight Time Calc</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(true);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-purple-100 dark:bg-purple-600/20 p-1.5 rounded-lg shrink-0"><Moon size={16} className="text-purple-600 dark:text-purple-400" /></div>
+                          <span>Night Time Calc</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(true);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-cyan-100 dark:bg-cyan-600/20 p-1.5 rounded-lg shrink-0"><Radio size={16} className="text-cyan-600 dark:text-cyan-400" /></div>
+                          <span>VOR Receiver Check</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Performance & Weather */}
+                    <div className="space-y-2">
+                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Performance & WX</div>
+                      <div className="space-y-1.5">
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(true);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-emerald-100 dark:bg-emerald-600/20 p-1.5 rounded-lg shrink-0"><Plane size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
+                          <span>SR20 Maneuvering Speed</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(true);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-orange-100 dark:bg-orange-600/20 p-1.5 rounded-lg shrink-0"><ThermometerSun size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                          <span>ISA Dev & Atmosphere</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(true);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-sky-100 dark:bg-sky-600/20 p-1.5 rounded-lg shrink-0"><Wind size={16} className="text-sky-600 dark:text-sky-400" /></div>
+                          <span>Wind Components</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="space-y-2">
+                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Navigation</div>
+                      <div className="space-y-1.5">
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(true);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-rose-100 dark:bg-rose-600/20 p-1.5 rounded-lg shrink-0"><Compass size={16} className="text-rose-600 dark:text-rose-400" /></div>
+                          <span>Holding Pattern Entry</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(true);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-955/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-indigo-100 dark:bg-indigo-600/20 p-1.5 rounded-lg shrink-0"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
+                          <span>Pivotal Altitude</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsFleetTrackerOpen(true);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-emerald-100 dark:bg-emerald-600/20 p-1.5 rounded-lg shrink-0"><AlertTriangle size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
+                          <span>Live Fleet Tracker</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Preflight & Ref */}
+                    <div className="space-y-2">
+                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Preflight & Ref</div>
+                      <div className="space-y-1.5">
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(true);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-amber-100 dark:bg-amber-600/20 p-1.5 rounded-lg shrink-0"><Calculator size={16} className="text-amber-600 dark:text-amber-400" /></div>
+                          <span>E6B Flight Computer</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(true);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-teal-100 dark:bg-teal-600/20 p-1.5 rounded-lg shrink-0"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
+                          <span>Airport Cheat Sheet</span>
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
 

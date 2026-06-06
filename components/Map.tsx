@@ -256,7 +256,19 @@ interface MapProps {
     tfrs: boolean;
   };
   baseMapType?: 'roadmap' | 'hybrid' | 'satellite' | 'terrain';
+  trackedAircraft?: any | null;
 }
+
+// Helper to center on tracked aircraft
+const AircraftTracker: React.FC<{ aircraft: any | null }> = ({ aircraft }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (aircraft && aircraft.latitude && aircraft.longitude) {
+      map.flyTo([aircraft.latitude, aircraft.longitude], 12, { animate: true, duration: 1.5 });
+    }
+  }, [aircraft, map]);
+  return null;
+};
 
 // Helper to fit bounds to selected airport
 const MapUpdater: React.FC<{ selectedAirport: Airport | undefined }> = ({ selectedAirport }) => {
@@ -309,7 +321,8 @@ const Map: React.FC<MapProps> = ({
   weatherMap,
   notamMap = {},
   mapLayers = { fuelPrices: false, weatherOverlay: false, notamWarnings: false, wildfires: false, tfrs: false },
-  baseMapType = 'roadmap'
+  baseMapType = 'roadmap',
+  trackedAircraft = null
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [airmets, setAirmets] = useState<Airmet[]>([]);
@@ -927,8 +940,36 @@ const Map: React.FC<MapProps> = ({
           </Marker>
         )}
 
+        {/* Tracker Marker */}
+        {trackedAircraft && trackedAircraft.latitude && trackedAircraft.longitude && (
+          <Marker 
+            position={[trackedAircraft.latitude, trackedAircraft.longitude]}
+            icon={L.divIcon({
+              className: 'custom-tracker-icon',
+              html: `<div style="background-color: #059669; color: white; border: 2px solid white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);">✈️</div>`,
+              iconSize: [24, 24],
+              iconAnchor: [12, 12],
+              popupAnchor: [0, -12],
+            })}
+            zIndexOffset={3000}
+          >
+            <Popup>
+              <div className="p-1 min-w-[140px]">
+                <h3 className="font-extrabold text-sm mb-1 text-slate-800">{trackedAircraft.tailNumber}</h3>
+                <p className="text-xs font-medium text-emerald-600 mb-2">{trackedAircraft.aircraftType}</p>
+                <div className="text-xs text-slate-600 space-y-1">
+                  <div><strong>Alt:</strong> {Math.round(trackedAircraft.baroAltitude).toLocaleString()} ft</div>
+                  <div><strong>Spd:</strong> {Math.round(trackedAircraft.velocity)} kts</div>
+                  <div><strong>Hdg:</strong> {Math.round(trackedAircraft.trueTrack)}°</div>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
         <MapUpdater selectedAirport={selectedAirport} />
         <CenterOnLocation location={userLocation} trigger={centerTrigger} />
+        <AircraftTracker aircraft={trackedAircraft} />
       </MapContainer>
     </div>
   );

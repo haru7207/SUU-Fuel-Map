@@ -14,11 +14,13 @@ const FUEL_DATA_API_URL = 'https://script.google.com/macros/s/AKfycbwLYchReDkCKV
  * Robust Fetcher that tries Direct connection first, then falls back to multiple Proxies.
  * Validates that the response is JSON if requireJson is true.
  */
-const fetchSafe = async (url: string, requireJson: boolean = false): Promise<Response> => {
+export const fetchSafe = async (url: string, requireJson: boolean = false, skipCacheBuster: boolean = false): Promise<Response> => {
   // Add unique cache buster to URL directly to avoid Cache-Control headers which trigger Preflight
-  const separator = url.includes('?') ? '&' : '?';
-  const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-  const urlWithCb = `${url}${separator}_cb=${uniqueId}`;
+  const urlWithCb = skipCacheBuster ? url : (() => {
+    const separator = url.includes('?') ? '&' : '?';
+    const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+    return `${url}${separator}_cb=${uniqueId}`;
+  })();
 
   // Helper to validate response content
   const validate = async (res: Response, strategy: string): Promise<Response> => {
