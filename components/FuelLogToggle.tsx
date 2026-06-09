@@ -296,7 +296,7 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
             const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
             
             const response = await ai.models.generateContent({
-                model: 'gemini-3.1-flash-lite-preview',
+                model: 'gemini-3.1-flash-lite',
                 contents: [
                     {
                         inlineData: {
@@ -351,7 +351,7 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
       try {
           const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
           const response = await ai.models.generateContent({
-              model: 'gemini-3.1-flash-lite-preview',
+              model: 'gemini-3.1-flash-lite',
               contents: `Format the following pilot notes to be professional, clear, and concise. Fix any typos. Notes: "${formData.notes}"`
           });
           if (response.text) {
