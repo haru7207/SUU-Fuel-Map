@@ -145,13 +145,26 @@ export const fetchWeather = async (airportId: string): Promise<WeatherData> => {
     let tafText = 'TAF NOT AVAILABLE';
     let category: any = 'UNKNOWN';
     let obsTime: string | undefined;
-    let wind: { direction: number; speed: number; gust: number } | undefined;
+    let wind: { direction: number; speed: number; gust: number; isVrb?: boolean } | undefined;
+    
+    let visibility: string | undefined;
+    let clouds: { cover: string; base: number }[] | undefined;
+    let temperature: number | undefined;
+    let dewpoint: number | undefined;
+    let altimeter: number | undefined;
+    let elevation: number | undefined;
 
     if (metarData && Array.isArray(metarData) && metarData.length > 0) {
       const m = metarData[0];
       metarText = m.rawOb || 'METAR DATA ERROR';
-      category = m.fltcat || 'UNKNOWN';
+      category = m.fltCat || 'UNKNOWN';
       obsTime = m.obsTime; 
+      visibility = m.visib;
+      clouds = m.clouds;
+      temperature = m.temp;
+      dewpoint = m.dewp;
+      altimeter = m.altim;
+      elevation = m.elev;
 
       if (m.wdir !== undefined && m.wspd !== undefined) {
          let dir = m.wdir;
@@ -180,6 +193,12 @@ export const fetchWeather = async (airportId: string): Promise<WeatherData> => {
       flightCategory: category,
       observationTime: obsTime,
       wind: wind,
+      visibility,
+      clouds,
+      temperature,
+      dewpoint,
+      altimeter,
+      elevation,
       lastUpdated: now
     };
 
@@ -261,9 +280,15 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
         weatherMap[id] = {
           metar: m.rawOb || 'METAR DATA ERROR',
           taf: 'TAF NOT FETCHED', // We don't fetch TAF for the map pins to save bandwidth
-          flightCategory: m.fltcat || 'UNKNOWN',
+          flightCategory: m.fltCat || 'UNKNOWN',
           observationTime: m.obsTime,
           wind: wind,
+          visibility: m.visib,
+          clouds: m.clouds,
+          temperature: m.temp,
+          dewpoint: m.dewp,
+          altimeter: m.altim,
+          elevation: m.elev,
           lastUpdated: now
         };
       });

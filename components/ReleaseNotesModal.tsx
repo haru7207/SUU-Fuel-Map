@@ -5,15 +5,15 @@ export const ReleaseNotesModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if the user has already seen the v2.6.2 release notes
-    const hasSeen = localStorage.getItem('saw_release_notes_v2_6_2');
+    // Check if the user has already seen the v2.6.3 release notes
+    const hasSeen = localStorage.getItem('saw_release_notes_v2_6_3');
     if (!hasSeen) {
       setIsOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('saw_release_notes_v2_6_2', 'true');
+    localStorage.setItem('saw_release_notes_v2_6_3', 'true');
     setIsOpen(false);
   };
 
@@ -34,9 +34,9 @@ export const ReleaseNotesModal: React.FC = () => {
               <Sparkles size={16} className="text-amber-300 animate-pulse" />
               <span className="text-xs font-bold uppercase tracking-widest">What's New</span>
             </div>
-            <h2 className="text-2xl font-black">SUU Fuel Map v2.6.2</h2>
+            <h2 className="text-2xl font-black">SUU Fuel Map v2.6.3</h2>
             <p className="text-sm font-medium text-sky-100 mt-1">
-              Introducing Fire & TFR map visualization, flight & night time loggers, E6B & ISA calculators, and new airport reference features.
+              Introducing redesigned Weather information displays, Fire & TFR map visualization, flight & night time loggers, E6B & ISA calculators, and new airport reference features.
             </p>
           </div>
           <button 
@@ -51,6 +51,18 @@ export const ReleaseNotesModal: React.FC = () => {
         <div className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           <ul className="space-y-4">
             
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 p-3 rounded-xl h-fit">
+                <Wind size={20} className="animate-spin-slow" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">🌤️ Redesigned Weather Display</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Enjoy a significantly improved layout for METARs, TAFs, density altitude, and solar/lunar phases on the location details pane.
+                </p>
+              </div>
+            </li>
+
             <li className="flex gap-4">
               <div className="shrink-0 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl h-fit">
                 <Flame size={20} className="animate-pulse" />

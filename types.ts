@@ -56,13 +56,19 @@ export interface WeatherData {
   metar: string;
   taf: string;
   flightCategory: 'VFR' | 'MVFR' | 'IFR' | 'LIFR' | 'UNKNOWN';
-  observationTime?: string;
+  observationTime?: number | string;
   wind?: {
     direction: number;
     speed: number;
     gust: number;
     isVrb?: boolean;
   };
+  visibility?: string;
+  clouds?: { cover: string; base: number }[];
+  temperature?: number;
+  dewpoint?: number;
+  altimeter?: number;
+  elevation?: number;
   lastUpdated: Date;
 }
 

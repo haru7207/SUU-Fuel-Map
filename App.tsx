@@ -438,6 +438,34 @@ const App: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [airports.length]);
 
+  // High-frequency Background Weather Poller for KCDC
+  useEffect(() => {
+    const refreshKCDCWeather = async () => {
+      try {
+        console.log("[Auto-Refresh] Fetching high-frequency update for KCDC weather...");
+        // Use fetchWeather to get both METAR and TAF
+        const { fetchWeather } = await import('./services/aviationService');
+        const kcdcWeather = await fetchWeather('KCDC');
+        if (kcdcWeather && kcdcWeather.metar !== 'METAR NOT AVAILABLE') {
+          setWeatherMap(prev => ({
+            ...prev,
+            'KCDC': kcdcWeather
+          }));
+          console.log("[Auto-Refresh] KCDC full weather updated successfully.");
+        } else {
+          console.log("[Auto-Refresh] KCDC fetch returned NOT AVAILABLE, skipping state update.");
+        }
+      } catch (error) {
+        console.error("[Auto-Refresh] Failed to update KCDC weather:", error);
+      }
+    };
+
+    // Update every 2 minutes for immediate weather board freshness
+    const intervalId = setInterval(refreshKCDCWeather, 2 * 60 * 1000);
+    refreshKCDCWeather(); // Fetch immediately on load
+    return () => clearInterval(intervalId);
+  }, []);
+
   const selectedAirport = airports.find(a => a.id === selectedId);
 
   const isAnyCfiToolOpen = isFlightTimeOpen || 

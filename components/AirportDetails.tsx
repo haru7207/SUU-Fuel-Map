@@ -8,6 +8,7 @@ import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, Arrow
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
+import { WeatherBoard } from './WeatherBoard';
 
 interface AirportDetailsProps {
   airport: Airport;
@@ -288,15 +289,19 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
     }
   };
 
-  const formatObsTime = (timeStr?: string) => {
-      if (!timeStr || typeof timeStr !== 'string') return 'N/A';
-      // Expecting "YYYY-MM-DD HH:MM:SS"
-      const parts = timeStr.split(' ');
+  const formatObsTime = (timeData?: string | number) => {
+      if (!timeData) return 'N/A';
+      if (typeof timeData === 'number') {
+          const d = new Date(timeData * 1000); // Unix timestamp
+          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' }) + 'Z';
+      }
+      // Expecting "YYYY-MM-DD HH:MM:SS" (Legacy)
+      const parts = timeData.split(' ');
       if (parts.length > 1) {
           const time = parts[1].substring(0, 5); // Extract HH:MM
           return `${time}Z`;
       }
-      return timeStr;
+      return timeData;
   }
   
   // Safe date formatter for notes
@@ -889,7 +894,7 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                              <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-1 rounded-full border border-blue-100" title="Last fetched from API">
                                 <RefreshCw size={10} className="text-blue-500" />
                                 <span className="text-[10px] font-bold text-blue-700">
-                                    Updated: {weather.lastUpdated.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                    Updated: {new Date(weather.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                                 </span>
                              </div>
                         )}
@@ -916,7 +921,7 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                             <p className="text-xs font-bold text-amber-700">Offline Mode</p>
                             {weather?.lastUpdated && (
                                 <p className="text-[10px] text-amber-600">
-                                    Last Updated: {weather.lastUpdated.toLocaleTimeString()}
+                                    Last Updated: {new Date(weather.lastUpdated).toLocaleTimeString()}
                                 </p>
                             )}
                          </div>
@@ -939,43 +944,7 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                     </div>
                 ) : weather ? (
                     <>
-                    <div className="bg-white p-3 rounded border border-slate-200 shadow-sm relative overflow-hidden">
-                        <div className="flex justify-between items-center mb-1">
-                             <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase">METAR</span>
-                                {weather.flightCategory && weather.flightCategory !== 'UNKNOWN' && (
-                                    <div 
-                                        className={`h-2 w-2 rounded-full ${getFlightCategoryColor(weather.flightCategory).split(' ')[0]}`} 
-                                        title={`Flight Category: ${weather.flightCategory}`}
-                                    />
-                                )}
-                             </div>
-                             {weather.flightCategory && weather.flightCategory !== 'UNKNOWN' && (
-                                 <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                                     weather.flightCategory === 'VFR' ? 'bg-green-100 text-green-700' :
-                                     weather.flightCategory === 'MVFR' ? 'bg-blue-100 text-blue-700' :
-                                     weather.flightCategory === 'IFR' ? 'bg-red-100 text-red-700' :
-                                     weather.flightCategory === 'LIFR' ? 'bg-purple-100 text-purple-700' : 
-                                     'bg-slate-100 text-slate-600'
-                                 }`}>
-                                    {weather.flightCategory}
-                                 </span>
-                             )}
-                        </div>
-                        <p className="font-mono text-xs text-slate-700 leading-relaxed relative z-10">{weather.metar}</p>
-                    </div>
-                    <div className="bg-white p-3 rounded border border-slate-200 shadow-sm">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase block">TAF</span>
-                            {weather.flightCategory && weather.flightCategory !== 'UNKNOWN' && (
-                                <div 
-                                    className={`h-2 w-2 rounded-full ${getFlightCategoryColor(weather.flightCategory).split(' ')[0]}`} 
-                                    title={`Flight Category: ${weather.flightCategory}`}
-                                />
-                            )}
-                        </div>
-                        <p className="font-mono text-xs text-slate-700 leading-relaxed">{weather.taf}</p>
-                    </div>
+                        <WeatherBoard weather={weather} airport={airport} />
                     
                     {/* Crosswind Calculator */}
                     <div className="mt-6 pt-6 border-t border-slate-200">
