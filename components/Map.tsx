@@ -624,10 +624,10 @@ const Map: React.FC<MapProps> = ({
           key={baseMapType}
           attribution="&copy; Google"
           url={
-            baseMapType === 'hybrid' ? "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}" :
-            baseMapType === 'satellite' ? "https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}" :
-            baseMapType === 'terrain' ? "https://mt1.google.com/vt/lyrs=p&x={x}&y={y}&z={z}" :
-            "https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+            baseMapType === 'hybrid' ? "https://mt1.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}" :
+            baseMapType === 'satellite' ? "https://mt1.google.com/vt/lyrs=s&hl=en&x={x}&y={y}&z={z}" :
+            baseMapType === 'terrain' ? "https://mt1.google.com/vt/lyrs=p&hl=en&x={x}&y={y}&z={z}" :
+            "https://mt1.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
           }
           maxZoom={20}
         />
