@@ -318,6 +318,36 @@ const Sidebar: React.FC<SidebarProps> = ({
                   Data Management
                 </h3>
                 <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden">
+                  {onRefreshFuelPrices && (
+                    <button 
+                      type="button"
+                      disabled={isRefreshingFuel}
+                      onClick={async () => {
+                        try {
+                          await onRefreshFuelPrices();
+                          alert("Fuel price database updated successfully!");
+                        } catch (e) {
+                          alert("Failed to update fuel price database: " + (e instanceof Error ? e.message : String(e)));
+                        }
+                      }}
+                      className="w-full flex items-center justify-between p-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors border-b border-slate-100 dark:border-slate-700/50 disabled:opacity-60"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400">
+                          <RefreshCw size={16} className={isRefreshingFuel ? "animate-spin" : ""} />
+                        </div>
+                        <div className="flex flex-col items-start">
+                          <span>Update Fuel Prices Database Now</span>
+                          <span className="text-[10px] text-slate-400 font-normal">Scans live search metrics via Gemini</span>
+                        </div>
+                      </div>
+                      {isRefreshingFuel ? (
+                        <span className="text-xs text-slate-400 font-medium">Searching...</span>
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse"></div>
+                      )}
+                    </button>
+                  )}
                   <button 
                     onClick={() => {
                       if (window.confirm("Are you sure you want to clear all saved fuel memos? This cannot be undone.")) {

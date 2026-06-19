@@ -74,6 +74,71 @@ const App: React.FC = () => {
     }
   });
 
+  const [isRefreshingFuel, setIsRefreshingFuel] = useState(false);
+
+  const handleRefreshFuel = async () => {
+    if (isRefreshingFuel) return;
+    setIsRefreshingFuel(true);
+    try {
+      console.log("Forcing manual live fuel price update via Gemini Search Metric Grounding...");
+      const livePrices = await fetchLiveFuelPricesWithGemini(airports.map(a => a.id), true);
+      if (livePrices && Object.keys(livePrices).length > 0) {
+        const { saveSharedFuelPrices, appendFuelPriceHistoryPoint } = await import('./services/firebase');
+        await saveSharedFuelPrices(livePrices);
+        
+        // Concurrently append to fuel history logs for all tracked airports
+        Promise.allSettled(Object.entries(livePrices).map(([id, p]) => {
+          return appendFuelPriceHistoryPoint(id, p['100LL'] !== undefined ? p['100LL'] : null, p['Jet A'] !== undefined ? p['Jet A'] : null);
+        })).catch(err => console.error("Error logging historical prices asynchronously:", err));
+        
+        const timestamp = new Date().toISOString();
+        setAirports(prev => {
+          const next = prev.map(airport => {
+            const pricesForAirport = livePrices[airport.id];
+            if (pricesForAirport) {
+              const updatedPrices = { ...(airport.fuelPrices || {}) };
+              let updated = false;
+              
+              if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                updated = true;
+              }
+              if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                updated = true;
+              }
+              
+              if (updated) {
+                return {
+                  ...airport,
+                  fuelPrices: updatedPrices,
+                  fuelPricesLastUpdated: timestamp
+                };
+              }
+            }
+            return airport;
+          });
+          
+          try {
+            localStorage.setItem('suu_cached_airports', JSON.stringify(next));
+          } catch (e) {
+            console.error("Failed to save forced fuel prices to local cache", e);
+          }
+          return next;
+        });
+        
+        console.log("Forced live fuel price update succeeded and saved.");
+      } else {
+        throw new Error("No live price data returned by search engine");
+      }
+    } catch (e) {
+      console.error("Forced live fuel price update failed:", e);
+      throw e;
+    } finally {
+      setIsRefreshingFuel(false);
+    }
+  };
+
   // Cache persistence effects
   useEffect(() => {
     if (airports && airports.length > 0) {
@@ -317,9 +382,104 @@ const App: React.FC = () => {
                 console.error("Failed to fetch NOTAM data", e);
             }
 
-            // Fetch live fuel prices via Gemini
+            // Sync fuel prices with Firestore and check Monday/Wednesday scheduling
             try {
-                console.log("Fetching live fuel prices via Gemini...");
+                const { fetchSharedFuelPrices, saveSharedFuelPrices } = await import('./services/firebase');
+                const sharedObj = await fetchSharedFuelPrices();
+                
+                const now = Date.now();
+                const today = new Date();
+                const dayOfWeek = today.getDay();
+                const isMonOrWed = dayOfWeek === 1 || dayOfWeek === 3;
+                
+                let needsUpdateVal = false;
+                if (!sharedObj) {
+                    console.log("No shared fuel prices found in Firestore. Seeding database now.");
+                    needsUpdateVal = true;
+                } else {
+                    const lastUpdatedDate = new Date(sharedObj.lastUpdated);
+                    const isSameCalendarDay = 
+                        lastUpdatedDate.getDate() === today.getDate() && 
+                        lastUpdatedDate.getMonth() === today.getMonth() && 
+                        lastUpdatedDate.getFullYear() === today.getFullYear();
+                    
+                    if (!isSameCalendarDay) {
+                        if (isMonOrWed) {
+                            console.log(`Today is ${dayOfWeek === 1 ? 'Monday' : 'Wednesday'} and no update has run yet today. Triggering scheduled update!`);
+                            needsUpdateVal = true;
+                        } else {
+                            // General fallback update if database is older than 3 days to keep it fresh
+                            const ageMs = now - lastUpdatedDate.getTime();
+                            if (ageMs > 3 * 24 * 60 * 60 * 1000) {
+                                console.log(`Shared fuel prices are older than 3 days (${Math.round(ageMs / 3600000)}h). Triggering fresh update.`);
+                                needsUpdateVal = true;
+                            }
+                        }
+                    }
+                }
+
+                const applyPricesToState = (pricesMap: Record<string, Record<string, number>>, lastUpdatedStr: string) => {
+                    setAirports(prev => {
+                        const next = prev.map(airport => {
+                            const pricesForAirport = pricesMap[airport.id];
+                            if (pricesForAirport) {
+                                const updatedPrices = { ...(airport.fuelPrices || {}) };
+                                let updated = false;
+                                
+                                if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                                    updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                                    updated = true;
+                                }
+                                if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                                    updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                                    updated = true;
+                                }
+                                
+                                if (updated) {
+                                    return {
+                                        ...airport,
+                                        fuelPrices: updatedPrices,
+                                        fuelPricesLastUpdated: lastUpdatedStr
+                                    };
+                                }
+                            }
+                            return airport;
+                        });
+                        
+                        try {
+                            localStorage.setItem('suu_cached_airports', JSON.stringify(next));
+                        } catch (e) {
+                            console.error("Failed to cache airports in local storage", e);
+                        }
+                        return next;
+                    });
+                };
+
+                // Apply currently cached/shared prices immediately to UI to prevent lag
+                if (sharedObj && sharedObj.prices && Object.keys(sharedObj.prices).length > 0) {
+                    applyPricesToState(sharedObj.prices, sharedObj.lastUpdated);
+                }
+
+                if (needsUpdateVal) {
+                    console.log("Fetching fresh live fuel prices via Gemini with Google Search grounding...");
+                    fetchLiveFuelPricesWithGemini(currentAirports.map(a => a.id), true).then(async (livePrices) => {
+                        if (livePrices && Object.keys(livePrices).length > 0) {
+                            const success = await saveSharedFuelPrices(livePrices);
+                            if (success) {
+                                console.log("Shared fuel prices updated in Firestore successfully.");
+                            }
+                            const { appendFuelPriceHistoryPoint } = await import('./services/firebase');
+                            Promise.allSettled(Object.entries(livePrices).map(([id, p]) => {
+                                return appendFuelPriceHistoryPoint(id, p['100LL'] !== undefined ? p['100LL'] : null, p['Jet A'] !== undefined ? p['Jet A'] : null);
+                            })).catch(err => console.error("Error logging historical prices asynchronously:", err));
+                            applyPricesToState(livePrices, new Date().toISOString());
+                        }
+                    }).catch(err => {
+                        console.error("Error fetching live fuel prices via Gemini:", err);
+                    });
+                }
+            } catch (e) {
+                console.error("Firestore fuel prices sync failed; falling back to direct background Gemini fetch.", e);
                 fetchLiveFuelPricesWithGemini(currentAirports.map(a => a.id)).then(livePrices => {
                     if (livePrices && Object.keys(livePrices).length > 0) {
                         setAirports(prev => {
@@ -349,13 +509,8 @@ const App: React.FC = () => {
                                 return airport;
                             });
                         });
-                        console.log("Live fuel prices updated successfully via Gemini.");
                     }
-                }).catch(err => {
-                    console.error("Error in live fuel price background fetch:", err);
-                });
-            } catch (e) {
-                console.error("Failed to start live fuel prices fetch", e);
+                }).catch(err => console.error(err));
             }
         };
 
@@ -391,43 +546,97 @@ const App: React.FC = () => {
   };
 
   // Automatically check cache & refresh live fuel prices every 15 minutes.
-  // Since the cache lifespan is 2 hours, this periodically updates prices without user interaction.
   useEffect(() => {
     if (airports.length === 0) return;
 
     const checkAndRefreshPrices = async () => {
       try {
-        console.log("[Auto-Refresh] Checking live fuel prices...");
-        const livePrices = await fetchLiveFuelPricesWithGemini(airports.map(a => a.id), false);
-        if (livePrices && Object.keys(livePrices).length > 0) {
-          setAirports(prev => {
-            return prev.map(airport => {
-              const pricesForAirport = livePrices[airport.id];
-              if (pricesForAirport) {
-                const updatedPrices = { ...(airport.fuelPrices || {}) };
-                let updated = false;
+        console.log("[Auto-Refresh] Checking Firestore for shared fuel prices...");
+        const { fetchSharedFuelPrices, saveSharedFuelPrices } = await import('./services/firebase');
+        const sharedObj = await fetchSharedFuelPrices();
+        
+        let needsUpdate = false;
+        const now = Date.now();
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const isMonOrWed = dayOfWeek === 1 || dayOfWeek === 3;
+
+        if (!sharedObj) {
+            needsUpdate = true;
+        } else {
+            const lastUpdatedDate = new Date(sharedObj.lastUpdated);
+            const isSameCalendarDay = 
+                lastUpdatedDate.getDate() === today.getDate() && 
+                lastUpdatedDate.getMonth() === today.getMonth() && 
+                lastUpdatedDate.getFullYear() === today.getFullYear();
+            
+            if (!isSameCalendarDay) {
+                if (isMonOrWed) {
+                    needsUpdate = true;
+                } else {
+                    const ageMs = now - lastUpdatedDate.getTime();
+                    if (ageMs > 3 * 24 * 60 * 60 * 1000) {
+                        needsUpdate = true;
+                    }
+                }
+            }
+        }
+
+        const applyPricesToState = (pricesMap: Record<string, Record<string, number>>, lastUpdatedStr: string) => {
+            setAirports(prev => {
+                const next = prev.map(airport => {
+                    const pricesForAirport = pricesMap[airport.id];
+                    if (pricesForAirport) {
+                        const updatedPrices = { ...(airport.fuelPrices || {}) };
+                        let updated = false;
+                        
+                        if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                            updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                            updated = true;
+                        }
+                        if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                            updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                            updated = true;
+                        }
+                        
+                        if (updated) {
+                            return {
+                                ...airport,
+                                fuelPrices: updatedPrices,
+                                fuelPricesLastUpdated: lastUpdatedStr
+                            };
+                        }
+                    }
+                    return airport;
+                });
                 
-                if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
-                  updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
-                  updated = true;
+                try {
+                    localStorage.setItem('suu_cached_airports', JSON.stringify(next));
+                } catch (e) {
+                    console.error("Failed to cache airports in local storage", e);
                 }
-                if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
-                  updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
-                  updated = true;
-                }
-                
-                if (updated) {
-                  return {
-                    ...airport,
-                    fuelPrices: updatedPrices,
-                    fuelPricesLastUpdated: new Date().toISOString()
-                  };
-                }
-              }
-              return airport;
+                return next;
             });
-          });
-          console.log("[Auto-Refresh] Fuel prices checked/updated successfully.");
+        };
+
+        if (sharedObj && sharedObj.prices && Object.keys(sharedObj.prices).length > 0) {
+            applyPricesToState(sharedObj.prices, sharedObj.lastUpdated);
+        }
+
+        if (needsUpdate) {
+            console.log("[Auto-Refresh] Triggering live Gemini background fetch...");
+            const livePrices = await fetchLiveFuelPricesWithGemini(airports.map(a => a.id), true);
+            if (livePrices && Object.keys(livePrices).length > 0) {
+                await saveSharedFuelPrices(livePrices);
+                
+                const { appendFuelPriceHistoryPoint } = await import('./services/firebase');
+                Promise.allSettled(Object.entries(livePrices).map(([id, p]) => {
+                    return appendFuelPriceHistoryPoint(id, p['100LL'] !== undefined ? p['100LL'] : null, p['Jet A'] !== undefined ? p['Jet A'] : null);
+                })).catch(err => console.error("Error logging historical prices asynchronously:", err));
+
+                applyPricesToState(livePrices, new Date().toISOString());
+                console.log("[Auto-Refresh] Shared fuel prices updated in Firestore successfully.");
+            }
         }
       } catch (err) {
         console.error("[Auto-Refresh] Error checking live fuel prices:", err);
@@ -536,6 +745,8 @@ const App: React.FC = () => {
             setBaseMapType={setBaseMapType}
             isMobile={isMobile}
             onClose={() => setIsSidebarOpen(false)}
+            isRefreshingFuel={isRefreshingFuel}
+            onRefreshFuelPrices={handleRefreshFuel}
           />
          </div>
       </div>

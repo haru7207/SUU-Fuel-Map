@@ -41,6 +41,18 @@ service cloud.firestore {
                (data.authorProfilePhoto == null || (data.authorProfilePhoto is string && data.authorProfilePhoto.size() <= 1000));
     }
 
+    function isValidFuelPrices(data) {
+        return data.keys().hasAll(['prices', 'lastUpdated']) &&
+               data.prices is map &&
+               data.lastUpdated is string && data.lastUpdated.size() <= 100;
+    }
+
+    function isValidFuelPriceHistory(data) {
+        return data.keys().hasAll(['airportId', 'history']) &&
+               data.airportId is string && data.airportId.size() <= 20 &&
+               data.history is list;
+    }
+
     match /pilotNotes/{noteId} {
       // Any signed in user can read notes.
       allow get: if isSignedIn() && isValidId(noteId);
@@ -49,6 +61,20 @@ service cloud.firestore {
       allow create: if isSignedIn() && isValidId(noteId) && isValidPilotNote(incoming()) && exists(/databases/$(database)/documents/users/$(request.auth.uid));
       allow update: if false; // Notes are immutable
       allow delete: if isSignedIn() && isValidId(noteId) && existing().authorId == request.auth.uid;
+    }
+
+    match /fuelPrices/{docId} {
+      allow get: if isSignedIn() && isValidId(docId);
+      allow list: if false;
+      allow create, update: if isSignedIn() && isValidId(docId) && isValidFuelPrices(incoming());
+      allow delete: if false;
+    }
+
+    match /fuelPriceHistory/{airportId} {
+      allow get: if isSignedIn() && isValidId(airportId);
+      allow list: if false;
+      allow create, update: if isSignedIn() && isValidId(airportId) && isValidFuelPriceHistory(incoming());
+      allow delete: if false;
     }
   }
 }

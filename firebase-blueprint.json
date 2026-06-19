@@ -25,6 +25,26 @@
         "createdAt": { "type": "string" }
       },
       "required": ["airportId", "authorId", "authorName", "content", "createdAt"]
+    },
+    "FuelPrices": {
+      "title": "Fuel Prices",
+      "description": "Shared dynamic fuel prices map",
+      "type": "object",
+      "properties": {
+        "prices": { "type": "object", "description": "Map of airport ICAOs to their fuel prices" },
+        "lastUpdated": { "type": "string", "description": "Timestamp when prices were last refreshed" }
+      },
+      "required": ["prices", "lastUpdated"]
+    },
+    "FuelPriceHistory": {
+      "title": "Fuel Price History",
+      "description": "Historical fuel prices for an airport over time",
+      "type": "object",
+      "properties": {
+        "airportId": { "type": "string" },
+        "history": { "type": "array", "description": "List of historical price entries" }
+      },
+      "required": ["airportId", "history"]
     }
   },
   "firestore": {
@@ -35,6 +55,14 @@
     "/pilotNotes/{noteId}": {
       "schema": { "$ref": "#/entities/PilotNote" },
       "description": "Pilot notes collection"
+    },
+    "/fuelPrices/{docId}": {
+      "schema": { "$ref": "#/entities/FuelPrices" },
+      "description": "Global fuel prices record"
+    },
+    "/fuelPriceHistory/{airportId}": {
+      "schema": { "$ref": "#/entities/FuelPriceHistory" },
+      "description": "A list of historical price data points for an airport"
     }
   }
 }

@@ -9,6 +9,7 @@ import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
 import { WeatherBoard } from './WeatherBoard';
+import { FuelPriceTrendChart } from './FuelPriceTrendChart';
 
 interface AirportDetailsProps {
   airport: Airport;
@@ -617,6 +618,9 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                             </div>
                         )}
                     </div>
+
+                    {/* Fuel Price Trend Chart */}
+                    <FuelPriceTrendChart airport={airport} />
 
                     {/* Estimated Fuel Price Calculator Card */}
                     <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 space-y-4 shadow-sm">
