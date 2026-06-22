@@ -37,6 +37,7 @@ export interface Airport {
   fuelPhones?: Record<string, string>; // Map of FuelType to specific phone number
   fuelPrices?: Record<string, number>; // Map of FuelType to price per gallon
   fuelPricesLastUpdated?: string; // ISO string when live prices were last fetched/updated
+  priceHistory?: { timestamp: string; ll100: number | null; jetA: number | null }[]; // Cached history for fast trend chart loading
   runways: string[]; // e.g. ["02/20", "08/26"]
   runwayLengths?: Record<string, number>; // Length in feet, mapped by runway ID "02/20"
   weatherSource?: string; // If this airport has no weather, use this airport's ID (e.g., 'KCDC' for '1L9')
@@ -48,6 +49,7 @@ export interface Airport {
     warning?: boolean; // For high prices or strict restrictions
     critical?: boolean; // For DO NOT USE warnings
     byFuelType?: Partial<Record<FuelType, CardType>>; // Specific card rules per fuel type
+    byFbo?: { name: string; card: CardType; vendor?: string; notes?: string }[]; // Specific card rules per FBO
   };
   userNotes?: UserNote[];
 }

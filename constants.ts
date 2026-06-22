@@ -505,8 +505,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'AZ',
     lat: 36.9261,
     lon: -111.4484,
-    fbo: 'Million Air',
-    phone: '(928) 645-2987',
+    fbo: 'Million Air / Adventurous FBO',
+    phone: 'Million Air: (928) 645-2987 | Adventurous: (928) 645-2404',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 7.45,
@@ -521,7 +521,21 @@ export const AIRPORT_DATABASE: Airport[] = [
     ],
     cardRules: {
       primary: CardType.AVFUEL,
-      notes: 'Black Avfuel Card (8615) Accepted'
+      notes: 'Black Avfuel Card (8615) accepted at Million Air. PCard required at Adventurous FBO.',
+      byFbo: [
+        {
+          name: 'Million Air',
+          card: CardType.AVFUEL,
+          vendor: 'AVFuel',
+          notes: 'Accepts Black card (8615).'
+        },
+        {
+          name: 'Adventurous FBO',
+          card: CardType.PCARD,
+          vendor: 'Phillips 66 Aviation',
+          notes: 'Ineligible for Black Card. PCard required.'
+        }
+      ]
     },
     userNotes: [
       {

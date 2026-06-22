@@ -52,7 +52,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
 
     if (cardFilter !== 'ALL') {
-      filtered = filtered.filter(a => a.cardRules.primary === cardFilter);
+      filtered = filtered.filter(a => {
+        if (a.cardRules.primary === cardFilter) return true;
+        if (a.cardRules.byFuelType && Object.values(a.cardRules.byFuelType).includes(cardFilter)) return true;
+        if (a.cardRules.byFbo && a.cardRules.byFbo.some(f => f.card === cardFilter)) return true;
+        return false;
+      });
     }
 
     if (!searchTerm) return filtered;
@@ -500,21 +505,48 @@ const Sidebar: React.FC<SidebarProps> = ({
                           </button>
                         </div>
                         
-                        <div className="flex items-center gap-1">
-                          {isWhiteCard && (
-                              <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
-                                  White Card
-                              </span>
-                          )}
-                          {!isWhiteCard && airport.cardRules.primary === CardType.PCARD && (
-                              <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
-                                  PCard
-                              </span>
-                          )}
-                          {!isWhiteCard && airport.cardRules.primary === CardType.AVFUEL && (
-                              <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
-                                  AVFuel
-                              </span>
+                        <div className="flex items-center gap-1 flex-wrap justify-end">
+                          {airport.cardRules.byFbo ? (
+                            Array.from(new Set(airport.cardRules.byFbo.map(f => f.card))).map((card, idx) => {
+                              if (card === CardType.WHITE_CARD) {
+                                return (
+                                  <span key={idx} className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
+                                      White
+                                  </span>
+                                );
+                              } else if (card === CardType.PCARD) {
+                                return (
+                                  <span key={idx} className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
+                                      PCard
+                                  </span>
+                                );
+                              } else if (card === CardType.AVFUEL) {
+                                return (
+                                  <span key={idx} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
+                                      AVFuel
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })
+                          ) : (
+                            <>
+                              {isWhiteCard && (
+                                  <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
+                                      White Card
+                                  </span>
+                              )}
+                              {!isWhiteCard && airport.cardRules.primary === CardType.PCARD && (
+                                  <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
+                                      PCard
+                                  </span>
+                              )}
+                              {!isWhiteCard && airport.cardRules.primary === CardType.AVFUEL && (
+                                  <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
+                                      AVFuel
+                                  </span>
+                              )}
+                            </>
                           )}
                           
                           {airport.cardRules.warning && !isWhiteCard && (

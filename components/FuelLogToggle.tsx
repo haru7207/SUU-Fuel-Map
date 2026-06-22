@@ -57,10 +57,15 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
   const [airportSearchInput, setAirportSearchInput] = useState<string>('');
   const [isAirportDropdownOpen, setIsAirportDropdownOpen] = useState<boolean>(false);
   const [calcSearchHighlightedIndex, setCalcSearchHighlightedIndex] = useState<number>(-1);
+  const [selectedFboIndex, setSelectedFboIndex] = useState<number>(0);
   const airportContainerRef = useRef<HTMLDivElement>(null);
 
   // Default fallback or live-updated list
   const activeAirports = airports || AIRPORT_DATABASE;
+
+  useEffect(() => {
+    setSelectedFboIndex(0);
+  }, [calcAirport]);
 
   // Auto-fill calcAirport from currentAirportId when sidebar or map updates
   useEffect(() => {
@@ -186,7 +191,9 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
   const handleApplyToMemo = () => {
     let cardToUse = "";
     if (selectedCalcAirportObj) {
-      if (selectedCalcAirportObj.cardRules?.byFuelType?.[calcFuelType]) {
+      if (selectedCalcAirportObj.cardRules?.byFbo && selectedCalcAirportObj.cardRules.byFbo[selectedFboIndex]) {
+        cardToUse = selectedCalcAirportObj.cardRules.byFbo[selectedFboIndex].card;
+      } else if (selectedCalcAirportObj.cardRules?.byFuelType?.[calcFuelType]) {
         cardToUse = selectedCalcAirportObj.cardRules.byFuelType[calcFuelType];
       } else if (selectedCalcAirportObj.cardRules?.primary) {
         cardToUse = selectedCalcAirportObj.cardRules.primary;
@@ -1105,9 +1112,48 @@ Notes: ${log.notes || 'None'}
                         </div>
 
                         {selectedCalcAirportObj && (
+                          selectedCalcAirportObj.cardRules?.byFbo ? (
+                            <div className="mt-3 pt-2.5 border-t border-slate-700/50">
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wide block mb-1.5">Select FBO / Refueling Station:</span>
+                              <div className="flex flex-col gap-1.5">
+                                {selectedCalcAirportObj.cardRules.byFbo.map((fboRule, idx) => {
+                                  const isSelected = selectedFboIndex === idx;
+                                  return (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setSelectedFboIndex(idx)}
+                                      className={`text-left px-2.5 py-1.5 rounded transition-all flex justify-between items-center border text-[11px] ${
+                                        isSelected
+                                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 font-bold'
+                                          : 'bg-slate-800/20 border-transparent text-slate-400 hover:text-slate-200'
+                                      }`}
+                                    >
+                                      <div className="flex flex-col">
+                                        <span className="font-bold">{fboRule.name}</span>
+                                        {fboRule.vendor && (
+                                          <span className="text-[9px] opacity-75 font-normal">Vendor: {fboRule.vendor}</span>
+                                        )}
+                                      </div>
+                                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                        fboRule.card === CardType.WHITE_CARD 
+                                          ? 'bg-red-500/10 text-red-305' 
+                                          : fboRule.card === CardType.PCARD 
+                                          ? 'bg-blue-500/10 text-blue-305' 
+                                          : 'bg-slate-705 text-slate-305'
+                                      }`}>
+                                        {fboRule.card === CardType.WHITE_CARD ? 'White' : fboRule.card === CardType.PCARD ? 'PCard' : 'AVFuel'}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ) : (
                             <p className="text-[9px] text-slate-500 mt-3 font-semibold uppercase tracking-wide">
                                 {selectedCalcAirportObj.fbo}
                             </p>
+                          )
                         )}
                     </div>
 

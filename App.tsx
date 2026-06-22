@@ -26,7 +26,29 @@ const App: React.FC = () => {
   const [airports, setAirports] = useState<Airport[]>(() => {
     try {
       const saved = localStorage.getItem('suu_cached_airports');
-      return saved ? JSON.parse(saved) : AIRPORT_DATABASE;
+      if (saved) {
+        const parsed = JSON.parse(saved) as Airport[];
+        return parsed.map(cached => {
+          const staticAirport = AIRPORT_DATABASE.find(a => a.id === cached.id);
+          if (staticAirport) {
+            return {
+              ...cached,
+              name: staticAirport.name,
+              city: staticAirport.city,
+              state: staticAirport.state,
+              lat: staticAirport.lat,
+              lon: staticAirport.lon,
+              runways: staticAirport.runways || cached.runways,
+              frequencies: staticAirport.frequencies || cached.frequencies,
+              cardRules: staticAirport.cardRules,
+              fbo: staticAirport.fbo || cached.fbo,
+              phone: staticAirport.phone || cached.phone,
+            };
+          }
+          return cached;
+        });
+      }
+      return AIRPORT_DATABASE;
     } catch {
       return AIRPORT_DATABASE;
     }
@@ -271,7 +293,30 @@ const App: React.FC = () => {
             let currentAirports = [];
             try {
                 const saved = localStorage.getItem('suu_cached_airports');
-                currentAirports = saved ? JSON.parse(saved) : [...AIRPORT_DATABASE];
+                if (saved) {
+                    const parsed = JSON.parse(saved) as Airport[];
+                    currentAirports = parsed.map(cached => {
+                        const staticAirport = AIRPORT_DATABASE.find(a => a.id === cached.id);
+                        if (staticAirport) {
+                            return {
+                                ...cached,
+                                name: staticAirport.name,
+                                city: staticAirport.city,
+                                state: staticAirport.state,
+                                lat: staticAirport.lat,
+                                lon: staticAirport.lon,
+                                runways: staticAirport.runways || cached.runways,
+                                frequencies: staticAirport.frequencies || cached.frequencies,
+                                cardRules: staticAirport.cardRules,
+                                fbo: staticAirport.fbo || cached.fbo,
+                                phone: staticAirport.phone || cached.phone,
+                            };
+                        }
+                        return cached;
+                    });
+                } else {
+                    currentAirports = [...AIRPORT_DATABASE];
+                }
             } catch {
                 currentAirports = [...AIRPORT_DATABASE];
             }
@@ -297,14 +342,17 @@ const App: React.FC = () => {
                         
                         if (existingIndex >= 0) {
                             // Merge fields for existing airport
+                            const existingAirport = currentAirports[existingIndex];
+                            const hasByFbo = existingAirport.cardRules?.byFbo && existingAirport.cardRules.byFbo.length > 0;
+                            
                             currentAirports[existingIndex] = {
-                                ...currentAirports[existingIndex],
-                                fbo: match.fbo || currentAirports[existingIndex].fbo,
-                                phone: match.contact || currentAirports[existingIndex].phone,
-                                cardRules: {
-                                    ...currentAirports[existingIndex].cardRules,
+                                ...existingAirport,
+                                fbo: hasByFbo ? existingAirport.fbo : (match.fbo || existingAirport.fbo),
+                                phone: hasByFbo ? existingAirport.phone : (match.contact || existingAirport.phone),
+                                cardRules: hasByFbo ? existingAirport.cardRules : {
+                                    ...existingAirport.cardRules,
                                     primary: cardType,
-                                    notes: match.note || currentAirports[existingIndex].cardRules.notes
+                                    notes: match.note || existingAirport.cardRules.notes
                                 }
                             };
                         } else {

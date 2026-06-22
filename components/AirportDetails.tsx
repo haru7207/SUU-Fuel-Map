@@ -568,9 +568,47 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                     </div>
 
                     <div className="pt-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Required Card</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Required Card</span>
                         
-                        {airport.cardRules.byFuelType ? (
+                        {airport.cardRules.byFbo ? (
+                            <div className="mt-1 space-y-2.5">
+                                {airport.cardRules.byFbo.map((fboRule, idx) => (
+                                    <div key={idx} className={`p-3 rounded border flex flex-col gap-1.5 ${
+                                        fboRule.card === CardType.WHITE_CARD 
+                                            ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/40' 
+                                            : fboRule.card === CardType.PCARD 
+                                            ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40' 
+                                            : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/60'
+                                    }`}>
+                                         <div className="flex justify-between items-center">
+                                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">{fboRule.name}</span>
+                                             <span className={`text-[10px] font-extrabold tracking-wide uppercase px-1.5 py-0.5 rounded ${
+                                                 fboRule.card === CardType.WHITE_CARD 
+                                                 ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300' 
+                                                 : fboRule.card === CardType.PCARD 
+                                                 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300' 
+                                                 : 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300'
+                                             }`}>
+                                                 {fboRule.card === CardType.WHITE_CARD ? 'White Card' : fboRule.card === CardType.PCARD ? 'PCard' : 'AVFuel'}
+                                             </span>
+                                         </div>
+                                         <div className="text-[11px] text-slate-600 dark:text-slate-300 flex flex-col gap-0.5 border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5">
+                                             {fboRule.vendor && (
+                                                <p><span className="font-semibold text-slate-400 dark:text-slate-500">Fuel Vendor:</span> {fboRule.vendor}</p>
+                                             )}
+                                             {fboRule.notes && (
+                                                <p><span className="font-semibold text-slate-400 dark:text-slate-500">Notice:</span> {fboRule.notes}</p>
+                                             )}
+                                         </div>
+                                    </div>
+                                ))}
+                                {airport.cardRules.notes && (
+                                    <p className="text-xs text-slate-650 dark:text-slate-400 mt-1 italic">
+                                        {airport.cardRules.notes}
+                                    </p>
+                                )}
+                            </div>
+                        ) : airport.cardRules.byFuelType ? (
                             <div className="mt-1 space-y-2">
                                 {Object.entries(airport.cardRules.byFuelType).map(([fuelType, card]) => (
                                     <div key={fuelType} className={`p-3 rounded border flex justify-between items-center ${

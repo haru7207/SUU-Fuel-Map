@@ -18,18 +18,38 @@ interface FuelPriceTrendChartProps {
 }
 
 export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airport }) => {
-  const [history, setHistory] = useState<HistoryPricePoint[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedFuelType, setSelectedFuelType] = useState<'both' | 'll100' | 'jetA'>('both');
-
   const currentLL = airport.fuelPrices?.['100LL'] || null;
   const currentJetA = airport.fuelPrices?.['Jet A'] || null;
+
+  const getCachedHistory = (): HistoryPricePoint[] | null => {
+    try {
+      const cached = localStorage.getItem(`suu_fuel_history_${airport.id}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as HistoryPricePoint[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+           const lastIndex = parsed.length - 1;
+           if (currentLL !== null) parsed[lastIndex].ll100 = currentLL;
+           if (currentJetA !== null) parsed[lastIndex].jetA = currentJetA;
+           return parsed;
+        }
+      }
+    } catch {}
+    return null;
+  };
+
+  const initialCached = getCachedHistory();
+
+  const [history, setHistory] = useState<HistoryPricePoint[]>(initialCached || []);
+  const [loading, setLoading] = useState<boolean>(!initialCached);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedFuelType, setSelectedFuelType] = useState<'both' | 'll100' | 'jetA'>('both');
 
   useEffect(() => {
     let active = true;
     const loadHistory = async () => {
-      setLoading(true);
+      if (!initialCached) {
+        setLoading(true);
+      }
       setError(null);
       try {
         const data = await fetchFuelPriceHistory(airport.id, currentLL, currentJetA);
@@ -38,7 +58,7 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
         }
       } catch (err: any) {
         console.error("Error loading fuel price history for chart:", err);
-        if (active) {
+        if (active && !initialCached) {
           setError("Could not load price trends database.");
         }
       } finally {

@@ -1,0 +1,746 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.0988,
+          37.7009
+        ]
+      },
+      "properties": {
+        "name": "KCDC_White Card",
+        "title": "KCDC_White Card",
+        "CardType": "White (Sphere One)",
+        "FBOProvider": "Sphere One ",
+        "FuelType": "White card only",
+        "Contact": "",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.5796,
+          37.7627
+        ]
+      },
+      "properties": {
+        "name": "1L7_White Card",
+        "title": "1L7_White Card",
+        "CardType": "White (Sphere One)",
+        "FBOProvider": "Sphere One ",
+        "FuelType": "White card only",
+        "Contact": "",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.0628,
+          41.5531
+        ]
+      },
+      "properties": {
+        "name": "KBMC_Black Card",
+        "title": "KBMC_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Brigham City Regional Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 723-5702",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.7548,
+          38.7549
+        ]
+      },
+      "properties": {
+        "name": "KCNY_Black Card",
+        "title": "KCNY_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Canyonlands Regional Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 259-7421",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.7523,
+          39.6094
+        ]
+      },
+      "properties": {
+        "name": "KPUC_Black Card",
+        "title": "KPUC_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Carbon County Regional Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 637-9556",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.1462,
+          37.7063
+        ]
+      },
+      "properties": {
+        "name": "KBCE_Black Card",
+        "title": "KBCE_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Bryce Canyon Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 834-5239",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.5103,
+          37.0363
+        ]
+      },
+      "properties": {
+        "name": "KSGU_Black Card",
+        "title": "KSGU_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Million Air",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 688-8009",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.4833,
+          37.5833
+        ]
+      },
+      "properties": {
+        "name": "KBDG_Black Card",
+        "title": "KBDG_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Blanding Municipal Airport - Freedom Fuels Blanding Air Support",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(801) 828-7211",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.4296,
+          40.4819
+        ]
+      },
+      "properties": {
+        "name": "KHCR_Black Card",
+        "title": "KHCR_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Heber City Municipal",
+        "FuelType": "",
+        "Contact": "",
+        "Note": "*High Price, w/ special permission only, Avoid due to landing fee and high-priced fuel  w/special permission or emergency"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.8974,
+          40.8719
+        ]
+      },
+      "properties": {
+        "name": "KBTF_Black Card",
+        "title": "KBTF_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Skypark Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(801) 295-3877",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.0118,
+          41.1959
+        ]
+      },
+      "properties": {
+        "name": "KOGD_Black Card",
+        "title": "KOGD_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Ogden-Hinckley Airport - Kemp Jet Services",
+        "FuelType": "100LL & Jet A & Jet A+ ",
+        "Contact": "(801)627-0040",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.0309,
+          40.7187
+        ]
+      },
+      "properties": {
+        "name": "KENV_Black Card",
+        "title": "KENV_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Wendover Airport",
+        "FuelType": "100LL & Jet A",
+        "Contact": "(435) 843-3360",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.1123,
+          38.7369
+        ]
+      },
+      "properties": {
+        "name": "KRIF_Black Card",
+        "title": "KRIF_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Richfield Municipal Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 896-9413",
+        "Note": "New fuel system installed. Use PCard if the Black Card is denied"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.8667,
+          39.7333
+        ]
+      },
+      "properties": {
+        "name": "U14_Black Card",
+        "title": "U14_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Nephi Municipal Airport - Nephi Jet Center",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 262-9669",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.5,
+          37.4
+        ]
+      },
+      "properties": {
+        "name": "U96_Black Card",
+        "title": "U96_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Roughrock Aviation",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 684-2419",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.4484,
+          36.9261
+        ]
+      },
+      "properties": {
+        "name": "KPGA_Black Card",
+        "title": "KPGA_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Page Municipal Airport - Million Air",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(928) 645-2987",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.55,
+          35.15
+        ]
+      },
+      "properties": {
+        "name": "KIFP_Black Card",
+        "title": "KIFP_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Bullhead International Airport - Signature",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(928) 754-3020",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.06,
+          36.83
+        ]
+      },
+      "properties": {
+        "name": "K67L_Black Card",
+        "title": "K67L_Black Card",
+        "CardType": "Black AVFuel Card (8615)",
+        "FBOProvider": "Mesquite Airport - City of Mesquite",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(702) 346-2841",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.5317,
+          37.0111
+        ]
+      },
+      "properties": {
+        "name": "KKNB_PCard",
+        "title": "KKNB_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Kanab Municipal Airport - City of Kanab",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 644-2299",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.8532,
+          41.7877
+        ]
+      },
+      "properties": {
+        "name": "KLGU_PCard",
+        "title": "KLGU_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Logan-Cache Airport - Leading Edge Aviation",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 752-5955",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.3444,
+          37.8683
+        ]
+      },
+      "properties": {
+        "name": "U64_PCard",
+        "title": "U64_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Monticello Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 587-2271",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.8456,
+          37.8606
+        ]
+      },
+      "properties": {
+        "name": "1L9_PCard",
+        "title": "1L9_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Parowan Airport - Parowan Aviation",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 867-0278",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.6608,
+          40.1422
+        ]
+      },
+      "properties": {
+        "name": "KSPK_PCard",
+        "title": "KSPK_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Utah Aviation-Spanish Fork",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(801) 804-4593",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.5072,
+          39.3806
+        ]
+      },
+      "properties": {
+        "name": "KDTA_PCard",
+        "title": "KDTA_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Delta Municipal Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 864-2759",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.3606,
+          38.9613
+        ]
+      },
+      "properties": {
+        "name": "KFOM_PCard",
+        "title": "KFOM_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Fillmore Municipal Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 743-6150",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.3081,
+          37.1764
+        ]
+      },
+      "properties": {
+        "name": "1L8_PCard",
+        "title": "1L8_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "General Dick Stout Field Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 635-2811",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.6133,
+          39.3317
+        ]
+      },
+      "properties": {
+        "name": "41U_PCard",
+        "title": "41U_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Manti-Ephraim Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 283-4631",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.0116,
+          38.4292
+        ]
+      },
+      "properties": {
+        "name": "KMLF_PCard",
+        "title": "KMLF_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Milford Municipal",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 463-9565",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.6775,
+          38.2372
+        ]
+      },
+      "properties": {
+        "name": "U52_PCard",
+        "title": "U52_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Beaver Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(435) 438-2451",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.7232,
+          40.2192
+        ]
+      },
+      "properties": {
+        "name": "KPVU_PCard",
+        "title": "KPVU_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Signature Aviation",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(801) 852-6715",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.9791,
+          40.7899
+        ]
+      },
+      "properties": {
+        "name": "KSLC_PCard",
+        "title": "KSLC_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Atlantic Aviation",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(385) 715-7192",
+        "Note": "Answers Radio's at night"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.97867447166792,
+          40.78965150031288
+        ]
+      },
+      "properties": {
+        "name": "KSLC_PCard",
+        "title": "KSLC_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "SLC International Airport - Signature",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(801) 359-2085",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.9431,
+          35.2594
+        ]
+      },
+      "properties": {
+        "name": "IGM_PCard",
+        "title": "IGM_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Kingman Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(928) 757-2134",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.0147,
+          36.9594
+        ]
+      },
+      "properties": {
+        "name": "KAZC_PCard",
+        "title": "KAZC_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "West Wing Aviation - Colorado City",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(702) 578-3348",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.1469,
+          35.9524
+        ]
+      },
+      "properties": {
+        "name": "KGCN_PCard",
+        "title": "KGCN_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Grand Canyon National Park Airport - Grand Canyon Airlines",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(928) 638-7117",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -105.2258,
+          40.0394
+        ]
+      },
+      "properties": {
+        "name": "KBDU_PCard",
+        "title": "KBDU_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Boulder Municipal",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(801) 359-2086",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1944,
+          36.2107
+        ]
+      },
+      "properties": {
+        "name": "KVGT_PCard",
+        "title": "KVGT_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "North Las Vegas Airport",
+        "FuelType": "100LL & Jet A ",
+        "Contact": "(702) 261-3801",
+        "Note": ""
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1344,
+          35.9729
+        ]
+      },
+      "properties": {
+        "name": "KHND_PCard",
+        "title": "KHND_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Henderson Executive Airport",
+        "FuelType": "100LL & Jet A",
+        "Contact": "(702) 261-4800",
+        "Note": "Black AVFuel card for JET A"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.3831,
+          40.6128
+        ]
+      },
+      "properties": {
+        "name": "KTVY_PCard",
+        "title": "KTVY_PCard",
+        "CardType": "PCard",
+        "FBOProvider": "Toole Valley Airport - SLC Department of Airports",
+        "FuelType": "100LL Only ",
+        "Contact": "(801) 575-2401 (Airport Owner's)\n(801) 209-1571 (Airport Manager's)",
+        "Note": ""
+      }
+    }
+  ]
+}

@@ -250,10 +250,37 @@ export const generateRealisticHistory = (airportId: string, currentLL: number | 
 };
 
 export const fetchFuelPriceHistory = async (airportId: string, currentLL: number | null, currentJetA: number | null): Promise<HistoryPricePoint[]> => {
+    const cacheKey = `suu_fuel_history_${airportId}`;
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            const parsedCache = JSON.parse(cached) as HistoryPricePoint[];
+            if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+                // Ensure latest current values are reflected instantly
+                const lastIndex = parsedCache.length - 1;
+                if (currentLL !== null) parsedCache[lastIndex].ll100 = currentLL;
+                if (currentJetA !== null) parsedCache[lastIndex].jetA = currentJetA;
+                
+                // Background fetch to update cache silently
+                fetchFuelPriceHistoryFromDb(airportId, currentLL, currentJetA).catch(() => {});
+                
+                return parsedCache;
+            }
+        }
+    } catch {
+        // Ignore cache errors
+    }
+
+    return await fetchFuelPriceHistoryFromDb(airportId, currentLL, currentJetA);
+};
+
+const fetchFuelPriceHistoryFromDb = async (airportId: string, currentLL: number | null, currentJetA: number | null): Promise<HistoryPricePoint[]> => {
     const path = `fuelPriceHistory/${airportId}`;
     try {
         const docRef = doc(db, "fuelPriceHistory", airportId);
         const docSnap = await getDoc(docRef);
+        
+        let historyToReturn: HistoryPricePoint[] | null = null;
         
         if (docSnap.exists()) {
             const data = docSnap.data() as FuelPriceHistoryData;
@@ -265,17 +292,27 @@ export const fetchFuelPriceHistory = async (airportId: string, currentLL: number
                     if (currentLL !== null) historyList[lastIndex].ll100 = currentLL;
                     if (currentJetA !== null) historyList[lastIndex].jetA = currentJetA;
                 }
-                return historyList;
+                historyToReturn = historyList;
             }
         }
 
-        // If no history exists in Firestore, generate a realistic one and save it
-        const generated = generateRealisticHistory(airportId, currentLL, currentJetA);
-        await setDoc(docRef, {
-            airportId,
-            history: generated
-        });
-        return generated;
+        if (!historyToReturn) {
+            // If no history exists in Firestore, generate a realistic one and save it
+            historyToReturn = generateRealisticHistory(airportId, currentLL, currentJetA);
+            await setDoc(docRef, {
+                airportId,
+                history: historyToReturn
+            });
+        }
+        
+        // Save to cache
+        try {
+            localStorage.setItem(`suu_fuel_history_${airportId}`, JSON.stringify(historyToReturn));
+        } catch {
+            // Ignore cache save error
+        }
+        
+        return historyToReturn;
     } catch (error) {
         if (isOfflineError(error)) {
             console.warn(`Firestore is offline or unreachable; using offline generated history trends for airport ${airportId}.`);
@@ -335,6 +372,13 @@ export const appendFuelPriceHistoryPoint = async (airportId: string, llPrice: nu
             airportId,
             history: historyList
         });
+        
+        try {
+            localStorage.setItem(`suu_fuel_history_${airportId}`, JSON.stringify(historyList));
+        } catch {
+            // Ignore cache save error
+        }
+        
         return true;
     } catch (error) {
         if (isOfflineError(error)) {
