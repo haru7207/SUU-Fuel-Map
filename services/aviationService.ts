@@ -243,17 +243,38 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
     const promises = chunks.map(async (chunk) => {
         const idsParam = chunk.join(',');
         try {
-            const response = await fetchSafe(`${AWC_API_BASE}/metar?ids=${idsParam}&format=json`, true);
-            const data = await response.json();
-            return Array.isArray(data) ? data : [];
+            const [metarResponse, tafResponse] = await Promise.all([
+                fetchSafe(`${AWC_API_BASE}/metar?ids=${idsParam}&format=json`, true),
+                fetchSafe(`${AWC_API_BASE}/taf?ids=${idsParam}&format=json`, true)
+            ]);
+            
+            const metarData = await metarResponse.json().catch(() => []);
+            const tafData = await tafResponse.json().catch(() => []);
+            
+            return {
+                metar: Array.isArray(metarData) ? metarData : [],
+                taf: Array.isArray(tafData) ? tafData : []
+            };
         } catch (e) {
             console.warn(`Failed to fetch chunk: ${idsParam}`, e);
-            return [];
+            return { metar: [], taf: [] };
         }
     });
 
     const results = await Promise.all(promises);
-    const metarData = results.flat();
+    const metarData = results.flatMap(r => r.metar);
+    const tafData = results.flatMap(r => r.taf);
+    
+    // Create map for TAFs
+    const tafMap: Record<string, any> = {};
+    if (tafData && Array.isArray(tafData)) {
+        tafData.forEach(t => {
+            const id = t.icaoId || t.stationId || t.station_id || t.id;
+            if (id && t.rawTAF) {
+                tafMap[id] = t.rawTAF;
+            }
+        });
+    }
 
     if (metarData && Array.isArray(metarData)) {
       metarData.forEach(m => {
@@ -279,7 +300,7 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
 
         weatherMap[id] = {
           metar: m.rawOb || 'METAR DATA ERROR',
-          taf: 'TAF NOT FETCHED', // We don't fetch TAF for the map pins to save bandwidth
+          taf: tafMap[id] || 'TAF NOT AVAILABLE',
           flightCategory: m.fltCat || 'UNKNOWN',
           observationTime: m.obsTime,
           wind: wind,
@@ -689,201 +710,9 @@ export const savePilotNote = async (note: UserNote, airportId: string, parentId?
     return false;
 };
 
-import { GoogleGenAI, Type } from '@google/genai';
-import { NotamData } from '../types';
+// Note: fetchAllNotamsWithGemini and fetchLiveFuelPricesWithGemini have been completely removed
+// as they violated the instruction to NOT use AI for information fetching.
 
-const NOTAM_CACHE_KEY = 'suu_notam_cache';
-const NOTAM_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes
-
-export const fetchAllNotamsWithGemini = async (airports: string[]): Promise<Record<string, NotamData>> => {
-    const notamMap: Record<string, NotamData> = {};
-    
-    // Check cache first
-    try {
-        const cachedStr = localStorage.getItem(NOTAM_CACHE_KEY);
-        if (cachedStr) {
-            const cached = JSON.parse(cachedStr);
-            if (Date.now() - cached.timestamp < NOTAM_CACHE_EXPIRY) {
-                console.log("Using cached NOTAM data");
-                return cached.data;
-            }
-        }
-    } catch (e) {
-        console.warn("Failed to read NOTAM cache", e);
-    }
-
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    
-    // Chunk airports into groups of 20 to avoid overwhelming the model or hitting rate limits
-    const chunkSize = 20;
-    const chunks: string[][] = [];
-    for (let i = 0; i < airports.length; i += chunkSize) {
-        chunks.push(airports.slice(i, i + chunkSize));
-    }
-
-    const fetchChunk = async (chunk: string[], index: number): Promise<boolean> => {
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
-                contents: `Find the current real-time FAA NOTAMs for the following airports: ${chunk.join(', ')}. Return ONLY a raw JSON object where the keys are the airport ICAO codes and the values are objects with 'rawNotams' (array of strings containing the raw NOTAM codes, no explanations) and 'hasFuelAlert' (boolean, true ONLY if a NOTAM mentions fuel, fueling, self-serve, avgas, or jet a being out of service or having issues). If an airport has no NOTAMs, return an empty array for rawNotams. Provide the JSON inside a markdown code block (\`\`\`json ... \`\`\`). Do not include any other text outside the code block.`,
-                config: {
-                    tools: [{ googleSearch: {} }]
-                }
-            });
-
-            if (response.text) {
-                try {
-                    const text = response.text;
-                    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                    const jsonText = jsonMatch ? jsonMatch[1] : text;
-                    const data = JSON.parse(jsonText);
-                    for (const icao of chunk) {
-                        if (data[icao]) {
-                            notamMap[icao] = data[icao];
-                        }
-                    }
-                } catch (e) {
-                    console.error(`Failed to parse NOTAM JSON for chunk ${index}`, e);
-                }
-            }
-            return true;
-        } catch (error: any) {
-            // If we hit a rate limit or quota error, return false to abort further chunks
-            if (error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota')) {
-                console.warn(`Quota exceeded fetching NOTAMs for chunk ${index}. Aborting background fetch.`);
-                return false;
-            }
-            console.error(`Error fetching NOTAMs for chunk ${index}:`, error?.message || error);
-            return true; // Continue on other errors (like a single chunk failing for some other reason)
-        }
-    };
-
-    // Run all chunk fetches sequentially to avoid rate limits
-    let aborted = false;
-    for (let i = 0; i < chunks.length; i++) {
-        const shouldContinue = await fetchChunk(chunks[i], i);
-        if (!shouldContinue) {
-            console.warn("Aborting remaining NOTAM fetches due to rate limits/quota.");
-            aborted = true;
-            break;
-        }
-        if (i < chunks.length - 1) {
-            // Add a larger delay between chunks to avoid rate limits (10 seconds)
-            await new Promise(resolve => setTimeout(resolve, 10000));
-        }
-    }
-    
-    // Only cache if we didn't abort due to quota, or if we at least got some data
-    if (!aborted || Object.keys(notamMap).length > 0) {
-        try {
-            localStorage.setItem(NOTAM_CACHE_KEY, JSON.stringify({
-                timestamp: Date.now(),
-                data: notamMap
-            }));
-        } catch (e) {
-            console.warn("Failed to write NOTAM cache", e);
-        }
-    }
-    
-    return notamMap;
-};
-
-const FUEL_PRICES_CACHE_KEY = 'suu_fuel_prices_cache';
-const FUEL_PRICES_CACHE_EXPIRY = 2 * 60 * 60 * 1000; // 2 hours
-
-export const fetchLiveFuelPricesWithGemini = async (airports: string[], forceRefresh = false): Promise<Record<string, Record<string, number>>> => {
-    const pricesMap: Record<string, Record<string, number>> = {};
-    
-    // Check cache first
-    try {
-        if (!forceRefresh) {
-            const cachedStr = localStorage.getItem(FUEL_PRICES_CACHE_KEY);
-            if (cachedStr) {
-                const cached = JSON.parse(cachedStr);
-                if (Date.now() - cached.timestamp < FUEL_PRICES_CACHE_EXPIRY) {
-                    console.log("Using cached live fuel prices");
-                    return cached.data;
-                }
-            }
-        } else {
-            console.log("Forcing refresh of live fuel prices");
-        }
-    } catch (e) {
-        console.warn("Failed to read fuel prices cache", e);
-    }
-
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    
-    // Chunk airports to avoid reaching model inputs or rate limits
-    // Since search grounding takes time, 10-15 per chunk is ideal
-    const chunkSize = 15;
-    const chunks: string[][] = [];
-    for (let i = 0; i < airports.length; i += chunkSize) {
-        chunks.push(airports.slice(i, i + chunkSize));
-    }
-
-    const fetchChunk = async (chunk: string[], index: number): Promise<boolean> => {
-        try {
-            const response = await ai.models.generateContent({
-                model: 'gemini-3.5-flash',
-                contents: `Find the actual, absolute current real-time general aviation fuel prices for the following airport codes: ${chunk.join(', ')}. Use Google Search to query real-time fuel prices or FBO listings on websites like AirNav, iFlightPlanner, or FBO web portals. Gather current cost per gallon for 100LL (sold as Avgas or 100LL) and Jet A (sold as Jet A or Jet-A) at each airport. Return ONLY a raw JSON object mapping where the keys are the airport codes, and the values are objects with fuel type keys ('100LL' and/or 'Jet A') and their price per gallon as numbers (e.g. {"KCDC": {"100LL": 5.15, "Jet A": 4.85}}). Only return the JSON inside a markdown code block (\`\`\`json ... \`\`\`), with no other text around it. If you can't find real-time prices for an airport, omit it from the JSON.`,
-                config: {
-                    tools: [{ googleSearch: {} }]
-                }
-            });
-
-            if (response.text) {
-                try {
-                    const text = response.text;
-                    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-                    const jsonText = jsonMatch ? jsonMatch[1] : text;
-                    const data = JSON.parse(jsonText);
-                    for (const icao of chunk) {
-                        if (data[icao]) {
-                            pricesMap[icao] = data[icao];
-                        }
-                    }
-                } catch (e) {
-                    console.error(`Failed to parse fuel prices JSON for chunk ${index}`, e);
-                }
-            }
-            return true;
-        } catch (error: any) {
-            if (error?.status === 429 || error?.status === 'RESOURCE_EXHAUSTED' || error?.message?.includes('429') || error?.message?.includes('quota')) {
-                console.warn(`Quota exceeded fetching fuel prices for chunk ${index}. Aborting Gemini fetch.`);
-                return false;
-            }
-            console.error(`Error fetching fuel prices for chunk ${index}:`, error?.message || error);
-            return true;
-        }
-    };
-
-    let aborted = false;
-    for (let i = 0; i < chunks.length; i++) {
-        const shouldContinue = await fetchChunk(chunks[i], i);
-        if (!shouldContinue) {
-            aborted = true;
-            break;
-        }
-        if (i < chunks.length - 1) {
-            // Larger delay between chunks to avoid rate limits
-            await new Promise(resolve => setTimeout(resolve, 8000));
-        }
-    }
-
-    if (!aborted || Object.keys(pricesMap).length > 0) {
-        try {
-            localStorage.setItem(FUEL_PRICES_CACHE_KEY, JSON.stringify({
-                timestamp: Date.now(),
-                data: pricesMap
-            }));
-        } catch (e) {
-            console.warn("Failed to write fuel prices cache", e);
-        }
-    }
-
-    return pricesMap;
-};
 
 // URL for NIFC WFIGS Interagency Perimeters (Current)
 const NIFC_WFIGS_PERIMETERS_URL = 'https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query';
@@ -914,11 +743,11 @@ export const fetchActiveWildfires = async (): Promise<any> => {
         locationsUrl.searchParams.append('returnGeometry', 'true');
 
         const [pResponse, lResponse] = await Promise.all([
-            fetch(perimetersUrl.toString(), { cache: 'no-cache' }).catch(e => {
+            fetchSafe(perimetersUrl.toString(), true).catch(e => {
                 console.error("Failed to fetch perimeters", e);
                 return null;
             }),
-            fetch(locationsUrl.toString(), { cache: 'no-cache' }).catch(e => {
+            fetchSafe(locationsUrl.toString(), true).catch(e => {
                 console.error("Failed to fetch locations", e);
                 return null;
             })
@@ -1023,7 +852,7 @@ export const fetchActiveTfrs = async (): Promise<any> => {
     try {
         const fetchPromises = Object.entries(endpoints).map(async ([key, url]) => {
             try {
-                const response = await fetch(url, { cache: 'no-cache' });
+                const response = await fetchSafe(url, true);
                 if (!response.ok) {
                     throw new Error(`Failed to fetch ${key}: ${response.status} ${response.statusText}`);
                 }

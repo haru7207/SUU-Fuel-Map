@@ -4,7 +4,7 @@ import { Airport, CardType, WeatherData, FuelType, NotamData } from '../types';
 import { fetchWeather } from '../services/aviationService';
 import { auth, signInWithGoogle, logOut } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star, Bell } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
@@ -50,6 +50,48 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   const [estCustomPrice, setEstCustomPrice] = useState<string>('');
   const [estUseCustom, setEstUseCustom] = useState<boolean>(false);
 
+  // Price Alert State
+  const [localAlert, setLocalAlert] = useState<{ targetPrice: number, fuelType: string } | null>(null);
+
+  useEffect(() => {
+    try {
+        const saved = localStorage.getItem('suu_price_alerts');
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed[airport.id]) {
+                setLocalAlert(parsed[airport.id]);
+            } else {
+                setLocalAlert(null);
+            }
+        } else {
+            setLocalAlert(null);
+        }
+    } catch {}
+  }, [airport.id]);
+
+  const handleSetAlert = (f: FuelType) => {
+    const rawInput = window.prompt(`Set Price Alert for ${airport.name} (${f})\nYou will be notified if the live price drops at or below this target.\n\nEnter target price (e.g. 6.50) or leave blank to clear:`, localAlert?.targetPrice?.toString() || "");
+    if (rawInput === null) return;
+    
+    const val = parseFloat(rawInput);
+    if (isNaN(val) || val <= 0) {
+        if (rawInput.trim() === '') {
+             const saved = JSON.parse(localStorage.getItem('suu_price_alerts') || '{}');
+             delete saved[airport.id];
+             localStorage.setItem('suu_price_alerts', JSON.stringify(saved));
+             setLocalAlert(null);
+             window.dispatchEvent(new Event('suu_price_alert_updated'));
+        }
+        return;
+    }
+    
+    const saved = JSON.parse(localStorage.getItem('suu_price_alerts') || '{}');
+    saved[airport.id] = { airportId: airport.id, targetPrice: val, fuelType: f };
+    localStorage.setItem('suu_price_alerts', JSON.stringify(saved));
+    setLocalAlert({ targetPrice: val, fuelType: f });
+    window.dispatchEvent(new Event('suu_price_alert_updated'));
+  };
+
   // Sync preferred fuel type when selected airport changes
   useEffect(() => {
     if (airport.fuelTypes && airport.fuelTypes.length > 0) {
@@ -87,45 +129,6 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
     return () => unsubscribe();
   }, []);
 
-  const fetchRemarksLive = useCallback(async (icao: string) => {
-      setLoadingRemarks(true);
-      setRemarksError(null);
-      try {
-          const key = process.env.GEMINI_API_KEY;
-          if (!key) {
-              throw new Error("No Gemini API key available.");
-          }
-          const ai = new GoogleGenAI({ apiKey: key });
-          
-          const prompt = `You are an expert aviation tool. Find the official, actual FAA Form 5010 (Chart Supplement) "Other Remarks" or airport operational remarks for the airport code "${icao}".
-Use Google Search grounding to retrieve real, exact remarks (e.g. traffic patterns, helipads, wildlife hazards, noise abatement, or restrictions).
-Format the remarks as a clean, direct list of bullet points.
-Return ONLY the bulleted points, with each point on a standalone line starting with a dash (e.g. "- GA ACFT NOT PERMITTED ON ACR RAMP.").
-Do not include any greeting, preamble, or markdown surrounding text. If no remarks can be found, reply exactly with "- NoRemarksPublished"`;
-
-          const response = await ai.models.generateContent({
-              model: 'gemini-3.5-flash',
-              contents: prompt,
-              config: {
-                  tools: [{ googleSearch: {} }],
-              }
-          });
-          
-          const text = response.text || "";
-          if (text.includes("NoRemarksPublished") || text.trim() === "") {
-              setRemarksError("No remarks published for this location.");
-          } else {
-              setRemarks(text.trim());
-              setRemarksSource('gemini');
-          }
-      } catch (error) {
-          console.error("Gemini Search Grounding Error", error);
-          setRemarksError("No remarks published for this location. (Live search unavailable)");
-      } finally {
-          setLoadingRemarks(false);
-      }
-  }, []);
-
   const fetchRemarks = useCallback(async (icao: string) => {
       setLoadingRemarks(true);
       setRemarksError(null);
@@ -144,14 +147,9 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
           return;
       }
 
-      // 2. Fallback to Gemini Grounded Live search (acts as robust free FAA Form 5010 API)
-      if (process.env.GEMINI_API_KEY) {
-          fetchRemarksLive(icao);
-      } else {
-          setRemarksError("No remarks published for this location.");
-          setLoadingRemarks(false);
-      }
-  }, [fetchRemarksLive]);
+      setRemarksError("No remarks published for this location.");
+      setLoadingRemarks(false);
+  }, []);
 
   useEffect(() => {
       fetchRemarks(airport.id);
@@ -557,9 +555,18 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                                                  )}
                                             </div>
                                         </div>
-                                        <span className="text-sm font-bold text-slate-800 font-mono w-16 text-right">
-                                            {airport.fuelPrices && airport.fuelPrices[f] ? `$${airport.fuelPrices[f].toFixed(2)}` : 'N/A'}
-                                        </span>
+                                        <div className="flex items-center gap-2 w-24 justify-end">
+                                            <button 
+                                                onClick={() => handleSetAlert(f as FuelType)} 
+                                                className={`p-1.5 rounded-full transition-colors ${localAlert?.fuelType === f && localAlert.targetPrice > 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400'}`}
+                                                title={localAlert?.fuelType === f ? `Alert set: <= $${localAlert.targetPrice}` : "Set Price Alert"}
+                                            >
+                                                <Bell size={12} strokeWidth={localAlert?.fuelType === f ? 3 : 2} />
+                                            </button>
+                                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono text-right shrink-0 min-w-[3.5rem]">
+                                                {airport.fuelPrices && airport.fuelPrices[f] ? `$${airport.fuelPrices[f].toFixed(2)}` : 'N/A'}
+                                            </span>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -1142,16 +1149,6 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                                 }`}>
                                     {remarksSource === 'local' ? 'Local DB' : 'Live Grounded AI'}
                                 </span>
-                                {process.env.GEMINI_API_KEY && (
-                                    <button
-                                        onClick={() => fetchRemarksLive(airport.id)}
-                                        className="p-1 px-2 rounded bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-[10px] font-bold text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors flex items-center gap-1 shadow-xs"
-                                        title="Fetch live official remarks using Google Search Grounding"
-                                    >
-                                        <Sparkles size={11} className="text-purple-500" />
-                                        <span>Sync Live</span>
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>
@@ -1173,15 +1170,6 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                             <div className="flex flex-col items-center justify-center h-48 text-center p-6 bg-white dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                                 <Info size={32} className="text-slate-400 mb-2" />
                                 <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-4">{remarksError}</p>
-                                {process.env.GEMINI_API_KEY && (
-                                    <button
-                                        onClick={() => fetchRemarksLive(airport.id)}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
-                                    >
-                                        <Sparkles size={14} />
-                                        <span>Fetch Live FAA Remarks</span>
-                                    </button>
-                                )}
                             </div>
                         ) : remarksList.length > 0 ? (
                             <div className="space-y-4">
@@ -1208,15 +1196,6 @@ Do not include any greeting, preamble, or markdown surrounding text. If no remar
                             <div className="flex flex-col items-center justify-center h-48 text-center p-6 bg-white dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
                                 <Info size={32} className="text-slate-400 mb-2" />
                                 <span className="text-sm text-slate-500 mb-4">No remarks published for this location.</span>
-                                {process.env.GEMINI_API_KEY && (
-                                    <button
-                                        onClick={() => fetchRemarksLive(airport.id)}
-                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
-                                    >
-                                        <Sparkles size={14} />
-                                        <span>Sync Remarks via AI Grounding</span>
-                                    </button>
-                                )}
                             </div>
                         )}
                     </div>

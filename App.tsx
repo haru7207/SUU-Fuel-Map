@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Sidebar from './components/Sidebar';
 import Map from './components/Map';
@@ -16,7 +16,7 @@ import { WindComponentsCalculator } from './components/WindComponentsCalculator'
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
-import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, fetchAllNotamsWithGemini, fetchLiveFuelPricesWithGemini } from './services/aviationService';
+import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame, ShieldAlert } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import LiveFleetTracker from './components/LiveFleetTracker';
@@ -85,6 +85,37 @@ const App: React.FC = () => {
       return {};
     }
   });
+
+  // Weather Expiration Worker
+  useEffect(() => {
+    const checkWeatherExpiration = () => {
+      setWeatherMap(prevMap => {
+        let hasChanges = false;
+        const now = Date.now();
+        const nextMap = { ...prevMap };
+        
+        for (const [airportId, weather] of Object.entries(nextMap)) {
+          if (weather.observationTime) {
+            const obsDate = new Date(weather.observationTime);
+            if (!isNaN(obsDate.getTime())) {
+              const diffMinutes = (now - obsDate.getTime()) / (1000 * 60);
+              if (diffMinutes > 60) {
+                delete nextMap[airportId];
+                hasChanges = true;
+                console.log(`[Auto-Refresh] Expired stale weather data for ${airportId} (Age: ${diffMinutes.toFixed(1)}m)`);
+              }
+            }
+          }
+        }
+        
+        return hasChanges ? nextMap : prevMap;
+      });
+    };
+
+    const intervalId = setInterval(checkWeatherExpiration, 60 * 1000); // Check every minute
+    checkWeatherExpiration(); // Also check on mount
+    return () => clearInterval(intervalId);
+  }, []);
   
   // NOTAM State
   const [notamMap, setNotamMap] = useState<Record<string, NotamData>>(() => {
@@ -96,62 +127,74 @@ const App: React.FC = () => {
     }
   });
 
+  // Price Alerts State
+  const [priceAlerts, setPriceAlerts] = useState<Record<string, { airportId: string; targetPrice: number; fuelType: string; }>>(() => {
+    try {
+      const saved = localStorage.getItem('suu_price_alerts');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const priceAlertsRef = useRef(priceAlerts);
+  useEffect(() => {
+    priceAlertsRef.current = priceAlerts;
+    try {
+      localStorage.setItem('suu_price_alerts', JSON.stringify(priceAlerts));
+    } catch {}
+  }, [priceAlerts]);
+
+  useEffect(() => {
+    const handler = () => {
+      try {
+        const saved = localStorage.getItem('suu_price_alerts');
+        if (saved) setPriceAlerts(JSON.parse(saved));
+      } catch {}
+    };
+    window.addEventListener('suu_price_alert_updated', handler);
+    return () => window.removeEventListener('suu_price_alert_updated', handler);
+  }, []);
+
+  // Notifications State
+  const [notifications, setNotifications] = useState<{id: number, message: string}[]>([]);
+  const addNotification = useCallback((message: string) => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, message }]);
+    setTimeout(() => {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }, 8000);
+  }, []);
+
+  const checkPriceAlerts = useCallback((livePrices: Record<string, Record<string, number>>) => {
+    const alerts = priceAlertsRef.current;
+    Object.entries(livePrices).forEach(([id, p]) => {
+      const alert = alerts[id];
+      if (alert) {
+        const currentVal = p[alert.fuelType];
+        if (currentVal !== undefined && currentVal <= alert.targetPrice) {
+           addNotification(`Price Alert: ${id} ${alert.fuelType} dropped to $${currentVal.toFixed(2)} (Target: $${alert.targetPrice.toFixed(2)})`);
+        }
+      }
+    });
+  }, [addNotification]);
+
+
   const [isRefreshingFuel, setIsRefreshingFuel] = useState(false);
 
   const handleRefreshFuel = async () => {
     if (isRefreshingFuel) return;
     setIsRefreshingFuel(true);
     try {
-      console.log("Forcing manual live fuel price update via Gemini Search Metric Grounding...");
-      const livePrices = await fetchLiveFuelPricesWithGemini(airports.map(a => a.id), true);
-      if (livePrices && Object.keys(livePrices).length > 0) {
-        const { saveSharedFuelPrices, appendFuelPriceHistoryPoint } = await import('./services/firebase');
-        await saveSharedFuelPrices(livePrices);
-        
-        // Concurrently append to fuel history logs for all tracked airports
-        Promise.allSettled(Object.entries(livePrices).map(([id, p]) => {
-          return appendFuelPriceHistoryPoint(id, p['100LL'] !== undefined ? p['100LL'] : null, p['Jet A'] !== undefined ? p['Jet A'] : null);
-        })).catch(err => console.error("Error logging historical prices asynchronously:", err));
-        
-        const timestamp = new Date().toISOString();
-        setAirports(prev => {
-          const next = prev.map(airport => {
-            const pricesForAirport = livePrices[airport.id];
-            if (pricesForAirport) {
-              const updatedPrices = { ...(airport.fuelPrices || {}) };
-              let updated = false;
-              
-              if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
-                updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
-                updated = true;
-              }
-              if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
-                updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
-                updated = true;
-              }
-              
-              if (updated) {
-                return {
-                  ...airport,
-                  fuelPrices: updatedPrices,
-                  fuelPricesLastUpdated: timestamp
-                };
-              }
-            }
-            return airport;
-          });
-          
-          try {
-            localStorage.setItem('suu_cached_airports', JSON.stringify(next));
-          } catch (e) {
-            console.error("Failed to save forced fuel prices to local cache", e);
-          }
-          return next;
-        });
-        
-        console.log("Forced live fuel price update succeeded and saved.");
+      console.log("Forcing manual live fuel data update...");
+      
+      const liveData = await fetchFuelMapData();
+      if (liveData && liveData.length > 0) {
+          // This simply triggers a reload of the app script data
+          // We don't fetch prices anymore as we removed AI
+          console.log("Fuel data refreshed successfully.");
       } else {
-        throw new Error("No live price data returned by search engine");
+        throw new Error("No live price data returned");
       }
     } catch (e) {
       console.error("Forced live fuel price update failed:", e);
@@ -419,16 +462,8 @@ const App: React.FC = () => {
                 console.error("Failed to fetch weather data", e);
             }
 
-            // Fetch NOTAMs for ALL airports
-            try {
-                console.log("Fetching NOTAMs for all airports...");
-                // We don't await this so it doesn't block the UI, it will update state when done
-                fetchAllNotamsWithGemini(currentAirports.map(a => a.id)).then(notamData => {
-                    setNotamMap(notamData);
-                });
-            } catch (e) {
-                console.error("Failed to fetch NOTAM data", e);
-            }
+            // NOTAM fetching is disabled as per 'no AI' policy.
+            // A suitable public API would be needed here.
 
             // Sync fuel prices with Firestore and check Monday/Wednesday scheduling
             try {
@@ -508,57 +543,9 @@ const App: React.FC = () => {
                     applyPricesToState(sharedObj.prices, sharedObj.lastUpdated);
                 }
 
-                if (needsUpdateVal) {
-                    console.log("Fetching fresh live fuel prices via Gemini with Google Search grounding...");
-                    fetchLiveFuelPricesWithGemini(currentAirports.map(a => a.id), true).then(async (livePrices) => {
-                        if (livePrices && Object.keys(livePrices).length > 0) {
-                            const success = await saveSharedFuelPrices(livePrices);
-                            if (success) {
-                                console.log("Shared fuel prices updated in Firestore successfully.");
-                            }
-                            const { appendFuelPriceHistoryPoint } = await import('./services/firebase');
-                            Promise.allSettled(Object.entries(livePrices).map(([id, p]) => {
-                                return appendFuelPriceHistoryPoint(id, p['100LL'] !== undefined ? p['100LL'] : null, p['Jet A'] !== undefined ? p['Jet A'] : null);
-                            })).catch(err => console.error("Error logging historical prices asynchronously:", err));
-                            applyPricesToState(livePrices, new Date().toISOString());
-                        }
-                    }).catch(err => {
-                        console.error("Error fetching live fuel prices via Gemini:", err);
-                    });
-                }
+                // Removed Gemini background fetch because AI data fetching is prohibited.
             } catch (e) {
-                console.error("Firestore fuel prices sync failed; falling back to direct background Gemini fetch.", e);
-                fetchLiveFuelPricesWithGemini(currentAirports.map(a => a.id)).then(livePrices => {
-                    if (livePrices && Object.keys(livePrices).length > 0) {
-                        setAirports(prev => {
-                            return prev.map(airport => {
-                                const pricesForAirport = livePrices[airport.id];
-                                if (pricesForAirport) {
-                                    const updatedPrices = { ...(airport.fuelPrices || {}) };
-                                    let updated = false;
-                                    
-                                    if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
-                                        updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
-                                        updated = true;
-                                    }
-                                    if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
-                                        updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
-                                        updated = true;
-                                    }
-                                    
-                                    if (updated) {
-                                        return {
-                                            ...airport,
-                                            fuelPrices: updatedPrices,
-                                            fuelPricesLastUpdated: new Date().toISOString()
-                                        };
-                                    }
-                                }
-                                return airport;
-                            });
-                        });
-                    }
-                }).catch(err => console.error(err));
+                console.error("Firestore fuel prices sync failed.", e);
             }
         };
 
@@ -671,21 +658,7 @@ const App: React.FC = () => {
             applyPricesToState(sharedObj.prices, sharedObj.lastUpdated);
         }
 
-        if (needsUpdate) {
-            console.log("[Auto-Refresh] Triggering live Gemini background fetch...");
-            const livePrices = await fetchLiveFuelPricesWithGemini(airports.map(a => a.id), true);
-            if (livePrices && Object.keys(livePrices).length > 0) {
-                await saveSharedFuelPrices(livePrices);
-                
-                const { appendFuelPriceHistoryPoint } = await import('./services/firebase');
-                Promise.allSettled(Object.entries(livePrices).map(([id, p]) => {
-                    return appendFuelPriceHistoryPoint(id, p['100LL'] !== undefined ? p['100LL'] : null, p['Jet A'] !== undefined ? p['Jet A'] : null);
-                })).catch(err => console.error("Error logging historical prices asynchronously:", err));
-
-                applyPricesToState(livePrices, new Date().toISOString());
-                console.log("[Auto-Refresh] Shared fuel prices updated in Firestore successfully.");
-            }
-        }
+        // Removed Gemini background fetch because AI data fetching is prohibited.
       } catch (err) {
         console.error("[Auto-Refresh] Error checking live fuel prices:", err);
       }
@@ -695,33 +668,33 @@ const App: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [airports.length]);
 
-  // High-frequency Background Weather Poller for KCDC
+  // Background Weather Poller for ALL tracked airports
   useEffect(() => {
-    const refreshKCDCWeather = async () => {
+    if (airports.length === 0) return;
+
+    const refreshAllWeather = async () => {
       try {
-        console.log("[Auto-Refresh] Fetching high-frequency update for KCDC weather...");
-        // Use fetchWeather to get both METAR and TAF
-        const { fetchWeather } = await import('./services/aviationService');
-        const kcdcWeather = await fetchWeather('KCDC');
-        if (kcdcWeather && kcdcWeather.metar !== 'METAR NOT AVAILABLE') {
-          setWeatherMap(prev => ({
-            ...prev,
-            'KCDC': kcdcWeather
-          }));
-          console.log("[Auto-Refresh] KCDC full weather updated successfully.");
-        } else {
-          console.log("[Auto-Refresh] KCDC fetch returned NOT AVAILABLE, skipping state update.");
+        console.log("[Auto-Refresh] Fetching weather update for all tracked airports...");
+        const { fetchAllWeather } = await import('./services/aviationService');
+        const weatherData = await fetchAllWeather(airports.map(a => a.weatherSource || a.id));
+        
+        if (weatherData && Object.keys(weatherData).length > 0) {
+            setWeatherMap(prev => ({
+              ...prev,
+              ...weatherData
+            }));
+            console.log("[Auto-Refresh] All airports weather updated successfully.");
         }
       } catch (error) {
-        console.error("[Auto-Refresh] Failed to update KCDC weather:", error);
+        console.error("[Auto-Refresh] Failed to update all airports weather:", error);
       }
     };
 
-    // Update every 2 minutes for immediate weather board freshness
-    const intervalId = setInterval(refreshKCDCWeather, 2 * 60 * 1000);
-    refreshKCDCWeather(); // Fetch immediately on load
+    // Update every 5 minutes for freshness across the board
+    const intervalId = setInterval(refreshAllWeather, 5 * 60 * 1000);
+    // Don't fetch immediately on load here because loadData() already does the initial fetch on mount
     return () => clearInterval(intervalId);
-  }, []);
+  }, [airports]);
 
   const selectedAirport = airports.find(a => a.id === selectedId);
 
@@ -1627,6 +1600,34 @@ const App: React.FC = () => {
             </>
           )}
         </AnimatePresence>
+
+        {/* Notifications Toast */}
+        <div className="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none">
+          <AnimatePresence>
+            {notifications.map(toast => (
+              <motion.div
+                key={toast.id}
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                className="bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-4 min-w-[300px] pointer-events-auto"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="text-emerald-400 mt-0.5">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                  </div>
+                  <div>
+                    <h4 className="text-white text-sm font-bold m-0">Live Update</h4>
+                    <p className="text-slate-300 text-xs mt-1 leading-snug m-0">{toast.message}</p>
+                  </div>
+                  <button onClick={() => setNotifications(n => n.filter(x => x.id !== toast.id))} className="ml-auto text-slate-500 hover:text-white transition-colors">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
 
         <ReleaseNotesModal />
       </div>
