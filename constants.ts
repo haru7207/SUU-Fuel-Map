@@ -520,14 +520,14 @@ export const AIRPORT_DATABASE: Airport[] = [
       { name: 'Denver Center', freq: '134.5' }
     ],
     cardRules: {
-      primary: CardType.AVFUEL,
-      notes: 'Black Avfuel Card (8615) accepted at Million Air. PCard required at Adventurous FBO.',
+      primary: CardType.UNKNOWN,
+      notes: 'Black Avfuel Card (8615) accepted at Million Air. PCard required at Adventurous FBO. If Million Air is closed out of business hours and you have to use PCard, reach out to Katie for authorization.',
       byFbo: [
         {
           name: 'Million Air',
           card: CardType.AVFUEL,
           vendor: 'AVFuel',
-          notes: 'Accepts Black card (8615).'
+          notes: 'Accepts Black card (8615). If closed out of business hours and have to use PCard, reach out to Katie for authorization.'
         },
         {
           name: 'Adventurous FBO',
@@ -1071,7 +1071,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'AZ',
     lat: 36.9594,
     lon: -113.0147,
-    fbo: 'Million Air / ADVENTUROUS',
+    fbo: 'West Wing Aviation',
     phone: '(702) 578-3348',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
@@ -1084,12 +1084,8 @@ export const AIRPORT_DATABASE: Airport[] = [
       { name: 'CTAF', freq: '122.9' }
     ],
     cardRules: {
-      primary: CardType.UNKNOWN,
-      notes: 'If Million Air is closed out of business hours and you have to use PCard, reach out to Katie for authorization.',
-      byFbo: [
-        { name: 'Million Air', vendor: 'AVFuel Co.', card: CardType.AVFUEL },
-        { name: 'ADVENTUROUS', vendor: 'Phillips 66 Aviation', card: CardType.PCARD }
-      ]
+      primary: CardType.PCARD,
+      notes: ''
     }
   },
   {

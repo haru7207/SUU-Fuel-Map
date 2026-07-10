@@ -390,15 +390,15 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <div>
                         <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base shadow-sm">Elon Jun</h4>
                         <p className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Terminal size={10} /> Lead Developer
+                          <Terminal size={10} /> Aviation Finance Assistant
                         </p>
                       </div>
                     </div>
                     
                     <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg space-y-2.5 text-sm border border-slate-100 dark:border-slate-700/50">
-                      <a href="mailto:haru7207.local@gmail.com" className="flex items-center gap-3 text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors group">
+                      <a href="mailto:elonjun@suu.edu" className="flex items-center gap-3 text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors group">
                         <div className="text-slate-400 group-hover:text-blue-500 transition-colors"><Mail size={14} /></div>
-                        <span className="font-medium">haru7207.local@gmail.com</span>
+                        <span className="font-medium">elonjun@suu.edu</span>
                       </a>
                       <div className="h-px w-full bg-slate-200 dark:bg-slate-700/50"></div>
                       <a href="tel:4356811849" className="flex items-center gap-3 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors group">
@@ -432,7 +432,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <Flame size={14} className="text-red-500 shadow-sm" />
                   <span className="font-bold tracking-wide text-sm text-slate-700 dark:text-slate-300">SUU Fuel Map</span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v2.6.3 • Designed for SUU Aviation</p>
+                <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v2.7.0 • Designed for SUU Aviation</p>
               </div>
             </div>
           </div>
