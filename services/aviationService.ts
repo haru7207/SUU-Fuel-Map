@@ -233,7 +233,7 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
   });
 
   // Chunk the IDs to avoid URL length limits (especially with proxies)
-  const chunkSize = 5;
+  const chunkSize = 50;
   const chunks = [];
   for (let i = 0; i < uniqueIds.length; i += chunkSize) {
       chunks.push(uniqueIds.slice(i, i + chunkSize));

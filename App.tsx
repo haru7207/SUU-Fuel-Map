@@ -335,6 +335,7 @@ const App: React.FC = () => {
             
             let currentAirports = [];
             try {
+                currentAirports = [...AIRPORT_DATABASE];
                 const saved = localStorage.getItem('suu_cached_airports');
                 if (saved) {
                     const parsed = JSON.parse(saved) as Airport[];
@@ -343,27 +344,29 @@ const App: React.FC = () => {
                         if (staticAirport) {
                             return {
                                 ...cached,
-                                name: staticAirport.name,
-                                city: staticAirport.city,
-                                state: staticAirport.state,
-                                lat: staticAirport.lat,
-                                lon: staticAirport.lon,
-                                runways: staticAirport.runways || cached.runways,
-                                frequencies: staticAirport.frequencies || cached.frequencies,
-                                cardRules: staticAirport.cardRules,
-                                fbo: staticAirport.fbo || cached.fbo,
-                                phone: staticAirport.phone || cached.phone,
+                                ...staticAirport, // Prioritize static data updates
+                                fuelPrices: cached.fuelPrices, // Keep cached prices
+                                fuelPricesLastUpdated: cached.fuelPricesLastUpdated
                             };
                         }
                         return cached;
                     });
-                } else {
-                    currentAirports = [...AIRPORT_DATABASE];
                 }
             } catch {
                 currentAirports = [...AIRPORT_DATABASE];
             }
             
+            // 1. Instantly trigger weather fetch for known airports in parallel
+            try {
+                console.log("Fetching weather instantly for preloaded airports...");
+                fetchAllWeather(currentAirports.map(a => a.weatherSource || a.id)).then(weatherData => {
+                    setWeatherMap(prev => ({ ...prev, ...weatherData }));
+                });
+            } catch (e) {
+                console.error("Failed to instantly fetch weather data", e);
+            }
+            
+            // 2. Fetch fuel map data from Google Script (can be slow)
             try {
                 console.log("Fetching live fuel map data...");
                 const liveData = await fetchFuelMapData();
@@ -453,13 +456,18 @@ const App: React.FC = () => {
                 console.error("Failed to merge live fuel data", e);
             }
 
-            // Now fetch weather for ALL airports (including newly added ones)
+            // Now fetch weather for ANY newly added airports from the sheet (if any)
             try {
-                console.log("Fetching weather for all airports...");
-                const weatherData = await fetchAllWeather(currentAirports.map(a => a.weatherSource || a.id));
-                setWeatherMap(weatherData);
+                const existingWeatherIds = Object.keys(weatherMap);
+                const airportsToFetch = currentAirports.filter(a => !existingWeatherIds.includes(a.weatherSource || a.id));
+                if (airportsToFetch.length > 0) {
+                    console.log(`Fetching weather for ${airportsToFetch.length} new airports...`);
+                    fetchAllWeather(airportsToFetch.map(a => a.weatherSource || a.id)).then(weatherData => {
+                        setWeatherMap(prev => ({ ...prev, ...weatherData }));
+                    });
+                }
             } catch (e) {
-                console.error("Failed to fetch weather data", e);
+                console.error("Failed to fetch additional weather data", e);
             }
 
             // NOTAM fetching is disabled as per 'no AI' policy.

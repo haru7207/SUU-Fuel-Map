@@ -485,7 +485,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     ],
     cardRules: {
       primary: CardType.PCARD,
-      notes: 'New fuel system installed. Black Avfuel Card NO LONGER ACCEPTED. Use PCard.',
+      notes: 'Try Black card (8615) first, then use the PCard if it is declined.',
       warning: true
     },
     userNotes: [
@@ -1071,7 +1071,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'AZ',
     lat: 36.9594,
     lon: -113.0147,
-    fbo: 'West Wing Aviation',
+    fbo: 'Million Air / ADVENTUROUS',
     phone: '(702) 578-3348',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
@@ -1084,8 +1084,12 @@ export const AIRPORT_DATABASE: Airport[] = [
       { name: 'CTAF', freq: '122.9' }
     ],
     cardRules: {
-      primary: CardType.PCARD,
-      notes: ''
+      primary: CardType.UNKNOWN,
+      notes: 'If Million Air is closed out of business hours and you have to use PCard, reach out to Katie for authorization.',
+      byFbo: [
+        { name: 'Million Air', vendor: 'AVFuel Co.', card: CardType.AVFUEL },
+        { name: 'ADVENTUROUS', vendor: 'Phillips 66 Aviation', card: CardType.PCARD }
+      ]
     }
   },
   {
