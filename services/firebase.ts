@@ -1,15 +1,86 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, initializeFirestore } from "firebase/firestore";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, initializeFirestore, serverTimestamp, collection, query, where, getDocs } from "firebase/firestore";
 import firebaseConfig from "../firebase-applet-config.json";
 
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-    databaseId: firebaseConfig.firestoreDatabaseId,
-    experimentalForceLongPolling: true
-});
+export const db = initializeFirestore(
+    app,
+    { experimentalForceLongPolling: true },
+    firebaseConfig.firestoreDatabaseId
+);
+
+const isOfflineError = (error: unknown): boolean => {
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return true;
+  }
+  const msg = error instanceof Error ? error.message : String(error);
+  const lowerMsg = msg.toLowerCase();
+  return lowerMsg.includes("offline") || 
+         lowerMsg.includes("network") || 
+         lowerMsg.includes("unreachable") || 
+         lowerMsg.includes("unavailable") ||
+         lowerMsg.includes("could not connect");
+};
+
+export const getMultipleCachedWeatherFromFirebase = async (airportIds: string[]): Promise<any[]> => {
+    if (airportIds.length === 0) return [];
+    try {
+        const cachedResults: any[] = [];
+        
+        // Firestore 'in' query has a limit of 30, so chunk it
+        const chunkSize = 30;
+        for (let i = 0; i < airportIds.length; i += chunkSize) {
+            const chunk = airportIds.slice(i, i + chunkSize);
+            const q = query(collection(db, 'airportWeatherCache'), where('airportId', 'in', chunk));
+            const snapshot = await getDocs(q);
+            snapshot.forEach(doc => {
+                cachedResults.push(doc.data());
+            });
+        }
+        return cachedResults;
+    } catch (e) {
+        if (!isOfflineError(e)) {
+            console.warn("Error getting multiple cached weather:", e);
+        }
+        return [];
+    }
+};
+
+export const getCachedWeatherFromFirebase = async (airportId: string) => {
+    try {
+        const docRef = doc(db, 'airportWeatherCache', airportId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        }
+        return null;
+    } catch (e) {
+        if (!isOfflineError(e)) {
+            console.warn("Error getting cached weather:", e);
+        }
+        return null;
+    }
+};
+
+export const setCachedWeatherToFirebase = async (airportId: string, metarData: any[], tafData: any[]) => {
+    if (!auth.currentUser) return; // Only signed-in users update the cache
+    try {
+        const docRef = doc(db, 'airportWeatherCache', airportId);
+        await setDoc(docRef, {
+            airportId,
+            metarData,
+            tafData,
+            lastUpdated: new Date().toISOString()
+        });
+    } catch (e) {
+        if (!isOfflineError(e)) {
+            console.warn("Error setting cached weather:", e);
+        }
+    }
+};
 
 export enum OperationType {
   CREATE = 'create',
@@ -36,19 +107,6 @@ interface FirestoreErrorInfo {
     }[];
   }
 }
-
-const isOfflineError = (error: unknown): boolean => {
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return true;
-  }
-  const msg = error instanceof Error ? error.message : String(error);
-  const lowerMsg = msg.toLowerCase();
-  return lowerMsg.includes("offline") || 
-         lowerMsg.includes("network") || 
-         lowerMsg.includes("unreachable") || 
-         lowerMsg.includes("unavailable") ||
-         lowerMsg.includes("could not connect");
-};
 
 function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
   const isOffline = isOfflineError(error);
@@ -167,6 +225,7 @@ export const fetchSharedFuelPrices = async (): Promise<SharedFuelPrices | null> 
 };
 
 export const saveSharedFuelPrices = async (pricesMap: Record<string, Record<string, number>>): Promise<boolean> => {
+    if (!auth.currentUser) return false;
     const path = "fuelPrices/global";
     try {
         const docRef = doc(db, "fuelPrices", "global");
@@ -299,10 +358,12 @@ const fetchFuelPriceHistoryFromDb = async (airportId: string, currentLL: number 
         if (!historyToReturn) {
             // If no history exists in Firestore, generate a realistic one and save it
             historyToReturn = generateRealisticHistory(airportId, currentLL, currentJetA);
-            await setDoc(docRef, {
-                airportId,
-                history: historyToReturn
-            });
+            if (auth.currentUser) {
+                await setDoc(docRef, {
+                    airportId,
+                    history: historyToReturn
+                });
+            }
         }
         
         // Save to cache
@@ -330,6 +391,7 @@ const fetchFuelPriceHistoryFromDb = async (airportId: string, currentLL: number 
 };
 
 export const appendFuelPriceHistoryPoint = async (airportId: string, llPrice: number | null, jetAPrice: number | null): Promise<boolean> => {
+    if (!auth.currentUser) return false;
     const path = `fuelPriceHistory/${airportId}`;
     try {
         const docRef = doc(db, "fuelPriceHistory", airportId);

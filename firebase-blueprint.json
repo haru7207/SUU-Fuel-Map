@@ -45,6 +45,18 @@
         "history": { "type": "array", "description": "List of historical price entries" }
       },
       "required": ["airportId", "history"]
+    },
+    "AirportWeatherCache": {
+      "title": "Airport Weather Cache",
+      "description": "Cached METAR and TAF data for an airport",
+      "type": "object",
+      "properties": {
+        "airportId": { "type": "string" },
+        "metarData": { "type": "array", "description": "JSON representation of METAR data from AWC" },
+        "tafData": { "type": "array", "description": "JSON representation of TAF data from AWC" },
+        "lastUpdated": { "type": "string", "description": "ISO timestamp of last successful fetch" }
+      },
+      "required": ["airportId", "metarData", "tafData", "lastUpdated"]
     }
   },
   "firestore": {
@@ -63,6 +75,10 @@
     "/fuelPriceHistory/{airportId}": {
       "schema": { "$ref": "#/entities/FuelPriceHistory" },
       "description": "A list of historical price data points for an airport"
+    },
+    "/airportWeatherCache/{airportId}": {
+      "schema": { "$ref": "#/entities/AirportWeatherCache" },
+      "description": "Cached weather data"
     }
   }
 }

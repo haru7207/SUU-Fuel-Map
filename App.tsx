@@ -698,8 +698,8 @@ const App: React.FC = () => {
       }
     };
 
-    // Update every 5 minutes for freshness across the board
-    const intervalId = setInterval(refreshAllWeather, 5 * 60 * 1000);
+    // Update every 1 hour for freshness across the board
+    const intervalId = setInterval(refreshAllWeather, 60 * 60 * 1000);
     // Don't fetch immediately on load here because loadData() already does the initial fetch on mount
     return () => clearInterval(intervalId);
   }, [airports]);

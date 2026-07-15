@@ -53,6 +53,14 @@ service cloud.firestore {
                data.history is list;
     }
 
+    function isValidAirportWeatherCache(data) {
+        return data.keys().hasAll(['airportId', 'metarData', 'tafData', 'lastUpdated']) &&
+               data.airportId is string && data.airportId.size() <= 20 &&
+               data.metarData is list &&
+               data.tafData is list &&
+               data.lastUpdated is string && data.lastUpdated.size() <= 100;
+    }
+
     match /pilotNotes/{noteId} {
       // Any signed in user can read notes.
       allow get: if isSignedIn() && isValidId(noteId);
@@ -64,16 +72,23 @@ service cloud.firestore {
     }
 
     match /fuelPrices/{docId} {
-      allow get: if isSignedIn() && isValidId(docId);
+      allow get: if isValidId(docId);
       allow list: if false;
       allow create, update: if isSignedIn() && isValidId(docId) && isValidFuelPrices(incoming());
       allow delete: if false;
     }
 
     match /fuelPriceHistory/{airportId} {
-      allow get: if isSignedIn() && isValidId(airportId);
+      allow get: if isValidId(airportId);
       allow list: if false;
       allow create, update: if isSignedIn() && isValidId(airportId) && isValidFuelPriceHistory(incoming());
+      allow delete: if false;
+    }
+
+    match /airportWeatherCache/{airportId} {
+      allow get: if isValidId(airportId);
+      allow list: if true;
+      allow create, update: if isSignedIn() && isValidId(airportId) && isValidAirportWeatherCache(incoming());
       allow delete: if false;
     }
   }

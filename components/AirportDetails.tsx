@@ -234,15 +234,12 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
           setWeather(weatherMap[weatherId]);
           setLoadingWeather(false); // Instantly hide loading state
           
-          // If TAF is not fetched, we might want to fetch it now for the details view
-          if (weatherMap[weatherId].taf === 'TAF NOT FETCHED') {
-              try {
-                  const fullWeather = await fetchWeather(weatherId);
-                  setWeather(fullWeather);
-              } catch (e) {
-                  console.error("Weather load failed", e);
-              }
-          }
+          // Background fetch for fresh data (METAR and TAF updates)
+          fetchWeather(weatherId, true).then(fullWeather => {
+              setWeather(fullWeather);
+          }).catch(e => {
+              console.error("Background weather load failed", e);
+          });
       } else {
           setLoadingWeather(true);
           try {

@@ -1,8 +1,9 @@
 
 import { WeatherData, TFR, Airmet, WindAloftData, UserNote } from '../types';
+import { getCachedWeatherFromFirebase, setCachedWeatherToFirebase, getMultipleCachedWeatherFromFirebase } from './firebase';
 
 // Base URL for Aviation Weather Center API (v2/Beta)
-const AWC_API_BASE = 'https://aviationweather.gov/api/data';
+const AWC_API_BASE = typeof window !== 'undefined' ? '/api/awc' : 'https://aviationweather.gov/api/data';
 
 // Google Apps Script Web App URL for Pilot Notes Backend
 const PILOT_NOTES_API_URL = 'https://script.google.com/macros/s/AKfycbwI3lNi6N5QekHISz0GIqrimSkDgKNhGeoY3JI_3Jfj2W77lIZdlg9UpUEtD-aLBfhd/exec';
@@ -10,16 +11,32 @@ const PILOT_NOTES_API_URL = 'https://script.google.com/macros/s/AKfycbwI3lNi6N5Q
 // Google Apps Script Web App URL for Fuel Map Data (FBO, Cards, Prices)
 const FUEL_DATA_API_URL = 'https://script.google.com/macros/s/AKfycbwLYchReDkCKVkVdNs2G6RfXV8M2DmInbwsYtFnCRrdI-wiyAoTwGoeCdsZluMwJtK5/exec';
 
+let lastWorkingStrategy = (() => {
+  try {
+    return localStorage.getItem('suu_last_weather_strategy') || 'Direct';
+  } catch {
+    return 'Direct';
+  }
+})();
+
+const saveWorkingStrategy = (strategy: string) => {
+  lastWorkingStrategy = strategy;
+  try {
+    localStorage.setItem('suu_last_weather_strategy', strategy);
+  } catch {}
+};
+
 /**
  * Robust Fetcher that tries Direct connection first, then falls back to multiple Proxies.
  * Validates that the response is JSON if requireJson is true.
  */
 export const fetchSafe = async (url: string, requireJson: boolean = false, skipCacheBuster: boolean = false): Promise<Response> => {
-  // Add unique cache buster to URL directly to avoid Cache-Control headers which trigger Preflight
+  // Add 5-minute aligned cache buster to URL directly to leverage browser/CDN cache but ensure update every 5m
   const urlWithCb = skipCacheBuster ? url : (() => {
     const separator = url.includes('?') ? '&' : '?';
-    const uniqueId = `${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-    return `${url}${separator}_cb=${uniqueId}`;
+    // Align cache buster to 5 minutes (300,000 milliseconds)
+    const interval = Math.floor(Date.now() / 300000);
+    return `${url}${separator}_cb=${interval}`;
   })();
 
   // Helper to validate response content
@@ -46,159 +63,184 @@ export const fetchSafe = async (url: string, requireJson: boolean = false, skipC
       return res;
   };
 
-  // Strategy 1: Direct Fetch
-  try {
+  // If the URL is relative (e.g. starting with '/'), fetch directly and bypass all external proxy strategies
+  if (url.startsWith('/')) {
+    try {
       const response = await fetch(urlWithCb, {
           method: 'GET',
-          credentials: 'omit', // Essential for 'Anyone' scripts to avoid cookie/auth redirects
           redirect: 'follow',
           mode: 'cors'
       });
-      return await validate(response, 'Direct');
-  } catch (directError) {
-      // console.warn(`[AviationService] Direct fetch failed for ${url}`, directError);
+      return await validate(response, 'DirectRelative');
+    } catch (e) {
+      console.warn(`[AviationService] Direct relative fetch failed for ${urlWithCb}`, e);
+      throw e;
+    }
   }
 
-  // Strategy 2: AllOrigins RAW (Best for redirects)
-  try {
-      const encodedUrl = encodeURIComponent(urlWithCb);
-      const proxyUrl = `https://api.allorigins.win/raw?url=${encodedUrl}`;
-      
-      const response = await fetch(proxyUrl);
-      return await validate(response, 'AllOriginsRaw');
-  } catch (proxyError) {
-      // console.warn(`[AviationService] AllOrigins RAW failed`, proxyError);
+  const strategies = [
+    {
+      name: 'Direct',
+      fn: async () => {
+        const response = await fetch(urlWithCb, {
+            method: 'GET',
+            credentials: 'omit', // Essential for 'Anyone' scripts to avoid cookie/auth redirects
+            redirect: 'follow',
+            mode: 'cors'
+        });
+        return await validate(response, 'Direct');
+      }
+    },
+    {
+      name: 'AllOriginsRaw',
+      fn: async () => {
+        const encodedUrl = encodeURIComponent(urlWithCb);
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodedUrl}`;
+        const response = await fetch(proxyUrl);
+        return await validate(response, 'AllOriginsRaw');
+      }
+    },
+    {
+      name: 'CodeTabs',
+      fn: async () => {
+        const encodedUrl = encodeURIComponent(urlWithCb);
+        const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`;
+        const response = await fetch(proxyUrl);
+        return await validate(response, 'CodeTabs');
+      }
+    },
+    {
+      name: 'CorsProxy',
+      fn: async () => {
+        const encodedUrl = encodeURIComponent(urlWithCb);
+        const proxyUrl = `https://corsproxy.io/?${encodedUrl}`;
+        const response = await fetch(proxyUrl);
+        return await validate(response, 'CorsProxy');
+      }
+    },
+    {
+      name: 'AllOriginsWrapped',
+      fn: async () => {
+        const encodedUrl = encodeURIComponent(urlWithCb);
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`Proxy status ${response.status}`);
+        const wrapper = await response.json();
+        if (!wrapper || !wrapper.contents) throw new Error("Invalid AllOrigins response");
+        const wrappedResponse = new Response(wrapper.contents, { 
+            status: 200, 
+            statusText: "OK",
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return await validate(wrappedResponse, 'AllOriginsWrapped');
+      }
+    }
+  ];
+
+  // Re-order strategies to try the last working one first
+  const orderedStrategies = [...strategies].sort((a, b) => {
+    if (a.name === lastWorkingStrategy) return -1;
+    if (b.name === lastWorkingStrategy) return 1;
+    return 0;
+  });
+
+  let lastError: any = null;
+  for (const strategy of orderedStrategies) {
+    try {
+      const response = await strategy.fn();
+      if (strategy.name !== lastWorkingStrategy) {
+         saveWorkingStrategy(strategy.name);
+         console.log(`[AviationService] Weather fetch strategy switched to: ${strategy.name}`);
+      }
+      return response;
+    } catch (e) {
+      lastError = e;
+      // Continue to next strategy if one fails
+    }
   }
 
-  // Strategy 3: CodeTabs (Reliable alternative)
-  try {
-      const encodedUrl = encodeURIComponent(urlWithCb);
-      const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`;
-      
-      const response = await fetch(proxyUrl);
-      return await validate(response, 'CodeTabs');
-  } catch (proxyError) {
-     // console.warn(`[AviationService] CodeTabs failed`, proxyError);
-  }
-
-  // Strategy 4: CorsProxy.io
-  try {
-      const encodedUrl = encodeURIComponent(urlWithCb);
-      // CorsProxy documentation: https://corsproxy.io/?https://...
-      const proxyUrl = `https://corsproxy.io/?${encodedUrl}`;
-      const response = await fetch(proxyUrl);
-      return await validate(response, 'CorsProxy');
-  } catch (proxyError) {
-      // console.warn(`[AviationService] CorsProxy failed`, proxyError);
-  }
-
-  // Strategy 5: AllOrigins Wrapped (Fallback)
-  try {
-      const encodedUrl = encodeURIComponent(urlWithCb);
-      const proxyUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
-      
-      const response = await fetch(proxyUrl);
-      if (!response.ok) throw new Error(`Proxy status ${response.status}`);
-      
-      const wrapper = await response.json();
-      if (!wrapper || !wrapper.contents) throw new Error("Invalid AllOrigins response");
-      
-      const wrappedResponse = new Response(wrapper.contents, { 
-          status: 200, 
-          statusText: "OK",
-          headers: { 'Content-Type': 'application/json' }
-      });
-      
-      return await validate(wrappedResponse, 'AllOriginsWrapped');
-  } catch (proxyError) {
-      // console.warn(`[AviationService] AllOrigins Wrapped failed`, proxyError);
-  }
-
-  // If all fail
-  throw new TypeError(`Failed to fetch ${url} after multiple attempts`); 
+  throw lastError || new TypeError(`Failed to fetch ${url} after multiple attempts`);
 };
+
+export function parseWeatherData(m: any, now: Date): WeatherData {
+    let wind: { direction: number; speed: number; gust: number; isVrb?: boolean } | undefined;
+    if (m.wdir !== undefined && m.wspd !== undefined) {
+        let dir = m.wdir;
+        let isVrb = false;
+        if (dir === 'VRB') {
+            dir = 0;
+            isVrb = true;
+        }
+        
+        wind = {
+            direction: typeof dir === 'number' ? dir : 0,
+            speed: typeof m.wspd === 'number' ? m.wspd : 0,
+            gust: typeof m.wgst === 'number' ? m.wgst : 0,
+            isVrb: isVrb
+        };
+    }
+
+    return {
+        metar: m.rawOb || 'METAR DATA ERROR',
+        taf: m.rawTaf || 'TAF NOT AVAILABLE',
+        flightCategory: m.fltCat || 'UNKNOWN',
+        observationTime: m.obsTime,
+        wind: wind,
+        visibility: m.visib,
+        clouds: m.clouds,
+        temperature: m.temp,
+        dewpoint: m.dewp,
+        altimeter: m.altim,
+        elevation: m.elev,
+        lastUpdated: now
+    };
+}
 
 /**
  * Fetch live METAR and TAF data from AWC.
  */
-export const fetchWeather = async (airportId: string): Promise<WeatherData> => {
+export const fetchWeather = async (airportId: string, forceRefresh = false): Promise<WeatherData> => {
   const now = new Date();
   
+  if (!forceRefresh) {
+    try {
+      const cached = await getCachedWeatherFromFirebase(airportId);
+      if (cached && cached.lastUpdated) {
+        const ageMs = Date.now() - new Date(cached.lastUpdated).getTime();
+        // Return instantly from DB cache if it is fresh (< 1 hour)
+        if (ageMs < 60 * 60 * 1000) { 
+           console.log(`[AviationService] Serving cached weather for ${airportId} from Firestore (Age: ${(ageMs / 60000).toFixed(1)}m)`);
+           if (cached.metarData && Array.isArray(cached.metarData) && cached.metarData.length > 0) {
+               return parseWeatherData(cached.metarData[0], new Date(cached.lastUpdated));
+           }
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to check firestore weather cache", e);
+    }
+  }
+  
   try {
-    const [metarRes, tafRes] = await Promise.allSettled([
-      fetchSafe(`${AWC_API_BASE}/metar?ids=${airportId}&format=json`, true),
-      fetchSafe(`${AWC_API_BASE}/taf?ids=${airportId}&format=json`, true)
-    ]);
+    const metarRes = await fetchSafe(`${AWC_API_BASE}/metar?ids=${airportId}&format=json&taf=true`, true);
 
     let metarData: any[] = [];
-    let tafData: any[] = [];
     
-    if (metarRes.status === 'fulfilled') {
-        try { metarData = await metarRes.value.json(); } catch(e) { console.warn('METAR JSON parse error', e); }
+    try { 
+        metarData = await metarRes.json(); 
+    } catch(e) { 
+        console.warn('METAR JSON parse error', e); 
     }
-    
-    if (tafRes.status === 'fulfilled') {
-        try { tafData = await tafRes.value.json(); } catch(e) { console.warn('TAF JSON parse error', e); }
-    }
-
-    let metarText = 'METAR NOT AVAILABLE';
-    let tafText = 'TAF NOT AVAILABLE';
-    let category: any = 'UNKNOWN';
-    let obsTime: string | undefined;
-    let wind: { direction: number; speed: number; gust: number; isVrb?: boolean } | undefined;
-    
-    let visibility: string | undefined;
-    let clouds: { cover: string; base: number }[] | undefined;
-    let temperature: number | undefined;
-    let dewpoint: number | undefined;
-    let altimeter: number | undefined;
-    let elevation: number | undefined;
 
     if (metarData && Array.isArray(metarData) && metarData.length > 0) {
-      const m = metarData[0];
-      metarText = m.rawOb || 'METAR DATA ERROR';
-      category = m.fltCat || 'UNKNOWN';
-      obsTime = m.obsTime; 
-      visibility = m.visib;
-      clouds = m.clouds;
-      temperature = m.temp;
-      dewpoint = m.dewp;
-      altimeter = m.altim;
-      elevation = m.elev;
-
-      if (m.wdir !== undefined && m.wspd !== undefined) {
-         let dir = m.wdir;
-         let isVrb = false;
-         if (dir === 'VRB') {
-             dir = 0;
-             isVrb = true;
-         }
-         
-         wind = {
-             direction: typeof dir === 'number' ? dir : 0,
-             speed: typeof m.wspd === 'number' ? m.wspd : 0,
-             gust: typeof m.wgst === 'number' ? m.wgst : 0,
-             isVrb: isVrb
-         };
-      }
-    }
-
-    if (tafData && Array.isArray(tafData) && tafData.length > 0) {
-      tafText = tafData[0].rawTAF || 'TAF DATA ERROR';
+        // Save to cache asynchronously
+        setCachedWeatherToFirebase(airportId, metarData, []).catch(console.warn);
+        return parseWeatherData(metarData[0], now);
     }
 
     return {
-      metar: metarText,
-      taf: tafText,
-      flightCategory: category,
-      observationTime: obsTime,
-      wind: wind,
-      visibility,
-      clouds,
-      temperature,
-      dewpoint,
-      altimeter,
-      elevation,
+      metar: 'METAR NOT AVAILABLE',
+      taf: 'TAF NOT AVAILABLE',
+      flightCategory: 'UNKNOWN',
       lastUpdated: now
     };
 
@@ -221,6 +263,7 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
   const uniqueIds = Array.from(new Set(airportIds));
   
   const weatherMap: Record<string, WeatherData> = {};
+  const idsToFetchFromApi: string[] = [];
   
   // Initialize with default values
   uniqueIds.forEach(id => {
@@ -232,88 +275,76 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
       };
   });
 
+  // Try to load from Firestore cache first
+  try {
+      const cachedList = await getMultipleCachedWeatherFromFirebase(uniqueIds);
+      const cachedIds = new Set<string>();
+      
+      cachedList.forEach(cached => {
+          if (cached && cached.airportId && cached.lastUpdated) {
+              const ageMs = Date.now() - new Date(cached.lastUpdated).getTime();
+              // Cache is valid for 1 hour
+              if (ageMs < 60 * 60 * 1000) {
+                  if (cached.metarData && Array.isArray(cached.metarData) && cached.metarData.length > 0) {
+                      weatherMap[cached.airportId] = parseWeatherData(cached.metarData[0], new Date(cached.lastUpdated));
+                      cachedIds.add(cached.airportId);
+                  }
+              }
+          }
+      });
+      
+      // Determine which ones still need fetching
+      uniqueIds.forEach(id => {
+          if (!cachedIds.has(id)) {
+              idsToFetchFromApi.push(id);
+          }
+      });
+      
+      console.log(`[AviationService] Loaded ${cachedIds.size} weathers from cache. Need to fetch ${idsToFetchFromApi.length} from API.`);
+  } catch (e) {
+      console.warn("Failed to check firestore weather cache in fetchAllWeather", e);
+      idsToFetchFromApi.push(...uniqueIds); // Fetch all if cache fails
+  }
+
+  if (idsToFetchFromApi.length === 0) {
+      return weatherMap;
+  }
+
   // Chunk the IDs to avoid URL length limits (especially with proxies)
   const chunkSize = 50;
   const chunks = [];
-  for (let i = 0; i < uniqueIds.length; i += chunkSize) {
-      chunks.push(uniqueIds.slice(i, i + chunkSize));
+  for (let i = 0; i < idsToFetchFromApi.length; i += chunkSize) {
+      chunks.push(idsToFetchFromApi.slice(i, i + chunkSize));
   }
 
   try {
     const promises = chunks.map(async (chunk) => {
         const idsParam = chunk.join(',');
         try {
-            const [metarResponse, tafResponse] = await Promise.all([
-                fetchSafe(`${AWC_API_BASE}/metar?ids=${idsParam}&format=json`, true),
-                fetchSafe(`${AWC_API_BASE}/taf?ids=${idsParam}&format=json`, true)
-            ]);
-            
-            const metarData = await metarResponse.json().catch(() => []);
-            const tafData = await tafResponse.json().catch(() => []);
+            const response = await fetchSafe(`${AWC_API_BASE}/metar?ids=${idsParam}&format=json&taf=true`, true);
+            const metarData = await response.json().catch(() => []);
             
             return {
-                metar: Array.isArray(metarData) ? metarData : [],
-                taf: Array.isArray(tafData) ? tafData : []
+                metar: Array.isArray(metarData) ? metarData : []
             };
         } catch (e) {
             console.warn(`Failed to fetch chunk: ${idsParam}`, e);
-            return { metar: [], taf: [] };
+            return { metar: [] };
         }
     });
 
     const results = await Promise.all(promises);
     const metarData = results.flatMap(r => r.metar);
-    const tafData = results.flatMap(r => r.taf);
-    
-    // Create map for TAFs
-    const tafMap: Record<string, any> = {};
-    if (tafData && Array.isArray(tafData)) {
-        tafData.forEach(t => {
-            const id = t.icaoId || t.stationId || t.station_id || t.id;
-            if (id && t.rawTAF) {
-                tafMap[id] = t.rawTAF;
-            }
-        });
-    }
 
     if (metarData && Array.isArray(metarData)) {
       metarData.forEach(m => {
         const id = m.icaoId || m.stationId || m.station_id || m.id;
         if (!id) return;
-
-        let wind: { direction: number; speed: number; gust: number; isVrb?: boolean } | undefined;
-        if (m.wdir !== undefined && m.wspd !== undefined) {
-           let dir = m.wdir;
-           let isVrb = false;
-           if (dir === 'VRB') {
-               dir = 0;
-               isVrb = true;
-           }
-           
-           wind = {
-               direction: typeof dir === 'number' ? dir : 0,
-               speed: typeof m.wspd === 'number' ? m.wspd : 0,
-               gust: typeof m.wgst === 'number' ? m.wgst : 0,
-               isVrb: isVrb
-           };
-        }
-
-        weatherMap[id] = {
-          metar: m.rawOb || 'METAR DATA ERROR',
-          taf: tafMap[id] || 'TAF NOT AVAILABLE',
-          flightCategory: m.fltCat || 'UNKNOWN',
-          observationTime: m.obsTime,
-          wind: wind,
-          visibility: m.visib,
-          clouds: m.clouds,
-          temperature: m.temp,
-          dewpoint: m.dewp,
-          altimeter: m.altim,
-          elevation: m.elev,
-          lastUpdated: now
-        };
+        weatherMap[id] = parseWeatherData(m, now);
+        // Also save this fresh batch to firestore cache asynchronously
+        setCachedWeatherToFirebase(id, [m], []).catch(console.warn);
       });
-      console.log("Parsed Weather Map:", weatherMap);
+      console.log("Parsed Weather Map (after API fetch):", weatherMap);
     }
 
     return weatherMap;
