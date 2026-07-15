@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState } from 'react';
-import { Airport, CardType } from '../types';
+import { Airport, CardType, WeatherData } from '../types';
 import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star, Layers, Palette, Code, Terminal, Info, Flame, Database } from 'lucide-react';
 
 interface SidebarProps {
@@ -20,6 +20,7 @@ interface SidebarProps {
   onRefreshFuelPrices?: () => Promise<void>;
   favorites?: string[];
   onToggleFavorite?: (id: string) => void;
+  weatherMap?: Record<string, WeatherData>;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -38,11 +39,22 @@ const Sidebar: React.FC<SidebarProps> = ({
   isRefreshingFuel = false,
   onRefreshFuelPrices,
   favorites = [],
-  onToggleFavorite
+  onToggleFavorite,
+  weatherMap = {}
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [cardFilter, setCardFilter] = useState<CardType | 'ALL'>('ALL');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+
+  const getFlightCategoryColor = (cat: string) => {
+    switch (cat) {
+      case 'VFR': return 'bg-green-500 border-green-600';
+      case 'MVFR': return 'bg-blue-500 border-blue-600';
+      case 'IFR': return 'bg-red-500 border-red-600';
+      case 'LIFR': return 'bg-purple-500 border-purple-600';
+      default: return 'bg-slate-400 border-slate-500';
+    }
+  };
   
   const filteredAirports = useMemo(() => {
     let filtered = airports;
@@ -469,8 +481,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                       <div className="flex items-center justify-between w-full mb-1">
                         <div className="flex items-center gap-2">
                           <div className="flex items-center gap-2">
-                            <span className={`font-bold text-lg ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                            <span className={`font-bold text-lg flex items-center gap-2 ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
                                 {airport.id}
+                                {weatherMap[airport.weatherSource || airport.id] && (
+                                  <div 
+                                    className={`w-2.5 h-2.5 rounded-full border shadow-sm ${getFlightCategoryColor(weatherMap[airport.weatherSource || airport.id].flightCategory)}`}
+                                    title={`Flight Category: ${weatherMap[airport.weatherSource || airport.id].flightCategory}`}
+                                  />
+                                )}
                             </span>
                             {airport.fuelPricesLastUpdated && (Date.now() - new Date(airport.fuelPricesLastUpdated).getTime()) < 24 * 60 * 60 * 1000 && (
                                 <div 

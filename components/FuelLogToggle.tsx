@@ -534,7 +534,7 @@ Notes: ${log.notes || 'None'}
     <>
       {/* Floating Action Buttons */}
       {!isOpen && !isFlightTimeOpen && !isHidden && (
-        <div className="absolute top-14 left-4 md:top-4 md:left-6 z-[1050]" ref={dropdownRef}>
+        <div className={`absolute top-20 left-4 md:top-4 md:left-6 z-[1050] transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
           <button
             onClick={() => setIsFuelMenuOpen(!isFuelMenuOpen)}
             className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${isFuelMenuOpen ? 'bg-red-700 text-white' : 'bg-red-600 text-white hover:bg-red-700 hover:scale-105'}`}

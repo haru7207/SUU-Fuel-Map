@@ -226,42 +226,50 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       }
   }, [activeTab, fetchForecast, forecast, loadingForecast, forecastError]);
 
+  // Manual refresh triggered by button
   const loadWeather = useCallback(async (forceRefresh: boolean = false) => {
       const weatherId = airport.weatherSource || airport.id;
-      
-      // If we have it in the pre-fetched map and not forcing refresh, use it instantly
-      if (!forceRefresh && weatherMap && weatherMap[weatherId]) {
-          setWeather(weatherMap[weatherId]);
-          setLoadingWeather(false); // Instantly hide loading state
-          
-          // Background fetch for fresh data (METAR and TAF updates)
-          fetchWeather(weatherId, true).then(fullWeather => {
-              setWeather(fullWeather);
-          }).catch(e => {
-              console.error("Background weather load failed", e);
-          });
-      } else {
-          setLoadingWeather(true);
-          try {
-              const w = await fetchWeather(weatherId);
-              setWeather(w);
-          } catch (e) {
-              console.error("Weather load failed", e);
-          } finally {
-              setLoadingWeather(false);
-          }
+      setLoadingWeather(true);
+      try {
+          const w = await fetchWeather(weatherId, true);
+          setWeather(w);
+      } catch (e) {
+          console.error("Weather load failed", e);
+      } finally {
+          setLoadingWeather(false);
       }
-  }, [airport.id, airport.weatherSource, weatherMap]);
+  }, [airport.id, airport.weatherSource]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const weatherId = airport.weatherSource || airport.id;
+    
+    // 1. Instantly show cached map data if available to prevent flicker
+    if (weatherMap && weatherMap[weatherId]) {
+        setWeather(weatherMap[weatherId]);
+    } else {
+        setLoadingWeather(true);
+    }
+    
+    // 2. Automatically fetch fresh data from API in background when airport is opened
+    fetchWeather(weatherId, true).then(w => {
+        if (isMounted) {
+            setWeather(w);
+            setLoadingWeather(false);
+        }
+    }).catch(e => {
+        console.error("Auto weather load failed", e);
+        if (isMounted) setLoadingWeather(false);
+    });
+    
+    return () => { isMounted = false; };
+  }, [airport.id, airport.weatherSource]); // intentionally omitting weatherMap to prevent overwrite loop
 
   useEffect(() => {
     if (airport.runways.length > 0) {
       setSelectedRunway(airport.runways[0]);
     }
   }, [airport]);
-
-  useEffect(() => {
-    loadWeather();
-  }, [loadWeather]);
 
   // Listen for online/offline events to update local state
   useEffect(() => {
@@ -416,8 +424,13 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   return (
     <div className="h-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden relative font-sans">
       
+      {/* Mobile Drag Indicator */}
+      <div className="w-full flex justify-center pt-3 pb-1 md:hidden bg-white dark:bg-slate-900 flex-shrink-0">
+         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+      </div>
+
       {/* --- HEADER --- */}
-      <div className="p-5 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-start flex-shrink-0">
+      <div className="px-5 pb-5 pt-2 md:p-5 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-start flex-shrink-0">
         <div>
           <div className="flex items-center gap-3">
              <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">

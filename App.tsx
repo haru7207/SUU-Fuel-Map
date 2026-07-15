@@ -745,9 +745,9 @@ const App: React.FC = () => {
       {isMobile && !isSidebarOpen && !selectedId && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          className={`absolute top-4 left-4 z-[1000] p-2 md:p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 ${!isOnline ? 'mt-6' : ''}`}
+          className={`absolute top-4 left-4 z-[1000] p-3 md:p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 min-w-[48px] min-h-[48px] flex items-center justify-center ${!isOnline ? 'mt-6' : ''}`}
         >
-          <Menu size={18} className="md:w-6 md:h-6" />
+          <Menu size={22} className="md:w-6 md:h-6" />
         </button>
       )}
 
@@ -755,7 +755,7 @@ const App: React.FC = () => {
       <div className={`fixed inset-y-0 left-0 z-[1100] transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } ${!isOnline ? 'pt-6 md:pt-0' : ''}`}>
-         <div className="h-full w-80 md:w-96 relative">
+         <div className="h-full w-[85vw] sm:w-80 md:w-96 relative">
            <Sidebar airports={airports} 
             selectedId={selectedId} 
             onSelect={handleSelect}
@@ -776,6 +776,7 @@ const App: React.FC = () => {
             onClose={() => setIsSidebarOpen(false)}
             isRefreshingFuel={isRefreshingFuel}
             onRefreshFuelPrices={handleRefreshFuel}
+            weatherMap={weatherMap}
           />
          </div>
       </div>
@@ -799,6 +800,7 @@ const App: React.FC = () => {
             mapLayers={mapLayers}
             baseMapType={baseMapType}
             trackedAircraft={trackedAircraft}
+            isOnline={isOnline}
           />
         </div>
 
@@ -873,13 +875,13 @@ const App: React.FC = () => {
         />
 
         {/* Toolbar */}
-        <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2">
+        <div className={`absolute top-4 right-4 z-[1000] flex-col items-end gap-2 ${isMobile && (!!selectedId || isSidebarOpen) ? 'hidden' : 'flex'}`}>
           
           {/* Map Layers Dropdown */}
           <div className="relative w-full">
             <button
               onClick={() => setIsLayersMenuOpen(!isLayersMenuOpen)}
-              className={`flex items-center justify-center gap-2 font-bold py-1.5 px-3 text-xs md:text-sm rounded shadow-md border transition-all active:scale-95 w-full ${
+              className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
                 isLayersMenuOpen ? 'bg-indigo-600 text-white border-indigo-600 font-bold' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
               }`}
               title="Toggle map layers and overlay information"
@@ -1022,7 +1024,7 @@ const App: React.FC = () => {
               <div className="relative w-full">
                 <button
                   onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
-                  className={`flex items-center justify-center gap-2 font-bold py-1.5 px-3 text-xs md:text-sm rounded shadow-md border transition-all active:scale-95 w-full ${
+                  className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
                     isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                   }`}
                 >
@@ -1299,8 +1301,8 @@ const App: React.FC = () => {
                   exit={isMobile ? { y: '100%' } : { x: '100%' }}
                   transition={{ type: 'spring', damping: 30, stiffness: 240 }}
                   className="absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
-                      md:top-4 md:right-4 md:bottom-4 md:w-96 md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
-                      inset-x-0 bottom-0 top-10 rounded-t-2xl md:inset-auto"
+                      md:top-4 md:right-4 md:bottom-4 md:w-[420px] md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
+                      inset-x-0 bottom-0 h-[85vh] md:h-auto rounded-t-3xl md:inset-auto"
               >
                   <AirportDetails 
                       airport={selectedAirport} 
