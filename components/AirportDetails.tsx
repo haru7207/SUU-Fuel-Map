@@ -10,6 +10,7 @@ import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
 import { WeatherBoard } from './WeatherBoard';
 import { FuelPriceTrendChart } from './FuelPriceTrendChart';
+import { WeatherEffects } from './WeatherEffects';
 
 interface AirportDetailsProps {
   airport: Airport;
@@ -944,8 +945,9 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
 
         {/* TAB: WEATHER */}
         {activeTab === 'weather' && (
-            <div className="space-y-4 animate-fadeIn">
-                <div className="flex justify-between items-center mb-2">
+            <div className="space-y-4 animate-fadeIn relative p-2 -mx-2">
+                {weather && <WeatherEffects weather={weather} />}
+                <div className="flex justify-between items-center mb-2 relative z-10">
                     <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Metar & Taf</h3>
                     <div className="flex items-center gap-3">
                         {/* Last Updated Badge */}
@@ -971,10 +973,9 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                         </button>
                     </div>
                 </div>
-
                 {/* OFFLINE INDICATOR */}
                 {isOffline && (
-                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex gap-3 items-center mb-2">
+                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex gap-3 items-center mb-2 relative z-10">
                          <WifiOff className="h-4 w-4 text-amber-500 flex-shrink-0" />
                          <div>
                             <p className="text-xs font-bold text-amber-700">Offline Mode</p>
@@ -986,9 +987,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                          </div>
                     </div>
                 )}
-
                 {airport.weatherSource && (
-                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex gap-3 items-center mb-2">
+                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex gap-3 items-center mb-2 relative z-10">
                          <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
                          <p className="text-xs text-blue-700">
                              <strong>Note:</strong> Weather reported from nearest station <strong>{airport.weatherSource}</strong>.
@@ -997,16 +997,16 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                 )}
                 
                 {loadingWeather ? (
-                    <div className="space-y-3 animate-pulse">
+                    <div className="space-y-3 animate-pulse relative z-10">
                         <div className="h-20 bg-slate-200 rounded"></div>
                         <div className="h-20 bg-slate-200 rounded"></div>
                     </div>
                 ) : weather ? (
-                    <>
+                    <div className="relative z-10 space-y-6">
                         <WeatherBoard weather={weather} airport={airport} />
                     
                     {/* Crosswind Calculator */}
-                    <div className="mt-6 pt-6 border-t border-slate-200">
+                    <div className="pt-6 border-t border-slate-200">
                         <div className="flex items-center gap-2 mb-4">
                             <Wind size={18} className="text-slate-700" />
                             <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Crosswind Calc</h3>
@@ -1128,7 +1128,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                             )}
                         </div>
                     </div>
-                    </>
+                    </div>
                 ) : (
                     <div className="text-center py-8 text-slate-400">Weather unavailable</div>
                 )}

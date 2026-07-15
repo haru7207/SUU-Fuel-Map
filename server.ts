@@ -17,7 +17,12 @@ async function startServer() {
   // 2. AWC Weather & TFR Proxy Route
   app.get('/api/awc/*all', async (req: express.Request, res: express.Response) => {
     const subPath = Array.isArray(req.params.all) ? req.params.all.join('/') : req.params.all; // e.g. "metar" or "taf"
-    const queryString = new URLSearchParams(req.query as any).toString();
+    
+    // Strip _cb parameter to prevent busting NOAA's edge cache which can cause 504s
+    const queryParams = new URLSearchParams(req.query as any);
+    queryParams.delete('_cb');
+    const queryString = queryParams.toString();
+    
     const targetUrl = `https://aviationweather.gov/api/data/${subPath}${queryString ? '?' + queryString : ''}`;
 
     try {
