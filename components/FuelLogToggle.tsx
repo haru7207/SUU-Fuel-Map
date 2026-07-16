@@ -300,47 +300,27 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
         reader.onloadend = async () => {
             const base64Data = (reader.result as string).split(',')[1];
             
-            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            
-            const response = await ai.models.generateContent({
-                model: 'gemini-3.1-flash-lite',
-                contents: [
-                    {
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: file.type
-                        }
-                    },
-                    "Extract the following information from this fuel receipt. Return ONLY a JSON object with these exact keys: 'airport' (ICAO code, e.g. KCDC), 'tailNumber' (e.g. N12345), 'gallons' (number as string), 'usedCard' (one of: 'PCard', 'AVFuel', 'White Card', or 'Unknown'). If you can't find a value, leave it as an empty string."
-                ],
-                config: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: Type.OBJECT,
-                        properties: {
-                            airport: { type: Type.STRING },
-                            tailNumber: { type: Type.STRING },
-                            gallons: { type: Type.STRING },
-                            usedCard: { type: Type.STRING }
-                        }
-                    }
-                }
-            });
-
-            if (response.text) {
-                try {
-                    const data = JSON.parse(response.text);
-                    setFormData(prev => ({
-                        ...prev,
-                        airport: data.airport || prev.airport,
-                        tailNumber: data.tailNumber || prev.tailNumber,
-                        gallons: data.gallons || prev.gallons,
-                        usedCard: data.usedCard || prev.usedCard
-                    }));
-                } catch (e) {
-                    console.error("Failed to parse Gemini response", e);
-                }
+            try {
+                const res = await fetch('/api/gemini/receipt', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ base64Data, mimeType: file.type })
+                });
+                
+                if (!res.ok) throw new Error('Failed to analyze receipt');
+                const data = await res.json();
+                
+                setFormData(prev => ({
+                    ...prev,
+                    airport: data.airport || prev.airport,
+                    tailNumber: data.tailNumber || prev.tailNumber,
+                    gallons: data.gallons || prev.gallons,
+                    usedCard: data.usedCard || prev.usedCard
+                }));
+            } catch (err) {
+                console.error("Error analyzing image from API:", err);
             }
+
             setIsAnalyzing(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         };
@@ -356,13 +336,17 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
       if (!formData.notes) return;
       setIsFormatting(true);
       try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          const response = await ai.models.generateContent({
-              model: 'gemini-3.1-flash-lite',
-              contents: `Format the following pilot notes to be professional, clear, and concise. Fix any typos. Notes: "${formData.notes}"`
+          const res = await fetch('/api/gemini/format-notes', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ notes: formData.notes })
           });
-          if (response.text) {
-              setFormData(prev => ({ ...prev, notes: response.text || prev.notes }));
+          
+          if (!res.ok) throw new Error('Failed to format notes');
+          const data = await res.json();
+          
+          if (data.formattedNotes) {
+              setFormData(prev => ({ ...prev, notes: data.formattedNotes || prev.notes }));
           }
       } catch (error) {
           console.error("Error formatting notes:", error);
