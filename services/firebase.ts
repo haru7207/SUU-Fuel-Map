@@ -25,62 +25,8 @@ const isOfflineError = (error: unknown): boolean => {
          lowerMsg.includes("could not connect");
 };
 
-export const getMultipleCachedWeatherFromFirebase = async (airportIds: string[]): Promise<any[]> => {
-    if (airportIds.length === 0) return [];
-    try {
-        const cachedResults: any[] = [];
-        
-        // Firestore 'in' query has a limit of 30, so chunk it
-        const chunkSize = 30;
-        for (let i = 0; i < airportIds.length; i += chunkSize) {
-            const chunk = airportIds.slice(i, i + chunkSize);
-            const q = query(collection(db, 'airportWeatherCache'), where('airportId', 'in', chunk));
-            const snapshot = await getDocs(q);
-            snapshot.forEach(doc => {
-                cachedResults.push(doc.data());
-            });
-        }
-        return cachedResults;
-    } catch (e) {
-        if (!isOfflineError(e)) {
-            console.warn("Error getting multiple cached weather:", e);
-        }
-        return [];
-    }
-};
 
-export const getCachedWeatherFromFirebase = async (airportId: string) => {
-    try {
-        const docRef = doc(db, 'airportWeatherCache', airportId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return docSnap.data();
-        }
-        return null;
-    } catch (e) {
-        if (!isOfflineError(e)) {
-            console.warn("Error getting cached weather:", e);
-        }
-        return null;
-    }
-};
 
-export const setCachedWeatherToFirebase = async (airportId: string, metarData: any[], tafData: any[]) => {
-    if (!auth.currentUser) return; // Only signed-in users update the cache
-    try {
-        const docRef = doc(db, 'airportWeatherCache', airportId);
-        await setDoc(docRef, {
-            airportId,
-            metarData,
-            tafData,
-            lastUpdated: new Date().toISOString()
-        });
-    } catch (e) {
-        if (!isOfflineError(e)) {
-            console.warn("Error setting cached weather:", e);
-        }
-    }
-};
 
 export enum OperationType {
   CREATE = 'create',

@@ -12,6 +12,7 @@
     "@google/genai": "^1.48.0",
     "express": "^5.2.1",
     "firebase": "^12.13.0",
+    "idb": "^8.0.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.563.0",
     "motion": "^12.40.0",

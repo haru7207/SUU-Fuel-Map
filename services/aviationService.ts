@@ -1,6 +1,6 @@
 
 import { WeatherData, TFR, Airmet, WindAloftData, UserNote } from '../types';
-import { getCachedWeatherFromFirebase, setCachedWeatherToFirebase, getMultipleCachedWeatherFromFirebase } from './firebase';
+import { getCachedWeatherFromIDB, setCachedWeatherToIDB, getMultipleCachedWeatherFromIDB } from './weatherDb';
 
 // Base URL for Aviation Weather Center API (v2/Beta)
 const AWC_API_BASE = typeof window !== 'undefined' ? '/api/awc' : 'https://aviationweather.gov/api/data';
@@ -204,19 +204,19 @@ export const fetchWeather = async (airportId: string, forceRefresh = false): Pro
   
   if (!forceRefresh) {
     try {
-      const cached = await getCachedWeatherFromFirebase(airportId);
+      const cached = await getCachedWeatherFromIDB(airportId);
       if (cached && cached.lastUpdated) {
         const ageMs = Date.now() - new Date(cached.lastUpdated).getTime();
         // Return instantly from DB cache if it is fresh (< 1 hour)
         if (ageMs < 60 * 60 * 1000) { 
-           console.log(`[AviationService] Serving cached weather for ${airportId} from Firestore (Age: ${(ageMs / 60000).toFixed(1)}m)`);
+           console.log(`[AviationService] Serving cached weather for ${airportId} from IndexedDB (Age: ${(ageMs / 60000).toFixed(1)}m)`);
            if (cached.metarData && Array.isArray(cached.metarData) && cached.metarData.length > 0) {
                return parseWeatherData(cached.metarData[0], new Date(cached.lastUpdated));
            }
         }
       }
     } catch (e) {
-      console.warn("Failed to check firestore weather cache", e);
+      console.warn("Failed to check IndexedDB weather cache", e);
     }
   }
   
@@ -233,7 +233,7 @@ export const fetchWeather = async (airportId: string, forceRefresh = false): Pro
 
     if (metarData && Array.isArray(metarData) && metarData.length > 0) {
         // Save to cache asynchronously
-        setCachedWeatherToFirebase(airportId, metarData, []).catch(console.warn);
+        setCachedWeatherToIDB(airportId, metarData, []).catch(console.warn);
         return parseWeatherData(metarData[0], now);
     }
 
@@ -275,9 +275,9 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
       };
   });
 
-  // Try to load from Firestore cache first
+  // Try to load from IndexedDB cache first
   try {
-      const cachedList = await getMultipleCachedWeatherFromFirebase(uniqueIds);
+      const cachedList = await getMultipleCachedWeatherFromIDB(uniqueIds);
       const cachedIds = new Set<string>();
       
       cachedList.forEach(cached => {
@@ -302,7 +302,7 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
       
       console.log(`[AviationService] Loaded ${cachedIds.size} weathers from cache. Need to fetch ${idsToFetchFromApi.length} from API.`);
   } catch (e) {
-      console.warn("Failed to check firestore weather cache in fetchAllWeather", e);
+      console.warn("Failed to check IndexedDB weather cache in fetchAllWeather", e);
       idsToFetchFromApi.push(...uniqueIds); // Fetch all if cache fails
   }
 
@@ -341,8 +341,8 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
         const id = m.icaoId || m.stationId || m.station_id || m.id;
         if (!id) return;
         weatherMap[id] = parseWeatherData(m, now);
-        // Also save this fresh batch to firestore cache asynchronously
-        setCachedWeatherToFirebase(id, [m], []).catch(console.warn);
+        // Also save this fresh batch to IndexedDB cache asynchronously
+        setCachedWeatherToIDB(id, [m], []).catch(console.warn);
       });
       console.log("Parsed Weather Map (after API fetch):", weatherMap);
     }
