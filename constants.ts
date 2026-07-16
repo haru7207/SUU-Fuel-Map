@@ -25,6 +25,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       '02/20': 8653,
       '08/26': 4822
     },
+    runwayDetails: {'02/20': {'length': 8653,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['20'],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'},'08/26': {'length': 4822,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['26'],'lighting': 'LIRL','slope': '0.9%'}},
     frequencies: [
       { name: 'CTAF', freq: '123.0' },
       { name: 'AWOS', freq: '119.025' },
@@ -52,6 +53,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['13/31'],
     runwayLengths: { '13/31': 3990 },
+    runwayDetails: {'13/31': {'length': 3990,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.7%'}},
     weatherSource: 'KBCE', // Bryce Canyon
     frequencies: [
       { name: 'CTAF', freq: '122.9' },
@@ -79,6 +81,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 3400 },
+    runwayDetails: {'01/19': {'length': 3400,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['19'],'lighting': 'LIRL','slope': '-0.1%'}},
     weatherSource: 'KSGU', // St. George
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
@@ -106,6 +109,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['04/22'],
     runwayLengths: { '04/22': 4900 },
+    runwayDetails: {'04/22': {'length': 4900,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['22'],'lighting': 'LIRL','slope': '0.6%'}},
     weatherSource: 'KCDC', // Cedar City
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
@@ -133,6 +137,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['07/25', '13/31'],
     runwayLengths: { '07/25': 4700, '13/31': 3200 },
+    runwayDetails: {'07/25': {'length': 4700,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['25'],'lighting': 'LIRL','slope': '-0.2%'},'13/31': {'length': 3200,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.5%'}},
     weatherSource: 'KMLF', // Milford
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
@@ -160,6 +165,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['04/22'],
     runwayLengths: { '04/22': 5040 },
+    runwayDetails: {'04/22': {'length': 5040,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['22'],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '134.0' },
@@ -185,6 +191,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['16/34'],
     runwayLengths: { '16/34': 5000 },
+    runwayDetails: {'16/34': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['34'],'lighting': 'LIRL','slope': '0.3%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '120.2' },
@@ -211,6 +218,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 8900 },
+    runwayDetails: {'17/35': {'length': 8900,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.6%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '135.075' },
@@ -237,6 +245,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['03/21', '15/33'],
     runwayLengths: { '03/21': 7100, '15/33': 4060 },
+    runwayDetails: {'03/21': {'length': 7100,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.3%'},'15/33': {'length': 4060,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['33'],'lighting': 'LIRL','slope': '-0.5%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '119.925' },
@@ -263,6 +272,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19', '08/26'],
     runwayLengths: { '01/19': 8300, '08/26': 4500 },
+    runwayDetails: {'01/19': {'length': 8300,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '1.0%'},'08/26': {'length': 4500,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.6%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '118.525' },
@@ -289,6 +299,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['03/21'],
     runwayLengths: { '03/21': 7400 },
+    runwayDetails: {'03/21': {'length': 7400,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.1%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '133.175' },
@@ -315,6 +326,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 9300 },
+    runwayDetails: {'01/19': {'length': 9300,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
     frequencies: [
       { name: 'Tower', freq: '118.3' },
       { name: 'Ground', freq: '121.7' },
@@ -342,6 +354,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['12L/30R', '12R/30L', '07/25'],
     runwayLengths: { '12L/30R': 5000, '12R/30L': 4200, '07/25': 4200 },
+    runwayDetails: {'12L/30R': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '-0.3%'},'12R/30L': {'length': 4200,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': 'Level'},'07/25': {'length': 4200,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['25'],'lighting': 'LIRL','slope': '0.8%'}},
     frequencies: [
       { name: 'Tower', freq: '118.0' },
       { name: 'Ground', freq: '121.7' },
@@ -370,6 +383,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['04/22', '13/31'],
     runwayLengths: { '04/22': 6900, '13/31': 4400 },
+    runwayDetails: {'04/22': {'length': 6900,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': 'Level'},'13/31': {'length': 4400,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '-0.4%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '124.825' },
@@ -397,6 +411,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['16/34'],
     runwayLengths: { '16/34': 4700 },
+    runwayDetails: {'16/34': {'length': 4700,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['34'],'lighting': 'LIRL','slope': '0.6%'}},
     weatherSource: 'KSLC',
     frequencies: [
       { name: 'CTAF', freq: '122.9' },
@@ -425,6 +440,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['03/21', '17/35', '07/25'],
     runwayLengths: { '03/21': 8150, '17/35': 5200, '07/25': 4300 },
+    runwayDetails: {'03/21': {'length': 8150,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['21'],'lighting': 'MIRL / REIL / PAPI','slope': '0.3%'},'17/35': {'length': 5200,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'},'07/25': {'length': 4300,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['25'],'lighting': 'LIRL','slope': '-0.4%'}},
     frequencies: [
       { name: 'Tower', freq: '118.7' },
       { name: 'Ground', freq: '121.7' },
@@ -452,6 +468,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['08/26', '12/30'],
     runwayLengths: { '08/26': 10000, '12/30': 8000 },
+    runwayDetails: {'08/26': {'length': 10000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['26'],'lighting': 'MIRL / REIL / PAPI','slope': '0.3%'},'12/30': {'length': 8000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.7%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '119.325' },
@@ -478,6 +495,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 6600 },
+    runwayDetails: {'01/19': {'length': 6600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '0.2%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '133.675' },
@@ -514,6 +532,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['15/33', '07/25'],
     runwayLengths: { '15/33': 5950, '07/25': 5500 },
+    runwayDetails: {'15/33': {'length': 5950,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['33'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.1%'},'07/25': {'length': 5500,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.5%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'ASOS', freq: '120.625' },
@@ -574,6 +593,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['16L/34R', '16R/34L', '17/35', '14/32'],
     runwayLengths: { '16L/34R': 12000, '16R/34L': 12000, '17/35': 9600, '14/32': 4900 },
+    runwayDetails: {'16L/34R': {'length': 12000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.8%'},'16R/34L': {'length': 12000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['34L'],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'},'17/35': {'length': 9600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.2%'},'14/32': {'length': 4900,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['32'],'lighting': 'LIRL','slope': '0.9%'}},
     frequencies: [
       { name: 'Tower', freq: '119.05' },
       { name: 'Ground', freq: '121.9' },
@@ -607,6 +627,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17R/35L', '17L/35R'],
     runwayLengths: { '17R/35L': 6500, '17L/35R': 5000 },
+    runwayDetails: {'17R/35L': {'length': 6500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35L'],'lighting': 'MIRL / REIL / PAPI','slope': '0.2%'},'17L/35R': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['35R'],'lighting': 'LIRL','slope': '-0.4%'}},
     frequencies: [
       { name: 'Tower', freq: '125.1' },
       { name: 'Ground', freq: '127.8' },
@@ -640,6 +661,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['13/31', '18/36'],
     runwayLengths: { '13/31': 8600, '18/36': 6600 },
+    runwayDetails: {'13/31': {'length': 8600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['31'],'lighting': 'MIRL / REIL / PAPI','slope': '1.0%'},'18/36': {'length': 6600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['36'],'lighting': 'MIRL / REIL / PAPI','slope': '0.6%'}},
     frequencies: [
       { name: 'Tower', freq: '125.3' },
       { name: 'Ground', freq: '121.8' },
@@ -667,6 +689,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17/35', '10/28'],
     runwayLengths: { '17/35': 9000, '10/28': 5000 },
+    runwayDetails: {'17/35': {'length': 9000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.5%'},'10/28': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['28'],'lighting': 'LIRL','slope': '0.8%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '119.075' },
@@ -693,6 +716,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['12/30'],
     runwayLengths: { '12/30': 6500 },
+    runwayDetails: {'12/30': {'length': 6500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
     weatherSource: 'KPVU', // Provo
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
@@ -720,6 +744,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 5500 },
+    runwayDetails: {'17/35': {'length': 5500,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.4%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '120.625' },
@@ -746,6 +771,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['05/23', '16/34'],
     runwayLengths: { '05/23': 7300, '16/34': 3900 },
+    runwayDetails: {'05/23': {'length': 7300,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'},'16/34': {'length': 3900,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.6%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '135.075' },
@@ -772,6 +798,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 5800 },
+    runwayDetails: {'17/35': {'length': 5800,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
     weatherSource: 'KCNY',
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
@@ -799,6 +826,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 6400 },
+    runwayDetails: {'17/35': {'length': 6400,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35'],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
     weatherSource: 'KPVU',
     frequencies: [
       { name: 'CTAF', freq: '122.9' },
@@ -826,6 +854,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 5700 },
+    runwayDetails: {'01/19': {'length': 5700,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
     weatherSource: 'KPGA',
     frequencies: [
       { name: 'CTAF', freq: '122.9' },
@@ -853,6 +882,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['16/34'],
     runwayLengths: { '16/34': 8500 },
+    runwayDetails: {'16/34': {'length': 8500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['34'],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
     frequencies: [
       { name: 'Tower', freq: '119.8' },
       { name: 'Ground', freq: '121.9' },
@@ -880,6 +910,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 5100 },
+    runwayDetails: {'01/19': {'length': 5100,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
     weatherSource: 'KIFP',
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
@@ -907,6 +938,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['03/21'],
     runwayLengths: { '03/21': 9000 },
+    runwayDetails: {'03/21': {'length': 9000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['21'],'lighting': 'MIRL / REIL / PAPI','slope': '0.9%'}},
     frequencies: [
       { name: 'Tower', freq: '119.0' },
       { name: 'Ground', freq: '121.9' },
@@ -934,6 +966,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['01/19'],
     runwayLengths: { '01/19': 6200 },
+    runwayDetails: {'01/19': {'length': 6200,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.3%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '119.35' }
@@ -959,6 +992,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['16/34'],
     runwayLengths: { '16/34': 6000 },
+    runwayDetails: {'16/34': {'length': 6000,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.4%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' }
     ],
@@ -983,6 +1017,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['12/30'],
     runwayLengths: { '12/30': 6500 },
+    runwayDetails: {'12/30': {'length': 6500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.7%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' },
       { name: 'AWOS', freq: '132.175' }
@@ -1008,6 +1043,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['17/35'],
     runwayLengths: { '17/35': 5500 },
+    runwayDetails: {'17/35': {'length': 5500,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.4%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' }
     ],
@@ -1032,6 +1068,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['03/21'],
     runwayLengths: { '03/21': 5000 },
+    runwayDetails: {'03/21': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['21'],'lighting': 'LIRL','slope': '-0.5%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.9' }
     ],
@@ -1056,6 +1093,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['03/21'],
     runwayLengths: { '03/21': 6800 },
+    runwayDetails: {'03/21': {'length': 6800,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['21'],'lighting': 'MIRL / REIL / PAPI','slope': '0.9%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.8' }
     ],
@@ -1080,6 +1118,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['11/29'],
     runwayLengths: { '11/29': 5100 },
+    runwayDetails: {'11/29': {'length': 5100,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['29'],'lighting': 'MIRL / REIL / PAPI','slope': '0.2%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.9' }
     ],
@@ -1104,6 +1143,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     },
     runways: ['08/26'],
     runwayLengths: { '08/26': 4100 },
+    runwayDetails: {'08/26': {'length': 4100,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.7%'}},
     frequencies: [
       { name: 'CTAF', freq: '122.725' }
     ],

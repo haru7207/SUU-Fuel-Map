@@ -11,6 +11,7 @@ import { REMARKS_DATABASE } from './remarksDb';
 import { WeatherBoard } from './WeatherBoard';
 import { FuelPriceTrendChart } from './FuelPriceTrendChart';
 import { WeatherEffects } from './WeatherEffects';
+import { RunwaysList } from './RunwaysList';
 
 interface AirportDetailsProps {
   airport: Airport;
@@ -24,7 +25,7 @@ interface AirportDetailsProps {
   onToggleFavorite?: (id: string) => void;
 }
 
-type Tab = 'info' | 'weather' | 'notam';
+type Tab = 'info' | 'runways' | 'weather' | 'notam';
 
 const AirportDetails: React.FC<AirportDetailsProps> = ({ 
   airport, 
@@ -501,6 +502,12 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
             FBO & Info
         </button>
         <button 
+            onClick={() => setActiveTab('runways')}
+            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'runways' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+        >
+            Runways
+        </button>
+        <button 
             onClick={() => setActiveTab('weather')}
             className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'weather' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
         >
@@ -821,47 +828,6 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                         </div>
                     </div>
 
-                    {/* Runway Info */}
-                    <div>
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-2">Runways</span>
-                        <div className="flex flex-col gap-2">
-                            {airport.runways.map(r => {
-                                // Check if this runway contains the "best" direction
-                                const isBest = bestRunwayInfo?.parent === r;
-                                const bestSide = isBest ? bestRunwayInfo?.id : null;
-                                const length = airport.runwayLengths?.[r];
-
-                                return (
-                                    <div key={r} className={`flex items-center justify-between border px-3 py-2 rounded text-xs font-bold ${
-                                        isBest ? 'bg-green-50 border-green-200 text-green-900 shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-700'
-                                    }`}>
-                                        <div className="flex items-center gap-2">
-                                            <ArrowUpCircle size={14} className={isBest ? 'text-green-600' : 'text-slate-400'} />
-                                            <span className="text-sm">{r}</span>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-3">
-                                            {isBest && bestSide && (
-                                                <span className="text-[10px] uppercase font-black tracking-wider text-green-600 bg-green-100 px-1.5 py-0.5 rounded">
-                                                    Best: {bestSide}
-                                                </span>
-                                            )}
-                                            {length ? (
-                                                <span className="font-mono text-slate-500">{length.toLocaleString()} ft</span>
-                                            ) : (
-                                                <span className="text-slate-400 italic">Len N/A</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                            
-                            {airport.runways.length === 0 && (
-                                <span className="text-xs text-slate-400 italic">No runway information available</span>
-                            )}
-                        </div>
-                    </div>
-
                     {/* Frequencies Info */}
                     {airport.frequencies && airport.frequencies.length > 0 && (
                         <div>
@@ -1005,97 +971,6 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                     <div className="relative z-10 space-y-6">
                         <WeatherBoard weather={weather} airport={airport} />
                     
-                    {/* Crosswind Calculator */}
-                    <div className="pt-6 border-t border-slate-200">
-                        <div className="flex items-center gap-2 mb-4">
-                            <Wind size={18} className="text-slate-700" />
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Crosswind Calc</h3>
-                        </div>
-
-                        {windData ? (
-                            <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-                                <div className="flex justify-between items-center mb-4">
-                                     <label className="text-xs font-bold text-slate-500">Runway</label>
-                                     <select 
-                                        className="text-sm font-bold bg-slate-100 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
-                                        value={selectedRunway}
-                                        onChange={(e) => setSelectedRunway(e.target.value)}
-                                     >
-                                         {airport.runways.map(r => (
-                                             <option key={r} value={r}>RWY {r}</option>
-                                         ))}
-                                     </select>
-                                </div>
-
-                                <div className="flex gap-4">
-                                    {/* Visual Graphic */}
-                                    <div className="relative w-32 h-32 bg-slate-50 rounded-full border border-slate-200 flex items-center justify-center flex-shrink-0">
-                                        <div className="absolute top-1 text-[8px] font-bold text-slate-400">N</div>
-                                        <div className="absolute bottom-1 text-[8px] font-bold text-slate-400">S</div>
-                                        <div className="absolute left-1 text-[8px] font-bold text-slate-400">W</div>
-                                        <div className="absolute right-1 text-[8px] font-bold text-slate-400">E</div>
-                                        
-                                        {/* Compass SVG */}
-                                        <svg width="100%" height="100%" viewBox="0 0 100 100" className="p-2">
-                                            {crosswindData && (
-                                                <>
-                                                    {/* Runway Bar */}
-                                                    <rect 
-                                                        x="44" y="10" width="12" height="80" rx="2" 
-                                                        fill="#334155" 
-                                                        transform={`rotate(${crosswindData.rwyHeading}, 50, 50)`} 
-                                                    />
-                                                    
-                                                    {/* Wind Arrow */}
-                                                    <g transform={`rotate(${windData.direction}, 50, 50)`}>
-                                                        {/* Arrow pointing to center (FROM) */}
-                                                        <line x1="50" y1="10" x2="50" y2="40" stroke="#ef4444" strokeWidth="3" markerEnd="url(#arrowhead)" />
-                                                    </g>
-                                                    <defs>
-                                                        <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
-                                                            <polygon points="0 0, 6 2, 0 4" fill="#ef4444" />
-                                                        </marker>
-                                                    </defs>
-                                                </>
-                                            )}
-                                        </svg>
-                                    </div>
-
-                                    {/* Stats */}
-                                    {crosswindData && (
-                                        <div className="flex-1 space-y-3 py-1">
-                                            <div>
-                                                <div className="text-[10px] text-slate-400 font-bold uppercase">Wind</div>
-                                                <div className="text-lg font-mono font-bold text-slate-800">
-                                                    {windData.isVrb ? 'VRB' : windData.direction.toString().padStart(3, '0')}@{windData.speed}
-                                                    {windData.gust > 0 ? `G${windData.gust}` : ''}kt
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                                                     <div className="text-[9px] text-slate-400 font-bold uppercase">X-Wind</div>
-                                                     <div className="text-sm font-mono font-bold text-slate-800">{crosswindData.crosswind}kt</div>
-                                                </div>
-                                                <div className={`p-2 rounded border ${crosswindData.isTailwind ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
-                                                     <div className={`text-[9px] font-bold uppercase ${crosswindData.isTailwind ? 'text-red-400' : 'text-green-600'}`}>
-                                                        {crosswindData.isTailwind ? 'Tailwind' : 'Headwind'}
-                                                     </div>
-                                                     <div className={`text-sm font-mono font-bold ${crosswindData.isTailwind ? 'text-red-700' : 'text-green-700'}`}>
-                                                        {Math.abs(crosswindData.headwind)}kt
-                                                     </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center p-4 text-slate-400 text-sm bg-slate-50 rounded">
-                                Wind data unavailable for calculation.
-                            </div>
-                        )}
-                    </div>
-
                     {/* 7-Day Forecast */}
                     <div className="mt-6">
                         <div className="flex items-center gap-2 mb-3">
@@ -1132,6 +1007,104 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                 ) : (
                     <div className="text-center py-8 text-slate-400">Weather unavailable</div>
                 )}
+            </div>
+        )}
+
+        {/* TAB: RUNWAYS */}
+        {activeTab === 'runways' && (
+            <div className="space-y-6 animate-fadeIn">
+                <RunwaysList airport={airport} bestRunwayInfo={bestRunwayInfo} />
+
+                {/* Crosswind Calculator */}
+                <div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Wind size={18} className="text-slate-700" />
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Crosswind Calc</h3>
+                    </div>
+
+                    {windData ? (
+                        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                            <div className="flex justify-between items-center mb-4">
+                                     <label className="text-xs font-bold text-slate-500">Runway</label>
+                                     <select 
+                                        className="text-sm font-bold bg-slate-100 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+                                        value={selectedRunway}
+                                        onChange={(e) => setSelectedRunway(e.target.value)}
+                                     >
+                                         {airport.runways.map(r => (
+                                             <option key={r} value={r}>RWY {r}</option>
+                                         ))}
+                                     </select>
+                            </div>
+
+                            <div className="flex gap-4">
+                                {/* Visual Graphic */}
+                                <div className="relative w-32 h-32 bg-slate-50 rounded-full border border-slate-200 flex items-center justify-center flex-shrink-0">
+                                    <div className="absolute top-1 text-[8px] font-bold text-slate-400">N</div>
+                                    <div className="absolute bottom-1 text-[8px] font-bold text-slate-400">S</div>
+                                    <div className="absolute left-1 text-[8px] font-bold text-slate-400">W</div>
+                                    <div className="absolute right-1 text-[8px] font-bold text-slate-400">E</div>
+                                    
+                                    {/* Compass SVG */}
+                                    <svg width="100%" height="100%" viewBox="0 0 100 100" className="p-2">
+                                        {crosswindData && (
+                                            <>
+                                                {/* Runway Bar */}
+                                                <rect 
+                                                    x="44" y="10" width="12" height="80" rx="2" 
+                                                    fill="#334155" 
+                                                    transform={`rotate(${crosswindData.rwyHeading}, 50, 50)`} 
+                                                />
+                                                
+                                                {/* Wind Arrow */}
+                                                <g transform={`rotate(${windData.direction}, 50, 50)`}>
+                                                    {/* Arrow pointing to center (FROM) */}
+                                                    <line x1="50" y1="10" x2="50" y2="40" stroke="#ef4444" strokeWidth="3" markerEnd="url(#arrowhead)" />
+                                                </g>
+                                                <defs>
+                                                    <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
+                                                        <polygon points="0 0, 6 2, 0 4" fill="#ef4444" />
+                                                    </marker>
+                                                </defs>
+                                            </>
+                                        )}
+                                    </svg>
+                                </div>
+
+                                {/* Stats */}
+                                {crosswindData && (
+                                    <div className="flex-1 space-y-3 py-1">
+                                        <div>
+                                            <div className="text-[10px] text-slate-400 font-bold uppercase">Wind</div>
+                                            <div className="text-lg font-mono font-bold text-slate-800">
+                                                {windData.isVrb ? 'VRB' : windData.direction.toString().padStart(3, '0')}@{windData.speed}
+                                                {windData.gust > 0 ? `G${windData.gust}` : ''}kt
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <div className="bg-slate-50 p-2 rounded border border-slate-100">
+                                                    <div className="text-[9px] text-slate-400 font-bold uppercase">X-Wind</div>
+                                                    <div className="text-sm font-mono font-bold text-slate-800">{crosswindData.crosswind}kt</div>
+                                            </div>
+                                            <div className={`p-2 rounded border ${crosswindData.isTailwind ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
+                                                    <div className={`text-[9px] font-bold uppercase ${crosswindData.isTailwind ? 'text-red-400' : 'text-green-600'}`}>
+                                                    {crosswindData.isTailwind ? 'Tailwind' : 'Headwind'}
+                                                    </div>
+                                                    <div className={`text-sm font-mono font-bold ${crosswindData.isTailwind ? 'text-red-700' : 'text-green-700'}`}>
+                                                    {Math.abs(crosswindData.headwind)}kt
+                                                    </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="text-center p-4 text-slate-400 text-sm bg-slate-50 rounded">
+                            Wind data unavailable for calculation.
+                        </div>
+                    )}
+                </div>
             </div>
         )}
 

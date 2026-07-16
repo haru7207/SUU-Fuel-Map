@@ -40,6 +40,15 @@ export interface Airport {
   priceHistory?: { timestamp: string; ll100: number | null; jetA: number | null }[]; // Cached history for fast trend chart loading
   runways: string[]; // e.g. ["02/20", "08/26"]
   runwayLengths?: Record<string, number>; // Length in feet, mapped by runway ID "02/20"
+  runwayDetails?: Record<string, {
+    length: number;
+    width: number;
+    surface: string;
+    tpa?: number;
+    rightTraffic?: string[];
+    lighting?: string;
+    slope?: string;
+  }>;
   weatherSource?: string; // If this airport has no weather, use this airport's ID (e.g., 'KCDC' for '1L9')
   frequencies?: { name: string; freq: string }[];
   cardRules: {
