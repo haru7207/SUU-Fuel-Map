@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/awc/:path*",
+      "destination": "https://aviationweather.gov/api/data/:path*"
+    },
+    {
+      "source": "/api/gemini/:path*",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
