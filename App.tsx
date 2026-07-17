@@ -885,7 +885,12 @@ const App: React.FC = () => {
           {/* Map Layers Dropdown */}
           <div className="relative w-full">
             <button
-              onClick={() => setIsLayersMenuOpen(!isLayersMenuOpen)}
+              onClick={() => {
+                setIsLayersMenuOpen(!isLayersMenuOpen);
+                if (!isLayersMenuOpen) {
+                  setIsInstructorToolsMenuOpen(false);
+                }
+              }}
               className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
                 isLayersMenuOpen ? 'bg-indigo-600 text-white border-indigo-600 font-bold' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
               }`}
@@ -1028,7 +1033,12 @@ const App: React.FC = () => {
             {!(isMobile && (!!selectedId || isSidebarOpen)) && (
               <div className="relative w-full">
                 <button
-                  onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
+                  onClick={() => {
+                    setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen);
+                    if (!isInstructorToolsMenuOpen) {
+                      setIsLayersMenuOpen(false);
+                    }
+                  }}
                   className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
                     isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                   }`}

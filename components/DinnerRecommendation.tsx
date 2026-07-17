@@ -87,7 +87,7 @@ export const DinnerRecommendation: React.FC<DinnerRecommendationProps> = ({ onCl
 
                     <div className="space-y-4">
                         {recipes.map((recipe) => (
-                            <div key={recipe.id} className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 transition-all flex flex-col sm:flex-row h-[120px]">
+                            <div key={recipe.id} className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 transition-all flex flex-col sm:flex-row h-auto sm:h-[120px]">
                                 {recipe.image ? (
                                     <img src={recipe.image} alt={recipe.title} referrerPolicy="no-referrer" className="w-full sm:w-[140px] h-[120px] object-cover shrink-0" />
                                 ) : (

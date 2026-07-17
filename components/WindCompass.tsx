@@ -56,7 +56,7 @@ export const WindCompass: React.FC<WindCompassProps> = ({ weatherMap, airports }
   if (!nearestWind) return null;
 
   return (
-    <div className="group absolute top-4 right-4 z-[1000] pointer-events-auto bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-md rounded-full w-14 h-14 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center transition-all hover:scale-110">
+    <div className="group absolute bottom-8 right-4 md:bottom-24 md:right-4 z-[1000] pointer-events-auto bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-md rounded-full w-14 h-14 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center transition-all hover:scale-110">
       {/* Compass rose layout */}
       <div className="relative w-full h-full rounded-full flex items-center justify-center">
           <div className="absolute top-0.5 text-[8px] font-black text-slate-400">N</div>
