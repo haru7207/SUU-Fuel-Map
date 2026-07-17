@@ -111,19 +111,54 @@ const RainEffect: React.FC<{ isHeavy: boolean }> = ({ isHeavy }) => {
 };
 
 const ThunderstormEffect: React.FC<{ fullScreen?: boolean }> = ({ fullScreen = false }) => {
+    // Generate some random positions for lightning bolts
+    const bolts = useMemo(() => Array.from({ length: 3 }).map((_, i) => ({
+        id: i,
+        left: `${15 + Math.random() * 70}%`,
+        scale: 0.5 + Math.random() * 1.5,
+        opacity: 0.6 + Math.random() * 0.4,
+        delay: `${Math.random() * 8}s`,
+        rotation: `${-15 + Math.random() * 30}deg`,
+        flip: Math.random() > 0.5 ? -1 : 1
+    })), []);
+
     return (
-        <div className="absolute inset-0">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <style>{`
                 @keyframes flash-storm {
-                    0%, 95%, 98% { background-color: transparent; }
-                    96%, 99% { background-color: rgba(255, 255, 255, ${fullScreen ? 0.25 : 0.4}); }
-                    100% { background-color: transparent; }
+                    0%, 93%, 97%, 100% { background-color: transparent; }
+                    95%, 98% { background-color: rgba(255, 255, 255, ${fullScreen ? 0.3 : 0.6}); }
+                }
+                @keyframes strike-bolt {
+                    0%, 93%, 97%, 100% { opacity: 0; }
+                    95%, 98% { opacity: var(--bolt-opacity); }
                 }
             `}</style>
+            
             <div 
                 className="absolute inset-0 mix-blend-overlay"
-                style={{ animation: 'flash-storm 7s infinite' }}
+                style={{ animation: 'flash-storm 6s infinite ease-in-out' }}
             />
+
+            {bolts.map(bolt => (
+                <div
+                    key={bolt.id}
+                    className="absolute top-0 origin-top opacity-0"
+                    style={{
+                        left: bolt.left,
+                        transform: `scaleX(${bolt.flip}) scale(${bolt.scale}) rotate(${bolt.rotation})`,
+                        '--bolt-opacity': bolt.opacity,
+                        animation: 'strike-bolt 6s infinite ease-in-out',
+                        animationDelay: bolt.delay
+                    } as React.CSSProperties}
+                >
+                    {/* Glowing Lightning Bolt */}
+                    <svg width="40" height="130" viewBox="0 0 40 130" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-[0_0_15px_rgba(255,255,255,0.9)]">
+                        <path d="M28 0L0 70H18L5 130L40 50H20L28 0Z" fill="#ffffff" />
+                        <path d="M28 0L0 70H18L5 130L40 50H20L28 0Z" fill="#fde047" fillOpacity="0.3" />
+                    </svg>
+                </div>
+            ))}
         </div>
     );
 };

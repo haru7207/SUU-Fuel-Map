@@ -9,6 +9,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'UT',
     lat: 37.7009,
     lon: -113.0988,
+    elevation: 5622,
     fbo: 'Sphere One',
     phone: '435-586-4556',
     fuelTypes: [FuelType.LL100, FuelType.JETA],

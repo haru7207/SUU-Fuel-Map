@@ -1,0 +1,13 @@
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-teal-100 dark:bg-teal-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
+                            Airport Cheat Sheet
+                          </button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                )}
+              </div>

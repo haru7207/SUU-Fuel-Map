@@ -17,10 +17,11 @@ import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame, ShieldAlert } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import LiveFleetTracker from './components/LiveFleetTracker';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
+import { DinnerRecommendation } from './components/DinnerRecommendation';
 
 const App: React.FC = () => {
   const [airports, setAirports] = useState<Airport[]>(() => {
@@ -236,6 +237,7 @@ const App: React.FC = () => {
   const [isVORCheckOpen, setIsVORCheckOpen] = useState(false);
   const [isE6BOpen, setIsE6BOpen] = useState(false);
   const [isFleetTrackerOpen, setIsFleetTrackerOpen] = useState(false);
+  const [isDinnerOpen, setIsDinnerOpen] = useState(false);
   const [trackedAircraft, setTrackedAircraft] = useState<any | null>(null);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
@@ -717,6 +719,7 @@ const App: React.FC = () => {
     isVORCheckOpen || 
     isE6BOpen || 
     isFleetTrackerOpen ||
+    isDinnerOpen ||
     (isMobile && isInstructorToolsMenuOpen);
 
   return (
@@ -845,6 +848,8 @@ const App: React.FC = () => {
           initialSearchQuery={cheatSheetQuery}
           onClose={() => setIsCheatSheetOpen(false)}
         />
+
+        {isDinnerOpen && <DinnerRecommendation onClose={() => setIsDinnerOpen(false)} />}
 
         <HoldingCalculator
           isOpen={isHoldingOpen}
@@ -1025,10 +1030,10 @@ const App: React.FC = () => {
                 <button
                   onClick={() => setIsInstructorToolsMenuOpen(!isInstructorToolsMenuOpen)}
                   className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
-                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                   }`}
                 >
-                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen ? 'text-white' : 'text-blue-500'}`} />
+                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen ? 'text-white' : 'text-blue-500'}`} />
                   <span>CFI Tools</span>
                 </button>
 
@@ -1280,6 +1285,30 @@ const App: React.FC = () => {
                           >
                             <div className="bg-teal-100 dark:bg-teal-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
                             Airport Cheat Sheet
+                          </button>
+                        </div>
+                        {/* Others */}
+                        <div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Others</div>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsDinnerOpen(true);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-orange-100 dark:bg-orange-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><ChefHat size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                            Today's Dinner
                           </button>
                         </div>
                       </div>
@@ -1600,6 +1629,33 @@ const App: React.FC = () => {
                         >
                           <div className="bg-teal-100 dark:bg-teal-600/20 p-1.5 rounded-lg shrink-0"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
                           <span>Airport Cheat Sheet</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Others */}
+                    <div className="space-y-2 sm:col-span-2">
+                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Others</div>
+                      <div className="space-y-1.5">
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsDinnerOpen(true);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-orange-100 dark:bg-orange-600/20 p-1.5 rounded-lg shrink-0"><ChefHat size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                          <span>Today's Dinner</span>
                         </button>
                       </div>
                     </div>

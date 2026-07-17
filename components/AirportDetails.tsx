@@ -4,7 +4,7 @@ import { Airport, CardType, WeatherData, FuelType, NotamData } from '../types';
 import { fetchWeather } from '../services/aviationService';
 import { auth, signInWithGoogle, logOut } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star, Bell } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star, Bell, CheckCircle, CloudFog, CloudRain } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
@@ -285,13 +285,13 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   }, []);
 
 
-  const getFlightCategoryColor = (cat: string) => {
+  const getFlightCategoryDetails = (cat: string) => {
     switch (cat) {
-      case 'VFR': return 'bg-green-500 border-green-600';
-      case 'MVFR': return 'bg-blue-500 border-blue-600';
-      case 'IFR': return 'bg-red-500 border-red-600';
-      case 'LIFR': return 'bg-purple-500 border-purple-600';
-      default: return 'bg-slate-400 border-slate-500';
+      case 'VFR': return { bg: 'bg-green-100', text: 'text-green-800', border: 'border-green-200', icon: <CheckCircle size={16} />, label: 'VFR', desc: 'Visual Flight Rules (Ceiling > 3,000ft, Vis > 5sm)' };
+      case 'MVFR': return { bg: 'bg-blue-100', text: 'text-blue-800', border: 'border-blue-200', icon: <CloudFog size={16} />, label: 'MVFR', desc: 'Marginal VFR (Ceiling 1,000-3,000ft, Vis 3-5sm)' };
+      case 'IFR': return { bg: 'bg-red-100', text: 'text-red-800', border: 'border-red-200', icon: <CloudRain size={16} />, label: 'IFR', desc: 'Instrument Flight Rules (Ceiling 500-1,000ft, Vis 1-3sm)' };
+      case 'LIFR': return { bg: 'bg-purple-100', text: 'text-purple-800', border: 'border-purple-200', icon: <AlertTriangle size={16} />, label: 'LIFR', desc: 'Low IFR (Ceiling < 500ft, Vis < 1sm)' };
+      default: return { bg: 'bg-slate-100', text: 'text-slate-800', border: 'border-slate-200', icon: <HelpCircle size={16} />, label: 'UNKNOWN', desc: 'Weather data unavailable or missing' };
     }
   };
 
@@ -431,25 +431,30 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
          <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
       </div>
 
+      {/* Flight Category Status Bar */}
+      {weather && (
+        (() => {
+          const catDetails = getFlightCategoryDetails(weather.flightCategory);
+          return (
+            <div className={`w-full px-4 py-2 flex items-center justify-center gap-2 border-b ${catDetails.bg} ${catDetails.border} flex-shrink-0`}>
+              <div className={`${catDetails.text} drop-shadow-sm`}>
+                {catDetails.icon}
+              </div>
+              <span className={`text-[11px] font-extrabold uppercase tracking-widest ${catDetails.text}`}>
+                {catDetails.label} <span className="opacity-75 font-semibold ml-1 tracking-normal capitalize">{catDetails.desc}</span>
+              </span>
+            </div>
+          );
+        })()
+      )}
+
       {/* --- HEADER --- */}
-      <div className="px-5 pb-5 pt-2 md:p-5 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-start flex-shrink-0">
+      <div className="px-5 pb-5 pt-4 md:p-5 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-start flex-shrink-0">
         <div>
           <div className="flex items-center gap-3">
              <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {airport.id}
              </h2>
-             {weather && (
-              <div 
-                className="flex items-center justify-center p-1"
-                title={`Current Flight Category: ${weather.flightCategory}`}
-              >
-                {weather.flightCategory === 'UNKNOWN' ? (
-                    <div className="h-3 w-3 rounded-full bg-slate-300 border border-slate-400" title="WX N/A" />
-                ) : (
-                    <div className={`h-3 w-3 rounded-full border shadow-sm ${getFlightCategoryColor(weather.flightCategory)}`} />
-                )}
-              </div>
-            )}
             
             {airport.weatherSource && (
                  <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded flex items-center gap-1" title={`Weather from ${airport.weatherSource}`}>

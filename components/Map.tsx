@@ -1,10 +1,11 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polygon, LayerGroup, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, Polygon, LayerGroup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import { Airport, CardType, Airmet, WeatherData, NotamData } from '../types';
 import { fetchAirmets, fetchActiveWildfires, fetchActiveTfrs } from '../services/aviationService';
 import { CloudFog, Wind, Snowflake, AlertTriangle, Navigation } from 'lucide-react';
+import { WindCompass } from './WindCompass';
 
 // Fix for default Leaflet markers in React
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -715,6 +716,16 @@ const Map: React.FC<MapProps> = ({
                   zIndexOffset={isSelected ? 1000 : 0}
                   eventHandlers={{ click: () => onSelect(airport.id) }}
               >
+                  <Tooltip direction="top" offset={[0, -20]} opacity={0.95} permanent={false}>
+                      <div className="flex flex-col items-center">
+                          <span className="font-bold text-slate-800 text-xs">{airport.id}</span>
+                          {fuelPriceText && (
+                              <span className="text-[10px] font-mono font-bold text-emerald-600 bg-emerald-50 px-1 rounded mt-0.5 border border-emerald-100">
+                                  {fuelPriceText}
+                              </span>
+                          )}
+                      </div>
+                  </Tooltip>
                   <Popup>
                      <div className="text-center">
                          <h3 className="font-bold text-lg m-0">{airport.id}</h3>
@@ -972,6 +983,7 @@ const Map: React.FC<MapProps> = ({
         <MapUpdater selectedAirport={selectedAirport} />
         <CenterOnLocation location={userLocation} trigger={centerTrigger} />
         <AircraftTracker aircraft={trackedAircraft} />
+        <WindCompass weatherMap={weatherMap} airports={airports} />
       </MapContainer>
     </div>
   );

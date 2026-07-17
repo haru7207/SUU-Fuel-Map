@@ -31,6 +31,7 @@ export interface Airport {
   state: string;
   lat: number;
   lon: number;
+  elevation?: number; // Airport elevation in feet MSL
   fbo: string;
   phone: string;
   fuelTypes: FuelType[];

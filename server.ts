@@ -119,6 +119,41 @@ async function startServer() {
     res.json({ status: 'ok', time: new Date() });
   });
 
+  // 3.5 TheMealDB Proxy Route
+  app.get('/api/dinner', async (req: express.Request, res: express.Response) => {
+    try {
+      const ingredients = req.query.ingredients as string;
+      if (!ingredients) {
+         return res.status(400).json({ error: 'Missing ingredients' });
+      }
+      
+      // TheMealDB free tier mainly supports searching by a single main ingredient.
+      // We will take the first ingredient provided by the user.
+      const mainIngredient = ingredients.split(',')[0].trim();
+
+      const url = `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(mainIngredient)}`;
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`TheMealDB API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Map TheMealDB format to the format expected by our frontend
+      const results = (data.meals || []).slice(0, 5).map((meal: any) => ({
+         id: meal.idMeal,
+         title: meal.strMeal,
+         image: meal.strMealThumb
+      }));
+
+      res.json({ results });
+    } catch (error: any) {
+      console.error("[Dinner API Proxy] Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // 4. Vite middleware for development or Static serving for production
   if (process.env.NODE_ENV !== 'production') {
     console.log('[Server] Initializing Vite dev server middleware...');

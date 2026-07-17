@@ -5,15 +5,15 @@ export const ReleaseNotesModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if the user has already seen the v2.6.3 release notes
-    const hasSeen = localStorage.getItem('saw_release_notes_v2_6_3');
+    // Check if the user has already seen the v2.7.2 release notes
+    const hasSeen = localStorage.getItem('saw_release_notes_v2_7_2');
     if (!hasSeen) {
       setIsOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('saw_release_notes_v2_6_3', 'true');
+    localStorage.setItem('saw_release_notes_v2_7_2', 'true');
     setIsOpen(false);
   };
 
@@ -34,9 +34,9 @@ export const ReleaseNotesModal: React.FC = () => {
               <Sparkles size={16} className="text-amber-300 animate-pulse" />
               <span className="text-xs font-bold uppercase tracking-widest">What's New</span>
             </div>
-            <h2 className="text-2xl font-black">SUU Fuel Map v2.6.3</h2>
+            <h2 className="text-2xl font-black">SUU Fuel Map v2.7.2</h2>
             <p className="text-sm font-medium text-sky-100 mt-1">
-              Introducing redesigned Weather information displays, Fire & TFR map visualization, flight & night time loggers, E6B & ISA calculators, and new airport reference features.
+              Introducing Today's Dinner recommendations, along with redesigned Weather information displays, Fire & TFR map visualization, and more.
             </p>
           </div>
           <button 
@@ -50,6 +50,18 @@ export const ReleaseNotesModal: React.FC = () => {
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           <ul className="space-y-4">
+
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl h-fit">
+                <Sparkles size={20} className="animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">🍽️ Today's Dinner Recommendation</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Avoid extra grocery trips! Enter ingredients you have available, and get instant dinner recipes right from the cockpit, powered by TheMealDB.
+                </p>
+              </div>
+            </li>
             
             <li className="flex gap-4">
               <div className="shrink-0 bg-sky-100 dark:bg-sky-950/40 text-sky-600 dark:text-sky-400 p-3 rounded-xl h-fit">

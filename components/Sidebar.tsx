@@ -444,7 +444,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <Flame size={14} className="text-red-500 shadow-sm" />
                   <span className="font-bold tracking-wide text-sm text-slate-700 dark:text-slate-300">SUU Fuel Map</span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v2.7.0 • Designed for SUU Aviation</p>
+                <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v2.7.2 • Designed for SUU Aviation</p>
               </div>
             </div>
           </div>
