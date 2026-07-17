@@ -60,4 +60,34 @@ app.post('/api/gemini/format-notes', async (req, res) => {
     }
 });
 
+app.get('/api/dinner', async (req: express.Request, res: express.Response) => {
+    try {
+        const ingredients = req.query.ingredients as string;
+        if (!ingredients) {
+            return res.status(400).json({ error: 'Missing ingredients' });
+        }
+        
+        const mainIngredient = ingredients.split(',')[0].trim();
+        const url = `https://www.themealdb.com/api/json/v1/1/filter.php?i=${encodeURIComponent(mainIngredient)}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`TheMealDB API Error: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        const results = (data.meals || []).slice(0, 5).map((meal: any) => ({
+            id: meal.idMeal,
+            title: meal.strMeal,
+            image: meal.strMealThumb
+        }));
+
+        res.json({ results });
+    } catch (error: any) {
+        console.error("[Dinner API Proxy] Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default app;
