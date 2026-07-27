@@ -182,6 +182,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     name: 'Milford Municipal',
     city: 'Milford',
     state: 'UT',
+    generalWarning: 'MLF ASOS may be unreliable via radio. For current weather, call the new number: 435-289-3387.',
     lat: 38.4292,
     lon: -113.0116,
     fbo: 'Milford',

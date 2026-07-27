@@ -62,6 +62,7 @@ export interface Airport {
     byFbo?: { name: string; card: CardType; vendor?: string; notes?: string }[]; // Specific card rules per FBO
   };
   userNotes?: UserNote[];
+  generalWarning?: string;
 }
 
 export interface WeatherData {

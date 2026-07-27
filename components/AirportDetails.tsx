@@ -498,6 +498,18 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
         </div>
       </div>
 
+      {airport.generalWarning && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-800/40 flex items-start gap-3">
+          <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+          <div>
+            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-0.5">Important Notice</h4>
+            <p className="text-xs text-amber-700 dark:text-amber-300/80 leading-relaxed font-medium">
+              {airport.generalWarning}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* --- TABS --- */}
       <div className="flex border-b border-gray-200 dark:border-slate-800">
         <button 

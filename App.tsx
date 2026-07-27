@@ -12,12 +12,13 @@ import { NightTimeCalculator } from './components/NightTimeCalculator';
 import { HoldingCalculator } from './components/HoldingCalculator';
 import { VaCalculator } from './components/VaCalculator';
 import { ISACalculator } from './components/ISACalculator';
+import { DensityAltitudeCalculator } from './components/DensityAltitudeCalculator';
 import { WindComponentsCalculator } from './components/WindComponentsCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Thermometer, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
 import LiveFleetTracker from './components/LiveFleetTracker';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
@@ -234,6 +235,7 @@ const App: React.FC = () => {
   const [isHoldingOpen, setIsHoldingOpen] = useState(false);
   const [isVaOpen, setIsVaOpen] = useState(false);
   const [isIsaOpen, setIsIsaOpen] = useState(false);
+  const [isDensityAltOpen, setIsDensityAltOpen] = useState(false);
   const [isWindOpen, setIsWindOpen] = useState(false);
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [isVORCheckOpen, setIsVORCheckOpen] = useState(false);
@@ -890,6 +892,13 @@ const App: React.FC = () => {
           isOpen={isIsaOpen}
           onClose={() => setIsIsaOpen(false)}
         />
+        <DensityAltitudeCalculator
+          isOpen={isDensityAltOpen}
+          onClose={() => setIsDensityAltOpen(false)}
+          airports={airports}
+          weatherMap={weatherMap}
+          selectedAirport={selectedAirport}
+        />
         <WindComponentsCalculator
           isOpen={isWindOpen}
           onClose={() => setIsWindOpen(false)}
@@ -1112,6 +1121,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1131,6 +1141,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1150,6 +1161,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1174,6 +1186,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(true);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1193,6 +1206,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(true);
+                            setIsDensityAltOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
@@ -1211,6 +1225,27 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                              setIsDensityAltOpen(true);
+                              setIsWindOpen(false);
+                              setIsE6BOpen(false);
+                              setIsCheatSheetOpen(false);
+                              setIsVORCheckOpen(false);
+                              setIsInstructorToolsMenuOpen(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                          >
+                            <div className="bg-red-100 dark:bg-red-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
+                            Density Altitude
+                          </button>
+                          <button
+                            onClick={() => {
+                              setIsFlightTimeOpen(false);
+                              setIsNightTimeOpen(false);
+                              setIsPivotalAltOpen(false);
+                              setIsHoldingOpen(false);
+                              setIsVaOpen(false);
+                              setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsWindOpen(true);
                               setIsE6BOpen(false);
@@ -1239,6 +1274,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(true);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1258,6 +1294,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1277,6 +1314,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1302,6 +1340,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(true);
                               setIsCheatSheetOpen(false);
@@ -1321,6 +1360,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(true);
@@ -1344,6 +1384,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1454,6 +1495,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1473,6 +1515,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1492,6 +1535,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1518,6 +1562,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(true);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1537,6 +1582,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(true);
+                            setIsDensityAltOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
                             setIsVORCheckOpen(false);
@@ -1555,6 +1601,27 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(true);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-red-100 dark:bg-red-600/20 p-1.5 rounded-lg shrink-0"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
+                          <span>Density Altitude</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(true);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1581,6 +1648,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(true);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1600,6 +1668,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1619,6 +1688,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);
@@ -1646,6 +1716,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(true);
                             setIsCheatSheetOpen(false);
@@ -1665,6 +1736,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(true);
@@ -1691,6 +1763,7 @@ const App: React.FC = () => {
                             setIsHoldingOpen(false);
                             setIsVaOpen(false);
                             setIsIsaOpen(false);
+                            setIsDensityAltOpen(false);
                             setIsWindOpen(false);
                             setIsE6BOpen(false);
                             setIsCheatSheetOpen(false);

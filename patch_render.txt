@@ -1,0 +1,7 @@
+        <DensityAltitudeCalculator
+          isOpen={isDensityAltOpen}
+          onClose={() => setIsDensityAltOpen(false)}
+          airports={airports}
+          weatherMap={weatherMap}
+          selectedAirport={selectedAirport}
+        />

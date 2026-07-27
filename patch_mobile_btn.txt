@@ -1,0 +1,20 @@
+                        <button
+                          onClick={() => {
+                            setIsFlightTimeOpen(false);
+                            setIsNightTimeOpen(false);
+                            setIsPivotalAltOpen(false);
+                            setIsHoldingOpen(false);
+                            setIsVaOpen(false);
+                            setIsIsaOpen(false);
+                            setIsDensityAltOpen(true);
+                            setIsWindOpen(false);
+                            setIsE6BOpen(false);
+                            setIsCheatSheetOpen(false);
+                            setIsVORCheckOpen(false);
+                            setIsInstructorToolsMenuOpen(false);
+                          }}
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                        >
+                          <div className="bg-red-100 dark:bg-red-600/20 p-1.5 rounded-lg shrink-0"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
+                          <span>Density Altitude</span>
+                        </button>
