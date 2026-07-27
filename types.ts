@@ -98,12 +98,13 @@ export interface TFR {
 
 export interface Airmet {
   id: string;
-  type: 'SIERRA' | 'TANGO' | 'ZULU';
-  hazard: string; // e.g. "IFR", "MTN OBSCN", "TURB-HI", "ICING"
+  type: 'SIERRA' | 'TANGO' | 'ZULU' | 'SIGMET' | 'CONVECTIVE SIGMET' | string;
+  hazard: string; // e.g. "IFR", "MTN OBSCN", "TURB-HI", "ICING", "CONVECTIVE"
   coordinates: [number, number][]; // Polygon points [lat, lon]
   minAlt?: string; // e.g. "SFC", "10000"
   maxAlt?: string; // e.g. "FL180", "12000"
   validTime: string;
+  rawText?: string;
 }
 
 export interface WindAloftData {

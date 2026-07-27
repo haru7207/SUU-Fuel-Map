@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2, Clock, Calculator, Sparkles, Search, ChevronDown } from 'lucide-react';
+import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2, Clock, Calculator, Sparkles, Search, ChevronDown, CloudSun } from 'lucide-react';
 import { AIRPORT_DATABASE } from '../constants';
 import { GoogleGenAI, Type } from '@google/genai';
 import { Airport, FuelType } from '../types';
@@ -14,6 +14,9 @@ interface FuelLogToggleProps {
   onOpenFlightTime?: () => void;
   isFlightTimeOpen?: boolean;
   airports?: Airport[];
+  isMetarOnly?: boolean;
+  onToggleMetarOnly?: () => void;
+  onOpenMetarModal?: () => void;
 }
 
 interface FuelLogData {
@@ -40,7 +43,10 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
   isHidden = false,
   onOpenFlightTime,
   isFlightTimeOpen,
-  airports
+  airports,
+  isMetarOnly = false,
+  onToggleMetarOnly,
+  onOpenMetarModal
 }) => {
   const [view, setView] = useState<'form' | 'list' | 'calc'>('form');
   const [showSavedToast, setShowSavedToast] = useState(false);
@@ -518,53 +524,75 @@ Notes: ${log.notes || 'None'}
     <>
       {/* Floating Action Buttons */}
       {!isOpen && !isFlightTimeOpen && !isHidden && (
-        <div className={`absolute top-20 left-4 md:top-4 md:left-6 z-[1050] transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
+        <div className={`absolute top-20 left-4 md:top-4 md:left-6 z-[1050] flex flex-col items-start gap-2.5 transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
+          {/* Fuel Ops Toggle Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setIsFuelMenuOpen(!isFuelMenuOpen)}
+              className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${isFuelMenuOpen ? 'bg-red-700 text-white ring-2 ring-red-400' : 'bg-red-600 text-white hover:bg-red-700 hover:scale-105'}`}
+            >
+              <Fuel size={16} className="md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
+              <span className="font-bold tracking-wide text-sm md:text-base">Fuel Ops</span>
+            </button>
+
+            {isFuelMenuOpen && (
+              <div className="absolute top-full mt-2 left-0 w-full min-w-[200px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1060]">
+                <button
+                  onClick={() => {
+                    setIsOpen(true);
+                    setView('form');
+                    setIsFuelMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                >
+                  <Fuel size={16} className="text-red-500" />
+                  Log Fuel
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsOpen(true);
+                    setView('calc');
+                    setIsFuelMenuOpen(false);
+                  }}
+                  className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                >
+                  <Calculator size={16} className="text-blue-500" />
+                  Fuel Price Calculator
+                </button>
+                
+                <a
+                  href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsFuelMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                >
+                  <AlertCircle size={16} className="text-orange-500" />
+                  Fuel Error Report
+                </a>
+              </div>
+            )}
+          </div>
+
+          {/* Dedicated METAR & TAF Weather Only Toggle Button */}
           <button
-            onClick={() => setIsFuelMenuOpen(!isFuelMenuOpen)}
-            className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${isFuelMenuOpen ? 'bg-red-700 text-white' : 'bg-red-600 text-white hover:bg-red-700 hover:scale-105'}`}
+            onClick={() => {
+              if (onToggleMetarOnly) onToggleMetarOnly();
+              if (onOpenMetarModal) onOpenMetarModal();
+            }}
+            className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${
+              isMetarOnly 
+                ? 'bg-sky-600 text-white hover:bg-sky-500 ring-2 ring-sky-300 shadow-sky-600/40 font-extrabold scale-105' 
+                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 border border-slate-200 dark:border-slate-700'
+            }`}
+            title="Search METAR & TAF weather data only"
           >
-            <Fuel size={16} className="md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
-            <span className="font-bold tracking-wide text-sm md:text-base">Fuel Ops</span>
+            <CloudSun size={16} className={`md:w-5 md:h-5 transition-transform group-hover:scale-110 ${isMetarOnly ? 'text-white animate-pulse' : 'text-sky-500'}`} />
+            <span className="font-bold tracking-wide text-sm md:text-base">
+              {isMetarOnly ? 'METAR & TAF (Active)' : 'METAR & TAF'}
+            </span>
           </button>
-
-          {isFuelMenuOpen && (
-            <div className="absolute top-full mt-2 w-full min-w-[200px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1060]">
-              <button
-                onClick={() => {
-                  setIsOpen(true);
-                  setView('form');
-                  setIsFuelMenuOpen(false);
-                }}
-                className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-              >
-                <Fuel size={16} className="text-red-500" />
-                Log Fuel
-              </button>
-
-              <button
-                onClick={() => {
-                  setIsOpen(true);
-                  setView('calc');
-                  setIsFuelMenuOpen(false);
-                }}
-                className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-              >
-                <Calculator size={16} className="text-blue-500" />
-                Fuel Price Calculator
-              </button>
-              
-              <a
-                href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setIsFuelMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
-              >
-                <AlertCircle size={16} className="text-orange-500" />
-                Fuel Error Report
-              </a>
-            </div>
-          )}
         </div>
       )}
 

@@ -1,10 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, Polygon, LayerGroup, GeoJSON } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap, useMapEvents, Polygon, Polyline, LayerGroup, GeoJSON } from 'react-leaflet';
 import L from 'leaflet';
 import { Airport, CardType, Airmet, WeatherData, NotamData } from '../types';
 import { fetchAirmets, fetchActiveWildfires, fetchActiveTfrs } from '../services/aviationService';
-import { CloudFog, Wind, Snowflake, AlertTriangle, Navigation } from 'lucide-react';
+import { CloudFog, Wind, Snowflake, AlertTriangle, Navigation, CloudLightning, ShieldAlert } from 'lucide-react';
 import { WindCompass } from './WindCompass';
 
 // Fix for default Leaflet markers in React
@@ -297,12 +297,30 @@ const CenterOnLocation: React.FC<{ location: {lat: number, lng: number} | null, 
   return null;
 };
 
+// Map Interaction Handler for Context Menu (Long-press / Right-click)
+const MapInteractionHandler: React.FC<{ 
+  onContextClick: (latlng: L.LatLng) => void;
+  onClearMeasure: () => void;
+}> = ({ onContextClick, onClearMeasure }) => {
+  useMapEvents({
+    contextmenu(e) {
+      onContextClick(e.latlng);
+    },
+    click() {
+      onClearMeasure();
+    }
+  });
+  return null;
+};
+
 // Helper for AIRMET styling and Icons
 const getAirmetStyle = (type: string) => {
     switch (type) {
         case 'SIERRA': return { color: '#9333ea', fillColor: '#9333ea', label: 'IFR / MTN OBSCN' }; // Purple
         case 'TANGO': return { color: '#ea580c', fillColor: '#ea580c', label: 'TURBULENCE' }; // Orange
         case 'ZULU': return { color: '#2563eb', fillColor: '#2563eb', label: 'ICING' }; // Blue
+        case 'SIGMET': return { color: '#b91c1c', fillColor: '#b91c1c', label: 'SIGMET' }; // Red
+        case 'CONVECTIVE SIGMET': return { color: '#dc2626', fillColor: '#ef4444', label: 'CONVECTIVE SIGMET' }; // Bright Red
         default: return { color: '#64748b', fillColor: '#64748b', label: 'AIRMET' };
     }
 };
@@ -311,6 +329,8 @@ const getAirmetIcon = (type: string) => {
         case 'SIERRA': return CloudFog;
         case 'TANGO': return Wind;
         case 'ZULU': return Snowflake;
+        case 'SIGMET': return ShieldAlert;
+        case 'CONVECTIVE SIGMET': return CloudLightning;
         default: return AlertTriangle;
     }
 }
@@ -334,6 +354,9 @@ const Map: React.FC<MapProps> = ({
   const [tfrGeoJson, setTfrGeoJson] = useState<any>(null);
   const [isFetchingTfrs, setIsFetchingTfrs] = useState(false);
   const [tfrsError, setTfrsError] = useState<string | null>(null);
+  
+  // Measurement Tool State
+  const [measurePoint, setMeasurePoint] = useState<L.LatLng | null>(null);
   
   // GPS Tracking State
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number, heading: number | null} | null>(null);
@@ -657,7 +680,9 @@ const Map: React.FC<MapProps> = ({
                                 <div className="p-1 min-w-[200px]">
                                     <div className="flex items-center gap-2 mb-2 pb-2" style={{ borderBottom: `1px solid ${style.color}40` }}>
                                         <Icon size={16} style={{ color: style.color }} />
-                                        <h3 className="font-bold m-0" style={{ color: style.color }}>AIRMET {airmet.type}</h3>
+                                        <h3 className="font-bold m-0" style={{ color: style.color }}>
+                                            {airmet.type.includes('SIGMET') ? airmet.type : `AIRMET ${airmet.type}`}
+                                        </h3>
                                     </div>
                                     <div className="space-y-1.5 text-xs text-slate-700">
                                         <div className="flex justify-between">
@@ -984,6 +1009,41 @@ const Map: React.FC<MapProps> = ({
         <CenterOnLocation location={userLocation} trigger={centerTrigger} />
         <AircraftTracker aircraft={trackedAircraft} />
         <WindCompass weatherMap={weatherMap} airports={airports} />
+
+        {/* Map Interaction Handler (e.g. Long Press for Distance) */}
+        <MapInteractionHandler 
+          onContextClick={(latlng) => setMeasurePoint(latlng)}
+          onClearMeasure={() => setMeasurePoint(null)}
+        />
+
+        {/* Measurement Graphics */}
+        {measurePoint && selectedAirport && (
+          <LayerGroup>
+            <Polyline 
+              positions={[
+                [measurePoint.lat, measurePoint.lng],
+                [selectedAirport.lat, selectedAirport.lon]
+              ]}
+              pathOptions={{ color: '#ec4899', weight: 3, dashArray: '5, 10' }}
+            >
+              <Tooltip permanent direction="center" className="bg-white/95 text-pink-600 font-bold px-2 py-1 border border-pink-200 shadow-lg rounded !mt-0 z-[1000] text-sm font-mono whitespace-nowrap">
+                {Math.round(measurePoint.distanceTo(L.latLng(selectedAirport.lat, selectedAirport.lon)) / 1852)} NM
+              </Tooltip>
+            </Polyline>
+            <Marker 
+              position={[measurePoint.lat, measurePoint.lng]}
+              icon={L.divIcon({
+                className: 'bg-transparent',
+                html: '<div class="w-3 h-3 bg-pink-500 rounded-full border-2 border-white shadow-md"></div>',
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]
+              })}
+            >
+              <Tooltip direction="top" offset={[0, -5]} className="text-xs">Measure Start</Tooltip>
+            </Marker>
+          </LayerGroup>
+        )}
+
       </MapContainer>
     </div>
   );

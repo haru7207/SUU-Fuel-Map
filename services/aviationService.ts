@@ -359,58 +359,91 @@ export const fetchAllWeather = async (airportIds: string[]): Promise<Record<stri
  */
 export const fetchAirmets = async (): Promise<Airmet[]> => {
   try {
-    const bbox = '-115,35,-108,43';
-    const response = await fetchSafe(`${AWC_API_BASE}/gairmet?bbox=${bbox}&format=geojson`, true);
+    const bbox = '-115,35,-108,43'; // Local map bounding box roughly
     
-    let geoJson;
-    try {
-        geoJson = await response.json();
-    } catch (e) {
-        return [];
+    // Fetch both AIRMETs and SIGMETs in parallel
+    const [airmetRes, sigmetRes] = await Promise.all([
+      fetchSafe(`${AWC_API_BASE}/gairmet?bbox=${bbox}&format=geojson`, true).catch(() => null),
+      fetchSafe(`${AWC_API_BASE}/sigmet?bbox=${bbox}&format=geojson`, true).catch(() => null)
+    ]);
+    
+    let allFeatures: any[] = [];
+    
+    if (airmetRes) {
+      try {
+        const airmetJson = await airmetRes.json();
+        if (airmetJson && airmetJson.features) {
+          allFeatures = [...allFeatures, ...airmetJson.features];
+        }
+      } catch (e) {
+        console.warn("Failed to parse AIRMET JSON");
+      }
     }
     
-    if (!geoJson || !geoJson.features) {
+    if (sigmetRes) {
+      try {
+        const sigmetJson = await sigmetRes.json();
+        if (sigmetJson && sigmetJson.features) {
+          allFeatures = [...allFeatures, ...sigmetJson.features];
+        }
+      } catch (e) {
+        console.warn("Failed to parse SIGMET JSON");
+      }
+    }
+
+    if (allFeatures.length === 0) {
         return [];
     }
 
-    const airmets = geoJson.features.map((feature: any) => {
+    const advisories = allFeatures.map((feature: any) => {
       const props = feature.properties || {};
       let coordinates: [number, number][] = [];
       
-      if (feature.geometry.type === 'Polygon') {
+      if (feature.geometry && feature.geometry.type === 'Polygon') {
          coordinates = feature.geometry.coordinates[0].map((pt: number[]) => [pt[1], pt[0]]);
-      } else if (feature.geometry.type === 'MultiPolygon') {
-         if(feature.geometry.coordinates[0]) {
+      } else if (feature.geometry && feature.geometry.type === 'MultiPolygon') {
+         if(feature.geometry.coordinates[0] && feature.geometry.coordinates[0][0]) {
              coordinates = feature.geometry.coordinates[0][0].map((pt: number[]) => [pt[1], pt[0]]);
          }
       }
 
       let type = 'UNKNOWN';
       const hazard = (props.hazard || '').toUpperCase();
-
-      if (['IFR', 'MT_OBSC', 'MT OBSC'].some(h => hazard.includes(h))) {
-        type = 'SIERRA';
-      } else if (['TURB', 'WND', 'LLWS', 'SFC_WND'].some(h => hazard.includes(h))) {
-        type = 'TANGO';
-      } else if (['ICE', 'FZLVL', 'ICING'].some(h => hazard.includes(h))) {
-        type = 'ZULU';
+      const airSigmetType = (props.airSigmetType || '').toUpperCase();
+      
+      if (airSigmetType === 'SIGMET') {
+        type = hazard === 'CONVECTIVE' ? 'CONVECTIVE SIGMET' : 'SIGMET';
+      } else {
+        // G-AIRMET logic
+        if (['IFR', 'MT_OBSC', 'MT OBSC'].some(h => hazard.includes(h))) {
+          type = 'SIERRA';
+        } else if (['TURB', 'WND', 'LLWS', 'SFC_WND'].some(h => hazard.includes(h))) {
+          type = 'TANGO';
+        } else if (['ICE', 'FZLVL', 'ICING'].some(h => hazard.includes(h))) {
+          type = 'ZULU';
+        } else {
+          type = 'AIRMET';
+        }
       }
 
+      const id = props.airmetId || props.seriesId || `ADV-${Math.random().toString(36).substr(2, 9)}`;
+
       return {
-        id: props.airmetId || `AIRMET-${Math.random().toString(36).substr(2, 9)}`,
-        type: type as any,
-        hazard: props.hazard || 'HAZARD',
-        minAlt: props.base || 'SFC',
-        maxAlt: props.top || 'FL180',
-        validTime: props.validTimeFrom ? `${new Date(props.validTimeFrom).getUTCHours()}Z - ${new Date(props.validTimeTo).getUTCHours()}Z` : 'VALID',
+        id,
+        type: type,
+        hazard: hazard || 'HAZARD',
+        minAlt: props.base !== undefined ? props.base : (props.altitudeLow1 || 'SFC'),
+        maxAlt: props.top !== undefined ? props.top : (props.altitudeHi1 || 'FL180'),
+        validTime: props.validTimeFrom && props.validTimeTo ? `${new Date(props.validTimeFrom).getUTCHours()}Z - ${new Date(props.validTimeTo).getUTCHours()}Z` : 'VALID',
+        rawText: props.rawAirSigmet || '',
         coordinates: coordinates
       };
-    });
+    }).filter((adv) => adv.coordinates.length > 0);
 
-    return airmets;
+    return advisories;
 
   } catch (error) {
-    console.warn("Could not fetch AIRMETs.", error);
+    console.warn("Could not fetch AIRMETs/SIGMETs.", error);
     return [];
   }
 };

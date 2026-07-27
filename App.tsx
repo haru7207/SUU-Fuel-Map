@@ -22,6 +22,8 @@ import { E6BCalculator } from './components/E6BCalculator';
 import LiveFleetTracker from './components/LiveFleetTracker';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 import { DinnerRecommendation } from './components/DinnerRecommendation';
+import { MetarTafModal } from './components/MetarTafModal';
+import { LegendInfoModal } from './components/LegendInfoModal';
 
 const App: React.FC = () => {
   const [airports, setAirports] = useState<Airport[]>(() => {
@@ -238,6 +240,8 @@ const App: React.FC = () => {
   const [isE6BOpen, setIsE6BOpen] = useState(false);
   const [isFleetTrackerOpen, setIsFleetTrackerOpen] = useState(false);
   const [isDinnerOpen, setIsDinnerOpen] = useState(false);
+  const [isMetarOnly, setIsMetarOnly] = useState(false);
+  const [isMetarModalOpen, setIsMetarModalOpen] = useState(false);
   const [trackedAircraft, setTrackedAircraft] = useState<any | null>(null);
   const [cheatSheetQuery, setCheatSheetQuery] = useState('');
   const [isInstructorToolsMenuOpen, setIsInstructorToolsMenuOpen] = useState(false);
@@ -264,6 +268,7 @@ const App: React.FC = () => {
 
   // Layers Menu Open State
   const [isLayersMenuOpen, setIsLayersMenuOpen] = useState(false);
+  const [isLegendInfoModalOpen, setIsLegendInfoModalOpen] = useState(false);
 
   // Layer Settings State (defaults to showing nothing)
   const [mapLayers, setMapLayers] = useState<{
@@ -780,6 +785,9 @@ const App: React.FC = () => {
             isRefreshingFuel={isRefreshingFuel}
             onRefreshFuelPrices={handleRefreshFuel}
             weatherMap={weatherMap}
+            isMetarOnly={isMetarOnly}
+            setIsMetarOnly={setIsMetarOnly}
+            onOpenMetarModal={() => setIsMetarModalOpen(true)}
           />
          </div>
       </div>
@@ -807,7 +815,7 @@ const App: React.FC = () => {
           />
         </div>
 
-        {/* Quick Fuel Log Toggle */}
+        {/* Quick Fuel Log Toggle & METAR Toggle */}
         <FuelLogToggle 
           currentAirportId={selectedId} 
           isOnline={isOnline} 
@@ -817,6 +825,25 @@ const App: React.FC = () => {
           onOpenFlightTime={() => setIsFlightTimeOpen(true)}
           isFlightTimeOpen={isFlightTimeOpen}
           airports={airports}
+          isMetarOnly={isMetarOnly}
+          onToggleMetarOnly={() => setIsMetarOnly(!isMetarOnly)}
+          onOpenMetarModal={() => setIsMetarModalOpen(true)}
+        />
+
+        {/* METAR & TAF Weather Station Modal */}
+        <MetarTafModal
+          isOpen={isMetarModalOpen}
+          onClose={() => setIsMetarModalOpen(false)}
+          airports={airports}
+          weatherMap={weatherMap}
+          selectedAirportId={selectedId}
+          onSelectAirport={(id) => handleSelect(id)}
+        />
+
+        {/* Legend & Info Modal */}
+        <LegendInfoModal 
+          isOpen={isLegendInfoModalOpen} 
+          onClose={() => setIsLegendInfoModalOpen(false)} 
         />
 
         {/* VOR Check Log Modal */}
@@ -908,12 +935,21 @@ const App: React.FC = () => {
                     <Layers size={14} className="text-indigo-500" />
                     <span className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">Map Overlays</span>
                   </div>
-                  <button 
-                    onClick={() => setIsLayersMenuOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                  >
-                    <X size={14} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => { setIsLegendInfoModalOpen(true); setIsLayersMenuOpen(false); }}
+                      className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                      title="Map Legend & Info"
+                    >
+                      <span className="text-[10px] font-black font-serif italic">i</span>
+                    </button>
+                    <button 
+                      onClick={() => setIsLayersMenuOpen(false)}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
                 </div>
                 {/* Options List */}
                 <div className="p-3 space-y-3">
@@ -1006,14 +1042,14 @@ const App: React.FC = () => {
                     </label>
                   </div>
 
-                  {/* Layer option: G-AIRMET (Integrated toggle!) */}
+                  {/* Layer option: AIRMET/SIGMET */}
                   <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
                     <label className="flex items-center justify-between cursor-pointer group select-none">
                       <div className="flex items-center gap-2">
                         <CloudFog size={14} className="text-purple-500" />
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">G-AIRMET Areas</span>
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500">Icing / Turbulence grids</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">AIRMETs & SIGMETs</span>
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500">Hazards, Icing, Convective</span>
                         </div>
                       </div>
                       <input 

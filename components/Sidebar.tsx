@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { Airport, CardType, WeatherData } from '../types';
-import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star, Layers, Palette, Code, Terminal, Info, Flame, Database } from 'lucide-react';
+import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star, Layers, Palette, Code, Terminal, Info, Flame, Database, CloudSun, Wind } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -21,6 +21,9 @@ interface SidebarProps {
   favorites?: string[];
   onToggleFavorite?: (id: string) => void;
   weatherMap?: Record<string, WeatherData>;
+  isMetarOnly?: boolean;
+  setIsMetarOnly?: (val: boolean) => void;
+  onOpenMetarModal?: () => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -40,7 +43,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   onRefreshFuelPrices,
   favorites = [],
   onToggleFavorite,
-  weatherMap = {}
+  weatherMap = {},
+  isMetarOnly = false,
+  setIsMetarOnly,
+  onOpenMetarModal
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [cardFilter, setCardFilter] = useState<CardType | 'ALL'>('ALL');
@@ -61,6 +67,13 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     if (showOnlyFavorites) {
       filtered = filtered.filter(a => favorites.includes(a.id));
+    }
+
+    if (isMetarOnly) {
+      filtered = filtered.filter(a => {
+        const w = weatherMap[a.weatherSource || a.id];
+        return !!(w && w.metar && !w.metar.includes('ERROR') && !w.metar.includes('Unavailable'));
+      });
     }
 
     if (cardFilter !== 'ALL') {
@@ -156,7 +169,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       
       return false;
     });
-  }, [airports, searchTerm, cardFilter, showOnlyFavorites, favorites]);
+  }, [airports, searchTerm, cardFilter, showOnlyFavorites, favorites, isMetarOnly, weatherMap]);
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 shadow-xl z-20">
@@ -191,22 +204,44 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Search className="absolute left-3 top-2.5 text-slate-500 group-focus-within:text-slate-300 transition-colors" size={16} />
             <input 
               type="text" 
-              placeholder="Search airport, city, name or ID" 
-              className="w-full pl-10 pr-4 py-2 bg-[#1e293b] border border-slate-700 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500 transition-all"
+              placeholder={isMetarOnly ? "Search METAR & TAF (ICAO, City, METAR)..." : "Search airport, city, name or ID"} 
+              className={`w-full pl-10 pr-4 py-2 border rounded text-sm text-white transition-all ${
+                isMetarOnly 
+                  ? 'bg-sky-950/60 border-sky-500/60 placeholder-sky-300 focus:ring-1 focus:ring-sky-400' 
+                  : 'bg-[#1e293b] border-slate-700 placeholder-slate-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500'
+              }`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         )}
 
-        {/* Card Filter */}
+        {/* Card & Weather Filter */}
         {!showSettings && (
           <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
              <button 
-                onClick={() => setCardFilter('ALL')} 
-                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${cardFilter === 'ALL' ? 'bg-slate-700 text-white' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
+                onClick={() => {
+                  setCardFilter('ALL');
+                  if (setIsMetarOnly) setIsMetarOnly(false);
+                }} 
+                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${!isMetarOnly && cardFilter === 'ALL' ? 'bg-slate-700 text-white' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
              >
                 All Cards
+             </button>
+             <button 
+                onClick={() => {
+                  if (setIsMetarOnly) setIsMetarOnly(!isMetarOnly);
+                  if (onOpenMetarModal && !isMetarOnly) onOpenMetarModal();
+                }} 
+                className={`px-3 py-1 rounded text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 border ${
+                  isMetarOnly 
+                    ? 'bg-sky-600 text-white border-sky-400 font-black shadow-md shadow-sky-600/30 ring-1 ring-sky-300' 
+                    : 'bg-[#1e293b] text-sky-400 hover:text-sky-300 border-slate-700/50'
+                }`}
+                title="Filter to METAR & TAF weather reporting airports only"
+             >
+                <CloudSun size={12} className={isMetarOnly ? "animate-pulse" : ""} />
+                <span>METAR & TAF</span>
              </button>
              <button 
                 onClick={() => setCardFilter(CardType.PCARD)} 
