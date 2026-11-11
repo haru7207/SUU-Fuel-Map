@@ -335,7 +335,9 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       try {
           const d = new Date(isoStr);
           if (isNaN(d.getTime())) return '';
-          return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+          const datePart = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const timePart = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return `${datePart}, ${timePart}`;
       } catch (e) {
           return '';
       }

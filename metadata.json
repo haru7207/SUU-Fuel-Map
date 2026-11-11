@@ -1,5 +1,6 @@
 {
   "name": "SUU Fuel Map",
-  "description": "Interactive aviation fuel map for SUU instructors, featuring fuel card rules, FBO info, and live weather data (advisory only, don't use this for situational awareness)",
-  "requestFramePermissions": ["geolocation"]
+  "description": "Interactive aviation fuel map for SUU instructors, featuring fuel card rules, FBO info, GFC 500 autopilot simulator, and live weather data.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

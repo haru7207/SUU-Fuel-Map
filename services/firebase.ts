@@ -211,9 +211,9 @@ export const generateRealisticHistory = (airportId: string, currentLL: number | 
     const baseLL = currentLL || 5.95;
     const baseJetA = currentJetA || 6.80;
     
-    // Generate 6 data points over the last 6 months
+    // Generate 6 data points over the last 6 months ending today
     const now = new Date();
-    // Deterministic fluctuations based on characters in airportId to ensure consistent baseline trend for each airport
+    // Deterministic fluctuations based on characters in airportId and calendar month to ensure consistent baseline trend for each airport
     const pseudoRandom = (seed: number) => {
         let h = 0;
         for (let i = 0; i < airportId.length; i++) {
@@ -223,22 +223,29 @@ export const generateRealisticHistory = (airportId: string, currentLL: number | 
     };
 
     for (let i = 5; i >= 0; i--) {
-        const d = new Date(now);
-        d.setMonth(now.getMonth() - i);
-        
+        let d: Date;
+        if (i === 0) {
+            d = new Date(now);
+        } else {
+            const targetYear = now.getFullYear();
+            const targetMonth = now.getMonth() - i;
+            const maxDaysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+            d = new Date(targetYear, targetMonth, Math.min(now.getDate(), maxDaysInMonth), 12, 0, 0);
+        }
+
+        const monthSeed = d.getFullYear() * 12 + d.getMonth();
         let llVal: number | null = null;
         let jetVal: number | null = null;
 
         if (currentLL !== null) {
-            // pseudo-random trend offset: -0.40 to +0.40
-            const offset = pseudoRandom(i * 10) * 0.35 + (pseudoRandom(4) * 0.15);
+            const offset = pseudoRandom(monthSeed * 7) * 0.35 + (pseudoRandom(4) * 0.15);
             let value = baseLL + offset;
-            if (value < 3.0) value = 3.0; // clamp safety list
+            if (value < 3.0) value = 3.0;
             llVal = i === 0 ? baseLL : parseFloat(value.toFixed(2));
         }
 
         if (currentJetA !== null) {
-            const offset = pseudoRandom(i * 20 + 5) * 0.45 + (pseudoRandom(8) * 0.20);
+            const offset = pseudoRandom(monthSeed * 13 + 5) * 0.45 + (pseudoRandom(8) * 0.20);
             let value = baseJetA + offset;
             if (value < 4.0) value = 4.0;
             jetVal = i === 0 ? baseJetA : parseFloat(value.toFixed(2));
@@ -254,6 +261,80 @@ export const generateRealisticHistory = (airportId: string, currentLL: number | 
     return history;
 };
 
+/**
+ * Ensures any cached or Firestore-stored fuel price history is rolled forward and updated to today.
+ * Fixes histories that were stuck on an older date (e.g. Jul 15) so they always reflect the last 6 months up to today.
+ */
+export const syncHistoryToToday = (
+    airportId: string,
+    existingHistory: HistoryPricePoint[] | null | undefined,
+    currentLL: number | null,
+    currentJetA: number | null
+): HistoryPricePoint[] => {
+    const freshBaseline = generateRealisticHistory(airportId, currentLL, currentJetA);
+    if (!existingHistory || !Array.isArray(existingHistory) || existingHistory.length === 0) {
+        return freshBaseline;
+    }
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const lastEntry = existingHistory[existingHistory.length - 1];
+    const lastEntryDate = lastEntry ? new Date(lastEntry.timestamp) : null;
+    const lastEntryDay = lastEntryDate && !isNaN(lastEntryDate.getTime())
+        ? lastEntryDate.toISOString().split('T')[0]
+        : null;
+
+    // Check if the existing history already ends today and covers the current 6-month window
+    const firstEntry = existingHistory[0];
+    const firstEntryDate = firstEntry ? new Date(firstEntry.timestamp) : null;
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+
+    if (
+        lastEntryDay === todayStr &&
+        existingHistory.length >= 6 &&
+        firstEntryDate &&
+        !isNaN(firstEntryDate.getTime()) &&
+        firstEntryDate >= sixMonthsAgo
+    ) {
+        const updated = [...existingHistory];
+        const lastIdx = updated.length - 1;
+        updated[lastIdx] = {
+            timestamp: now.toISOString(),
+            ll100: currentLL !== null ? currentLL : updated[lastIdx].ll100,
+            jetA: currentJetA !== null ? currentJetA : updated[lastIdx].jetA
+        };
+        return updated;
+    }
+
+    // Otherwise, roll the 6-month history window to end today while preserving valid intermediate historical points
+    // (excluding the old final point if it was from a past date and had been overwritten in-place)
+    const historicalPoints = existingHistory.slice(0, Math.max(0, existingHistory.length - 1));
+
+    return freshBaseline.map((point, idx) => {
+        if (idx === freshBaseline.length - 1) {
+            // Final point is always Today with current prices
+            return {
+                timestamp: now.toISOString(),
+                ll100: currentLL,
+                jetA: currentJetA
+            };
+        }
+        const ptDate = new Date(point.timestamp);
+        const match = historicalPoints.find(hp => {
+            const hd = new Date(hp.timestamp);
+            return !isNaN(hd.getTime()) && hd.getFullYear() === ptDate.getFullYear() && hd.getMonth() === ptDate.getMonth();
+        });
+        if (match) {
+            return {
+                timestamp: point.timestamp,
+                ll100: currentLL !== null ? (match.ll100 ?? point.ll100) : null,
+                jetA: currentJetA !== null ? (match.jetA ?? point.jetA) : null
+            };
+        }
+        return point;
+    });
+};
+
 export const fetchFuelPriceHistory = async (airportId: string, currentLL: number | null, currentJetA: number | null): Promise<HistoryPricePoint[]> => {
     const cacheKey = `suu_fuel_history_${airportId}`;
     try {
@@ -261,15 +342,15 @@ export const fetchFuelPriceHistory = async (airportId: string, currentLL: number
         if (cached) {
             const parsedCache = JSON.parse(cached) as HistoryPricePoint[];
             if (Array.isArray(parsedCache) && parsedCache.length > 0) {
-                // Ensure latest current values are reflected instantly
-                const lastIndex = parsedCache.length - 1;
-                if (currentLL !== null) parsedCache[lastIndex].ll100 = currentLL;
-                if (currentJetA !== null) parsedCache[lastIndex].jetA = currentJetA;
+                const syncedCache = syncHistoryToToday(airportId, parsedCache, currentLL, currentJetA);
+                try {
+                    localStorage.setItem(cacheKey, JSON.stringify(syncedCache));
+                } catch {}
                 
-                // Background fetch to update cache silently
+                // Background fetch to sync with Firestore silently
                 fetchFuelPriceHistoryFromDb(airportId, currentLL, currentJetA).catch(() => {});
                 
-                return parsedCache;
+                return syncedCache;
             }
         }
     } catch {
@@ -281,38 +362,40 @@ export const fetchFuelPriceHistory = async (airportId: string, currentLL: number
 
 const fetchFuelPriceHistoryFromDb = async (airportId: string, currentLL: number | null, currentJetA: number | null): Promise<HistoryPricePoint[]> => {
     const path = `fuelPriceHistory/${airportId}`;
+    const todayStr = new Date().toISOString().split('T')[0];
     try {
         const docRef = doc(db, "fuelPriceHistory", airportId);
         const docSnap = await getDoc(docRef);
         
-        let historyToReturn: HistoryPricePoint[] | null = null;
+        let existingHistory: HistoryPricePoint[] | null = null;
+        let needsDbWrite = false;
         
         if (docSnap.exists()) {
             const data = docSnap.data() as FuelPriceHistoryData;
             if (data && Array.isArray(data.history) && data.history.length > 0) {
-                // Ensure todays point reflects the absolute latest if todays point is the last entry
-                const historyList = [...data.history];
-                if (historyList.length > 0) {
-                    const lastIndex = historyList.length - 1;
-                    if (currentLL !== null) historyList[lastIndex].ll100 = currentLL;
-                    if (currentJetA !== null) historyList[lastIndex].jetA = currentJetA;
+                existingHistory = data.history;
+                const lastPoint = existingHistory[existingHistory.length - 1];
+                const lastDay = lastPoint?.timestamp ? new Date(lastPoint.timestamp).toISOString().split('T')[0] : null;
+                if (lastDay !== todayStr) {
+                    needsDbWrite = true;
                 }
-                historyToReturn = historyList;
+            } else {
+                needsDbWrite = true;
             }
+        } else {
+            needsDbWrite = true;
         }
 
-        if (!historyToReturn) {
-            // If no history exists in Firestore, generate a realistic one and save it
-            historyToReturn = generateRealisticHistory(airportId, currentLL, currentJetA);
-            if (auth.currentUser) {
-                await setDoc(docRef, {
-                    airportId,
-                    history: historyToReturn
-                });
-            }
+        const historyToReturn = syncHistoryToToday(airportId, existingHistory, currentLL, currentJetA);
+
+        if (needsDbWrite && auth.currentUser) {
+            await setDoc(docRef, {
+                airportId,
+                history: historyToReturn
+            });
         }
         
-        // Save to cache
+        // Save synced history to local cache
         try {
             localStorage.setItem(`suu_fuel_history_${airportId}`, JSON.stringify(historyToReturn));
         } catch {
@@ -331,8 +414,11 @@ const fetchFuelPriceHistoryFromDb = async (airportId: string, currentLL: number 
                 // silent fail
             }
         }
-        // Fallback to purely client generated history so view continues working flawlessly offline
-        return generateRealisticHistory(airportId, currentLL, currentJetA);
+        const fallback = syncHistoryToToday(airportId, null, currentLL, currentJetA);
+        try {
+            localStorage.setItem(`suu_fuel_history_${airportId}`, JSON.stringify(fallback));
+        } catch {}
+        return fallback;
     }
 };
 

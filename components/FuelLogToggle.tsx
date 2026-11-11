@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Fuel, X, Trash2, User, Plane, Calendar, FileText, CheckCircle, Info, Save, List, Plus, Edit2, ChevronRight, History, Droplets, CreditCard, Share2, Mail, AlertCircle, Camera, Loader2, Wand2, Clock, Calculator, Sparkles, Search, ChevronDown, CloudSun } from 'lucide-react';
 import { AIRPORT_DATABASE } from '../constants';
 import { GoogleGenAI, Type } from '@google/genai';
-import { Airport, FuelType } from '../types';
+import { Airport, FuelType, CardType } from '../types';
 
 interface FuelLogToggleProps {
   currentAirportId: string | null;

@@ -21,6 +21,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 7.18,
       [FuelType.JETA]: 8.88
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['02/20', '08/26'],
     runwayLengths: {
       '02/20': 8653,
@@ -52,6 +53,7 @@ export const AIRPORT_DATABASE: Airport[] = [
     fuelPrices: {
       [FuelType.LL100]: 6.25
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['13/31'],
     runwayLengths: { '13/31': 3990 },
     runwayDetails: {'13/31': {'length': 3990,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.7%'}},
@@ -74,12 +76,13 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'UT',
     lat: 37.1764,
     lon: -113.3081,
-    fbo: 'Hurricane City',
-    phone: '435-635-4343',
+    fbo: 'General Dick Stout Field Airport',
+    phone: '(435) 635-2811',
     fuelTypes: [FuelType.LL100],
     fuelPrices: {
       [FuelType.LL100]: 5.85
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19'],
     runwayLengths: { '01/19': 3400 },
     runwayDetails: {'01/19': {'length': 3400,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['19'],'lighting': 'LIRL','slope': '-0.1%'}},
@@ -102,12 +105,14 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'UT',
     lat: 37.8606,
     lon: -112.8456,
-    fbo: 'Parowan City',
-    phone: '435-477-3331',
-    fuelTypes: [FuelType.LL100],
+    fbo: 'Parowan Airport - Parowan Aviation',
+    phone: '(435) 867-0278',
+    fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
-      [FuelType.LL100]: 5.75
+      [FuelType.LL100]: 5.75,
+      [FuelType.JETA]: 5.35
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['04/22'],
     runwayLengths: { '04/22': 4900 },
     runwayDetails: {'04/22': {'length': 4900,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['22'],'lighting': 'LIRL','slope': '0.6%'}},
@@ -136,6 +141,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 5.95,
       [FuelType.JETA]: 5.45
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['07/25', '13/31'],
     runwayLengths: { '07/25': 4700, '13/31': 3200 },
     runwayDetails: {'07/25': {'length': 4700,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['25'],'lighting': 'LIRL','slope': '-0.2%'},'13/31': {'length': 3200,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.5%'}},
@@ -157,13 +163,14 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'UT',
     lat: 38.9613,
     lon: -112.3606,
-    fbo: 'Fillmore City',
-    phone: '435-743-5700',
+    fbo: 'Fillmore Municipal Airport',
+    phone: '(435) 743-6150',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 6.05,
       [FuelType.JETA]: 5.55
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['04/22'],
     runwayLengths: { '04/22': 5040 },
     runwayDetails: {'04/22': {'length': 5040,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['22'],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
@@ -185,12 +192,13 @@ export const AIRPORT_DATABASE: Airport[] = [
     generalWarning: 'MLF ASOS may be unreliable via radio. For current weather, call the new number: 435-289-3387.',
     lat: 38.4292,
     lon: -113.0116,
-    fbo: 'Milford',
-    phone: '435-387-2711',
-    fuelTypes: [FuelType.LL100],
+    fbo: 'Milford Municipal',
+    phone: '(435) 463-9565',
+    fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 6.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['16/34'],
     runwayLengths: { '16/34': 5000 },
     runwayDetails: {'16/34': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['34'],'lighting': 'LIRL','slope': '0.3%'}},
@@ -218,6 +226,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.15,
       [FuelType.JETA]: 5.65
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17/35'],
     runwayLengths: { '17/35': 8900 },
     runwayDetails: {'17/35': {'length': 8900,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.6%'}},
@@ -245,6 +254,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 7.45,
       [FuelType.JETA]: 7.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['03/21', '15/33'],
     runwayLengths: { '03/21': 7100, '15/33': 4060 },
     runwayDetails: {'03/21': {'length': 7100,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.3%'},'15/33': {'length': 4060,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['33'],'lighting': 'LIRL','slope': '-0.5%'}},
@@ -272,6 +282,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.45,
       [FuelType.JETA]: 6.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19', '08/26'],
     runwayLengths: { '01/19': 8300, '08/26': 4500 },
     runwayDetails: {'01/19': {'length': 8300,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '1.0%'},'08/26': {'length': 4500,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.6%'}},
@@ -299,6 +310,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.95,
       [FuelType.JETA]: 6.45
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['03/21'],
     runwayLengths: { '03/21': 7400 },
     runwayDetails: {'03/21': {'length': 7400,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.1%'}},
@@ -326,6 +338,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 7.65,
       [FuelType.JETA]: 7.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19'],
     runwayLengths: { '01/19': 9300 },
     runwayDetails: {'01/19': {'length': 9300,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
@@ -347,13 +360,14 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'NV',
     lat: 36.2107,
     lon: -115.1944,
-    fbo: 'VGT Terminal',
-    phone: '(702) 261-3806',
+    fbo: 'North Las Vegas Airport',
+    phone: '(702) 261-3801',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 6.95,
       [FuelType.JETA]: 6.55
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['12L/30R', '12R/30L', '07/25'],
     runwayLengths: { '12L/30R': 5000, '12R/30L': 4200, '07/25': 4200 },
     runwayDetails: {'12L/30R': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '-0.3%'},'12R/30L': {'length': 4200,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': 'Level'},'07/25': {'length': 4200,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['25'],'lighting': 'LIRL','slope': '0.8%'}},
@@ -383,6 +397,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 9.95,
       [FuelType.JETA]: 9.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['04/22', '13/31'],
     runwayLengths: { '04/22': 6900, '13/31': 4400 },
     runwayDetails: {'04/22': {'length': 6900,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': 'Level'},'13/31': {'length': 4400,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '-0.4%'}},
@@ -411,6 +426,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.75
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['16/34'],
     runwayLengths: { '16/34': 4700 },
     runwayDetails: {'16/34': {'length': 4700,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['34'],'lighting': 'LIRL','slope': '0.6%'}},
@@ -440,6 +456,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.JETA]: 5.85,
       [FuelType.JETA_PLUS]: 5.95
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['03/21', '17/35', '07/25'],
     runwayLengths: { '03/21': 8150, '17/35': 5200, '07/25': 4300 },
     runwayDetails: {'03/21': {'length': 8150,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['21'],'lighting': 'MIRL / REIL / PAPI','slope': '0.3%'},'17/35': {'length': 5200,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'},'07/25': {'length': 4300,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['25'],'lighting': 'LIRL','slope': '-0.4%'}},
@@ -468,6 +485,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.35,
       [FuelType.JETA]: 6.05
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['08/26', '12/30'],
     runwayLengths: { '08/26': 10000, '12/30': 8000 },
     runwayDetails: {'08/26': {'length': 10000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['26'],'lighting': 'MIRL / REIL / PAPI','slope': '0.3%'},'12/30': {'length': 8000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.7%'}},
@@ -495,6 +513,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.15,
       [FuelType.JETA]: 5.75
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19'],
     runwayLengths: { '01/19': 6600 },
     runwayDetails: {'01/19': {'length': 6600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '0.2%'}},
@@ -504,8 +523,8 @@ export const AIRPORT_DATABASE: Airport[] = [
       { name: 'Salt Lake Center', freq: '128.55' }
     ],
     cardRules: {
-      primary: CardType.PCARD,
-      notes: 'Try Black card (8615) first, then use the PCard if it is declined.',
+      primary: CardType.AVFUEL,
+      notes: 'New fuel system installed. Use PCard if the Black Card is denied.',
       warning: true
     },
     userNotes: [
@@ -532,6 +551,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 7.45,
       [FuelType.JETA]: 7.05
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['15/33', '07/25'],
     runwayLengths: { '15/33': 5950, '07/25': 5500 },
     runwayDetails: {'15/33': {'length': 5950,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['33'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.1%'},'07/25': {'length': 5500,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.5%'}},
@@ -593,6 +613,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 9.15,
       [FuelType.JETA]: 8.45
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['16L/34R', '16R/34L', '17/35', '14/32'],
     runwayLengths: { '16L/34R': 12000, '16R/34L': 12000, '17/35': 9600, '14/32': 4900 },
     runwayDetails: {'16L/34R': {'length': 12000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.8%'},'16R/34L': {'length': 12000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['34L'],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'},'17/35': {'length': 9600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.2%'},'14/32': {'length': 4900,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['32'],'lighting': 'LIRL','slope': '0.9%'}},
@@ -627,6 +648,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 7.95,
       [FuelType.JETA]: 7.45
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17R/35L', '17L/35R'],
     runwayLengths: { '17R/35L': 6500, '17L/35R': 5000 },
     runwayDetails: {'17R/35L': {'length': 6500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35L'],'lighting': 'MIRL / REIL / PAPI','slope': '0.2%'},'17L/35R': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['35R'],'lighting': 'LIRL','slope': '-0.4%'}},
@@ -661,6 +683,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 7.55,
       [FuelType.JETA]: 7.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['13/31', '18/36'],
     runwayLengths: { '13/31': 8600, '18/36': 6600 },
     runwayDetails: {'13/31': {'length': 8600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['31'],'lighting': 'MIRL / REIL / PAPI','slope': '1.0%'},'18/36': {'length': 6600,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['36'],'lighting': 'MIRL / REIL / PAPI','slope': '0.6%'}},
@@ -689,6 +712,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.35,
       [FuelType.JETA]: 5.95
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17/35', '10/28'],
     runwayLengths: { '17/35': 9000, '10/28': 5000 },
     runwayDetails: {'17/35': {'length': 9000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.5%'},'10/28': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['28'],'lighting': 'LIRL','slope': '0.8%'}},
@@ -716,6 +740,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.85
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['12/30'],
     runwayLengths: { '12/30': 6500 },
     runwayDetails: {'12/30': {'length': 6500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
@@ -737,13 +762,14 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'UT',
     lat: 40.6128,
     lon: -112.3831,
-    fbo: 'Tooele FBO',
-    phone: '(435) 843-3440',
+    fbo: 'Toole Valley Airport - SLC Department of Airports',
+    phone: '(801) 575-2401 / (801) 209-1571',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 6.15,
       [FuelType.JETA]: 5.65
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17/35'],
     runwayLengths: { '17/35': 5500 },
     runwayDetails: {'17/35': {'length': 5500,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.4%'}},
@@ -771,6 +797,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.45,
       [FuelType.JETA]: 6.05
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['05/23', '16/34'],
     runwayLengths: { '05/23': 7300, '16/34': 3900 },
     runwayDetails: {'05/23': {'length': 7300,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'},'16/34': {'length': 3900,'width': 75,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.6%'}},
@@ -791,13 +818,14 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'UT',
     lat: 37.5833,
     lon: -109.4833,
-    fbo: 'Freedom Fuels',
+    fbo: 'Blanding Municipal Airport - Freedom Fuels Blanding Air Support',
     phone: '(801) 828-7211',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 6.35,
       [FuelType.JETA]: 5.95
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17/35'],
     runwayLengths: { '17/35': 5800 },
     runwayDetails: {'17/35': {'length': 5800,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
@@ -826,6 +854,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.85
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17/35'],
     runwayLengths: { '17/35': 6400 },
     runwayDetails: {'17/35': {'length': 6400,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['35'],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
@@ -854,6 +883,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.45,
       [FuelType.JETA]: 6.05
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19'],
     runwayLengths: { '01/19': 5700 },
     runwayDetails: {'01/19': {'length': 5700,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.4%'}},
@@ -882,6 +912,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.85,
       [FuelType.JETA]: 6.35
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['16/34'],
     runwayLengths: { '16/34': 8500 },
     runwayDetails: {'16/34': {'length': 8500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['34'],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
@@ -910,6 +941,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.55,
       [FuelType.JETA]: 6.15
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19'],
     runwayLengths: { '01/19': 5100 },
     runwayDetails: {'01/19': {'length': 5100,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.1%'}},
@@ -931,13 +963,14 @@ export const AIRPORT_DATABASE: Airport[] = [
     state: 'AZ',
     lat: 35.9524,
     lon: -112.1469,
-    fbo: 'Wiseman Aviation',
-    phone: '(928) 638-2359',
+    fbo: 'Grand Canyon National Park Airport - Grand Canyon Airlines',
+    phone: '(928) 638-7117',
     fuelTypes: [FuelType.LL100, FuelType.JETA],
     fuelPrices: {
       [FuelType.LL100]: 7.75,
       [FuelType.JETA]: 7.25
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['03/21'],
     runwayLengths: { '03/21': 9000 },
     runwayDetails: {'03/21': {'length': 9000,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['21'],'lighting': 'MIRL / REIL / PAPI','slope': '0.9%'}},
@@ -966,6 +999,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.75
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['01/19'],
     runwayLengths: { '01/19': 6200 },
     runwayDetails: {'01/19': {'length': 6200,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['19'],'lighting': 'MIRL / REIL / PAPI','slope': '-0.3%'}},
@@ -992,6 +1026,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.45,
       [FuelType.JETA]: 5.95
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['16/34'],
     runwayLengths: { '16/34': 6000 },
     runwayDetails: {'16/34': {'length': 6000,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.4%'}},
@@ -1017,6 +1052,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.85
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['12/30'],
     runwayLengths: { '12/30': 6500 },
     runwayDetails: {'12/30': {'length': 6500,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '0.7%'}},
@@ -1043,6 +1079,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.15,
       [FuelType.JETA]: 5.65
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['17/35'],
     runwayLengths: { '17/35': 5500 },
     runwayDetails: {'17/35': {'length': 5500,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': [],'lighting': 'MIRL / REIL / PAPI','slope': '-0.4%'}},
@@ -1068,6 +1105,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.75
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['03/21'],
     runwayLengths: { '03/21': 5000 },
     runwayDetails: {'03/21': {'length': 5000,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': ['21'],'lighting': 'LIRL','slope': '-0.5%'}},
@@ -1093,6 +1131,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.45,
       [FuelType.JETA]: 5.95
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['03/21'],
     runwayLengths: { '03/21': 6800 },
     runwayDetails: {'03/21': {'length': 6800,'width': 150,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['21'],'lighting': 'MIRL / REIL / PAPI','slope': '0.9%'}},
@@ -1118,6 +1157,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.35,
       [FuelType.JETA]: 5.85
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['11/29'],
     runwayLengths: { '11/29': 5100 },
     runwayDetails: {'11/29': {'length': 5100,'width': 100,'surface': 'Asphalt','tpa': 1000,'rightTraffic': ['29'],'lighting': 'MIRL / REIL / PAPI','slope': '0.2%'}},
@@ -1143,6 +1183,7 @@ export const AIRPORT_DATABASE: Airport[] = [
       [FuelType.LL100]: 6.25,
       [FuelType.JETA]: 5.75
     },
+    fuelPricesLastUpdated: new Date().toISOString(),
     runways: ['08/26'],
     runwayLengths: { '08/26': 4100 },
     runwayDetails: {'08/26': {'length': 4100,'width': 100,'surface': 'Asphalt/Concrete','tpa': 1000,'rightTraffic': [],'lighting': 'LIRL','slope': '0.7%'}},

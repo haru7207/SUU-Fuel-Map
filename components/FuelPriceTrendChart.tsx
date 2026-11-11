@@ -9,7 +9,7 @@ import {
   Tooltip, 
   Legend 
 } from 'recharts';
-import { fetchFuelPriceHistory, HistoryPricePoint } from '../services/firebase';
+import { fetchFuelPriceHistory, syncHistoryToToday, HistoryPricePoint } from '../services/firebase';
 import { Airport } from '../types';
 import { TrendingUp, TrendingDown, Minus, Loader2, Calendar, DollarSign, Activity, AlertCircle } from 'lucide-react';
 
@@ -27,14 +27,13 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
       if (cached) {
         const parsed = JSON.parse(cached) as HistoryPricePoint[];
         if (Array.isArray(parsed) && parsed.length > 0) {
-           const lastIndex = parsed.length - 1;
-           if (currentLL !== null) parsed[lastIndex].ll100 = currentLL;
-           if (currentJetA !== null) parsed[lastIndex].jetA = currentJetA;
-           return parsed;
+           const synced = syncHistoryToToday(airport.id, parsed, currentLL, currentJetA);
+           localStorage.setItem(`suu_fuel_history_${airport.id}`, JSON.stringify(synced));
+           return synced;
         }
       }
     } catch {}
-    return null;
+    return syncHistoryToToday(airport.id, null, currentLL, currentJetA);
   };
 
   const initialCached = getCachedHistory();

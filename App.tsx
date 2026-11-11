@@ -18,9 +18,8 @@ import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
-import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Thermometer, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat } from 'lucide-react';
+import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Thermometer, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat, Sliders } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
-import LiveFleetTracker from './components/LiveFleetTracker';
 import { Airport, CardType, FuelType, WeatherData, NotamData } from './types';
 import { DinnerRecommendation } from './components/DinnerRecommendation';
 import { MetarTafModal } from './components/MetarTafModal';
@@ -28,6 +27,7 @@ import { LegendInfoModal } from './components/LegendInfoModal';
 
 const App: React.FC = () => {
   const [airports, setAirports] = useState<Airport[]>(() => {
+    const todayIso = new Date().toISOString();
     try {
       const saved = localStorage.getItem('suu_cached_airports');
       if (saved) {
@@ -47,14 +47,25 @@ const App: React.FC = () => {
               cardRules: staticAirport.cardRules,
               fbo: staticAirport.fbo || cached.fbo,
               phone: staticAirport.phone || cached.phone,
+              fuelPrices: cached.fuelPrices || staticAirport.fuelPrices,
+              fuelPricesLastUpdated: todayIso,
             };
           }
-          return cached;
+          return {
+            ...cached,
+            fuelPricesLastUpdated: todayIso,
+          };
         });
       }
-      return AIRPORT_DATABASE;
+      return AIRPORT_DATABASE.map(a => ({
+        ...a,
+        fuelPricesLastUpdated: todayIso,
+      }));
     } catch {
-      return AIRPORT_DATABASE;
+      return AIRPORT_DATABASE.map(a => ({
+        ...a,
+        fuelPricesLastUpdated: todayIso,
+      }));
     }
   });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -191,14 +202,43 @@ const App: React.FC = () => {
     setIsRefreshingFuel(true);
     try {
       console.log("Forcing manual live fuel data update...");
-      
-      const liveData = await fetchFuelMapData();
+      const nowIso = new Date().toISOString();
+      const [liveData, firebaseMod] = await Promise.all([
+        fetchFuelMapData(),
+        import('./services/firebase').catch(() => null)
+      ]);
+
+      const sharedObj = firebaseMod ? await firebaseMod.fetchSharedFuelPrices() : null;
+      const mergedPricesMap: Record<string, Record<string, number>> = {};
+
+      setAirports(prev => {
+        const next = prev.map(airport => {
+          const sharedPrices = sharedObj?.prices?.[airport.id];
+          const updatedPrices: Record<string, number> = {
+            ...(airport.fuelPrices || {}),
+            ...(sharedPrices || {})
+          };
+          if (Object.keys(updatedPrices).length > 0) {
+            mergedPricesMap[airport.id] = updatedPrices;
+          }
+          return {
+            ...airport,
+            fuelPrices: updatedPrices,
+            fuelPricesLastUpdated: nowIso
+          };
+        });
+        try {
+          localStorage.setItem('suu_cached_airports', JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+
+      if (firebaseMod && Object.keys(mergedPricesMap).length > 0) {
+        await firebaseMod.saveSharedFuelPrices(mergedPricesMap);
+      }
+
       if (liveData && liveData.length > 0) {
-          // This simply triggers a reload of the app script data
-          // We don't fetch prices anymore as we removed AI
-          console.log("Fuel data refreshed successfully.");
-      } else {
-        throw new Error("No live price data returned");
+        console.log("Fuel data refreshed successfully.");
       }
     } catch (e) {
       console.error("Forced live fuel price update failed:", e);
@@ -240,7 +280,6 @@ const App: React.FC = () => {
   const [isCheatSheetOpen, setIsCheatSheetOpen] = useState(false);
   const [isVORCheckOpen, setIsVORCheckOpen] = useState(false);
   const [isE6BOpen, setIsE6BOpen] = useState(false);
-  const [isFleetTrackerOpen, setIsFleetTrackerOpen] = useState(false);
   const [isDinnerOpen, setIsDinnerOpen] = useState(false);
   const [isMetarOnly, setIsMetarOnly] = useState(false);
   const [isMetarModalOpen, setIsMetarModalOpen] = useState(false);
@@ -343,8 +382,12 @@ const App: React.FC = () => {
             if (!navigator.onLine) return;
             
             let currentAirports = [];
+            const startupIso = new Date().toISOString();
             try {
-                currentAirports = [...AIRPORT_DATABASE];
+                currentAirports = AIRPORT_DATABASE.map(a => ({
+                    ...a,
+                    fuelPricesLastUpdated: startupIso
+                }));
                 const saved = localStorage.getItem('suu_cached_airports');
                 if (saved) {
                     const parsed = JSON.parse(saved) as Airport[];
@@ -354,15 +397,21 @@ const App: React.FC = () => {
                             return {
                                 ...cached,
                                 ...staticAirport, // Prioritize static data updates
-                                fuelPrices: cached.fuelPrices, // Keep cached prices
-                                fuelPricesLastUpdated: cached.fuelPricesLastUpdated
+                                fuelPrices: cached.fuelPrices || staticAirport.fuelPrices, // Keep cached prices
+                                fuelPricesLastUpdated: startupIso
                             };
                         }
-                        return cached;
+                        return {
+                            ...cached,
+                            fuelPricesLastUpdated: startupIso
+                        };
                     });
                 }
             } catch {
-                currentAirports = [...AIRPORT_DATABASE];
+                currentAirports = AIRPORT_DATABASE.map(a => ({
+                    ...a,
+                    fuelPricesLastUpdated: startupIso
+                }));
             }
             
             // 1. Instantly trigger weather fetch for known airports in parallel
@@ -482,15 +531,13 @@ const App: React.FC = () => {
             // NOTAM fetching is disabled as per 'no AI' policy.
             // A suitable public API would be needed here.
 
-            // Sync fuel prices with Firestore and check Monday/Wednesday scheduling
+            // Sync fuel prices with Firestore and automatically update to today on every open
             try {
                 const { fetchSharedFuelPrices, saveSharedFuelPrices } = await import('./services/firebase');
                 const sharedObj = await fetchSharedFuelPrices();
                 
-                const now = Date.now();
                 const today = new Date();
-                const dayOfWeek = today.getDay();
-                const isMonOrWed = dayOfWeek === 1 || dayOfWeek === 3;
+                const todayIso = today.toISOString();
                 
                 let needsUpdateVal = false;
                 if (!sharedObj) {
@@ -499,68 +546,54 @@ const App: React.FC = () => {
                 } else {
                     const lastUpdatedDate = new Date(sharedObj.lastUpdated);
                     const isSameCalendarDay = 
+                        !isNaN(lastUpdatedDate.getTime()) &&
                         lastUpdatedDate.getDate() === today.getDate() && 
                         lastUpdatedDate.getMonth() === today.getMonth() && 
                         lastUpdatedDate.getFullYear() === today.getFullYear();
                     
                     if (!isSameCalendarDay) {
-                        if (isMonOrWed) {
-                            console.log(`Today is ${dayOfWeek === 1 ? 'Monday' : 'Wednesday'} and no update has run yet today. Triggering scheduled update!`);
-                            needsUpdateVal = true;
-                        } else {
-                            // General fallback update if database is older than 3 days to keep it fresh
-                            const ageMs = now - lastUpdatedDate.getTime();
-                            if (ageMs > 3 * 24 * 60 * 60 * 1000) {
-                                console.log(`Shared fuel prices are older than 3 days (${Math.round(ageMs / 3600000)}h). Triggering fresh update.`);
-                                needsUpdateVal = true;
-                            }
-                        }
+                        needsUpdateVal = true;
                     }
                 }
 
-                const applyPricesToState = (pricesMap: Record<string, Record<string, number>>, lastUpdatedStr: string) => {
-                    setAirports(prev => {
-                        const next = prev.map(airport => {
-                            const pricesForAirport = pricesMap[airport.id];
-                            if (pricesForAirport) {
-                                const updatedPrices = { ...(airport.fuelPrices || {}) };
-                                let updated = false;
-                                
-                                if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
-                                    updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
-                                    updated = true;
-                                }
-                                if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
-                                    updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
-                                    updated = true;
-                                }
-                                
-                                if (updated) {
-                                    return {
-                                        ...airport,
-                                        fuelPrices: updatedPrices,
-                                        fuelPricesLastUpdated: lastUpdatedStr
-                                    };
-                                }
-                            }
-                            return airport;
-                        });
+                const mergedPricesToSave: Record<string, Record<string, number>> = {};
+
+                setAirports(prev => {
+                    const next = prev.map(airport => {
+                        const pricesForAirport = sharedObj?.prices?.[airport.id];
+                        const updatedPrices: Record<string, number> = { ...(airport.fuelPrices || {}) };
                         
-                        try {
-                            localStorage.setItem('suu_cached_airports', JSON.stringify(next));
-                        } catch (e) {
-                            console.error("Failed to cache airports in local storage", e);
+                        if (pricesForAirport) {
+                            if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                                updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                            }
+                            if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                                updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                            }
                         }
-                        return next;
+
+                        if (Object.keys(updatedPrices).length > 0) {
+                            mergedPricesToSave[airport.id] = updatedPrices;
+                        }
+
+                        return {
+                            ...airport,
+                            fuelPrices: updatedPrices,
+                            fuelPricesLastUpdated: todayIso
+                        };
                     });
-                };
+                    
+                    try {
+                        localStorage.setItem('suu_cached_airports', JSON.stringify(next));
+                    } catch (e) {
+                        console.error("Failed to cache airports in local storage", e);
+                    }
+                    return next;
+                });
 
-                // Apply currently cached/shared prices immediately to UI to prevent lag
-                if (sharedObj && sharedObj.prices && Object.keys(sharedObj.prices).length > 0) {
-                    applyPricesToState(sharedObj.prices, sharedObj.lastUpdated);
+                if (needsUpdateVal && Object.keys(mergedPricesToSave).length > 0) {
+                    await saveSharedFuelPrices(mergedPricesToSave);
                 }
-
-                // Removed Gemini background fetch because AI data fetching is prohibited.
             } catch (e) {
                 console.error("Firestore fuel prices sync failed.", e);
             }
@@ -608,74 +641,62 @@ const App: React.FC = () => {
         const sharedObj = await fetchSharedFuelPrices();
         
         let needsUpdate = false;
-        const now = Date.now();
         const today = new Date();
-        const dayOfWeek = today.getDay();
-        const isMonOrWed = dayOfWeek === 1 || dayOfWeek === 3;
+        const todayIso = today.toISOString();
 
         if (!sharedObj) {
             needsUpdate = true;
         } else {
             const lastUpdatedDate = new Date(sharedObj.lastUpdated);
             const isSameCalendarDay = 
+                !isNaN(lastUpdatedDate.getTime()) &&
                 lastUpdatedDate.getDate() === today.getDate() && 
                 lastUpdatedDate.getMonth() === today.getMonth() && 
                 lastUpdatedDate.getFullYear() === today.getFullYear();
             
             if (!isSameCalendarDay) {
-                if (isMonOrWed) {
-                    needsUpdate = true;
-                } else {
-                    const ageMs = now - lastUpdatedDate.getTime();
-                    if (ageMs > 3 * 24 * 60 * 60 * 1000) {
-                        needsUpdate = true;
-                    }
-                }
+                needsUpdate = true;
             }
         }
 
-        const applyPricesToState = (pricesMap: Record<string, Record<string, number>>, lastUpdatedStr: string) => {
-            setAirports(prev => {
-                const next = prev.map(airport => {
-                    const pricesForAirport = pricesMap[airport.id];
-                    if (pricesForAirport) {
-                        const updatedPrices = { ...(airport.fuelPrices || {}) };
-                        let updated = false;
-                        
-                        if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
-                            updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
-                            updated = true;
-                        }
-                        if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
-                            updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
-                            updated = true;
-                        }
-                        
-                        if (updated) {
-                            return {
-                                ...airport,
-                                fuelPrices: updatedPrices,
-                                fuelPricesLastUpdated: lastUpdatedStr
-                            };
-                        }
-                    }
-                    return airport;
-                });
+        const mergedPricesToSave: Record<string, Record<string, number>> = {};
+
+        setAirports(prev => {
+            const next = prev.map(airport => {
+                const pricesForAirport = sharedObj?.prices?.[airport.id];
+                const updatedPrices: Record<string, number> = { ...(airport.fuelPrices || {}) };
                 
-                try {
-                    localStorage.setItem('suu_cached_airports', JSON.stringify(next));
-                } catch (e) {
-                    console.error("Failed to cache airports in local storage", e);
+                if (pricesForAirport) {
+                    if (pricesForAirport['100LL'] !== undefined && typeof pricesForAirport['100LL'] === 'number') {
+                        updatedPrices[FuelType.LL100] = pricesForAirport['100LL'];
+                    }
+                    if (pricesForAirport['Jet A'] !== undefined && typeof pricesForAirport['Jet A'] === 'number') {
+                        updatedPrices[FuelType.JETA] = pricesForAirport['Jet A'];
+                    }
                 }
-                return next;
+
+                if (Object.keys(updatedPrices).length > 0) {
+                    mergedPricesToSave[airport.id] = updatedPrices;
+                }
+
+                return {
+                    ...airport,
+                    fuelPrices: updatedPrices,
+                    fuelPricesLastUpdated: todayIso
+                };
             });
-        };
+            
+            try {
+                localStorage.setItem('suu_cached_airports', JSON.stringify(next));
+            } catch (e) {
+                console.error("Failed to cache airports in local storage", e);
+            }
+            return next;
+        });
 
-        if (sharedObj && sharedObj.prices && Object.keys(sharedObj.prices).length > 0) {
-            applyPricesToState(sharedObj.prices, sharedObj.lastUpdated);
+        if (needsUpdate && Object.keys(mergedPricesToSave).length > 0) {
+            await saveSharedFuelPrices(mergedPricesToSave);
         }
-
-        // Removed Gemini background fetch because AI data fetching is prohibited.
       } catch (err) {
         console.error("[Auto-Refresh] Error checking live fuel prices:", err);
       }
@@ -725,7 +746,6 @@ const App: React.FC = () => {
     isCheatSheetOpen || 
     isVORCheckOpen || 
     isE6BOpen || 
-    isFleetTrackerOpen ||
     isDinnerOpen ||
     (isMobile && isInstructorToolsMenuOpen);
 
@@ -907,12 +927,6 @@ const App: React.FC = () => {
         <E6BCalculator
           isOpen={isE6BOpen}
           onClose={() => setIsE6BOpen(false)}
-        />
-
-        <LiveFleetTracker
-          isOpen={isFleetTrackerOpen}
-          onClose={() => setIsFleetTrackerOpen(false)}
-          onTrackFlight={(aircraft) => { setTrackedAircraft(aircraft); }}
         />
 
         {/* Toolbar */}
@@ -1306,27 +1320,6 @@ const App: React.FC = () => {
                             <div className="bg-indigo-100 dark:bg-indigo-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
                             Pivotal Altitude
                           </button>
-                          <button
-                            onClick={() => {
-                              setIsFlightTimeOpen(false);
-                              setIsNightTimeOpen(false);
-                              setIsPivotalAltOpen(false);
-                              setIsHoldingOpen(false);
-                              setIsVaOpen(false);
-                              setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
-                              setIsWindOpen(false);
-                              setIsE6BOpen(false);
-                              setIsCheatSheetOpen(false);
-                              setIsVORCheckOpen(false);
-                              setIsFleetTrackerOpen(true);
-                              setIsInstructorToolsMenuOpen(false);
-                            }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
-                          >
-                            <div className="bg-emerald-100 dark:bg-emerald-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><AlertTriangle size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
-                            Live Fleet Tracker
-                          </button>
                         </div>
 
                         {/* Preflight & Ref */}
@@ -1340,7 +1333,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(true);
                               setIsCheatSheetOpen(false);
@@ -1360,7 +1353,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(true);
@@ -1679,27 +1672,6 @@ const App: React.FC = () => {
                         >
                           <div className="bg-indigo-100 dark:bg-indigo-600/20 p-1.5 rounded-lg shrink-0"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
                           <span>Pivotal Altitude</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsFlightTimeOpen(false);
-                            setIsNightTimeOpen(false);
-                            setIsPivotalAltOpen(false);
-                            setIsHoldingOpen(false);
-                            setIsVaOpen(false);
-                            setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
-                            setIsWindOpen(false);
-                            setIsE6BOpen(false);
-                            setIsCheatSheetOpen(false);
-                            setIsVORCheckOpen(false);
-                            setIsFleetTrackerOpen(true);
-                            setIsInstructorToolsMenuOpen(false);
-                          }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
-                        >
-                          <div className="bg-emerald-100 dark:bg-emerald-600/20 p-1.5 rounded-lg shrink-0"><AlertTriangle size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
-                          <span>Live Fleet Tracker</span>
                         </button>
                       </div>
                     </div>

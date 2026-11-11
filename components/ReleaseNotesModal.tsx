@@ -5,15 +5,15 @@ export const ReleaseNotesModal: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Check if the user has already seen the v2.7.2 release notes
-    const hasSeen = localStorage.getItem('saw_release_notes_v2_7_2');
+    // Check if the user has already seen the v2.7.3 release notes
+    const hasSeen = localStorage.getItem('saw_release_notes_v2_7_3');
     if (!hasSeen) {
       setIsOpen(true);
     }
   }, []);
 
   const handleClose = () => {
-    localStorage.setItem('saw_release_notes_v2_7_2', 'true');
+    localStorage.setItem('saw_release_notes_v2_7_3', 'true');
     setIsOpen(false);
   };
 
@@ -24,19 +24,19 @@ export const ReleaseNotesModal: React.FC = () => {
       <div className="bg-white dark:bg-slate-900 w-full max-w-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden animate-slide-in-up">
         
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 via-sky-600 to-blue-700 p-6 flex justify-between items-start relative overflow-hidden">
+        <div className="bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 p-6 flex justify-between items-start relative overflow-hidden">
           {/* Decorative shapes */}
           <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
           <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-40 h-40 rounded-full bg-white/10 blur-3xl"></div>
           
           <div className="relative z-10 text-white">
-            <div className="flex items-center gap-2 mb-2 text-sky-100">
+            <div className="flex items-center gap-2 mb-2 text-rose-100">
               <Sparkles size={16} className="text-amber-300 animate-pulse" />
-              <span className="text-xs font-bold uppercase tracking-widest">What's New</span>
+              <span className="text-xs font-bold uppercase tracking-widest">Database Updated</span>
             </div>
-            <h2 className="text-2xl font-black">SUU Fuel Map v2.7.2</h2>
-            <p className="text-sm font-medium text-sky-100 mt-1">
-              Introducing Today's Dinner recommendations, along with redesigned Weather information displays, Fire & TFR map visualization, and more.
+            <h2 className="text-2xl font-black">SUU Fuel Map v2.7.3</h2>
+            <p className="text-sm font-medium text-rose-100 mt-1">
+              Fuel Database synchronized as of August 26, 2026. Updated FBO contact directory, payment card instructions, and live station availability.
             </p>
           </div>
           <button 
@@ -50,6 +50,18 @@ export const ReleaseNotesModal: React.FC = () => {
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[60vh] custom-scrollbar">
           <ul className="space-y-4">
+
+            <li className="flex gap-4">
+              <div className="shrink-0 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-3 rounded-xl h-fit">
+                <Database size={20} className="animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-1">⛽ Fuel Database Synchronized (8/26/2026)</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Refreshed all FBO operations, contact phone numbers (e.g. Parowan Aviation, Fillmore, Hurricane, Milford, Grand Canyon), card acceptance rules, and fuel availability directly with the latest official SUU Aviation database.
+                </p>
+              </div>
+            </li>
 
             <li className="flex gap-4">
               <div className="shrink-0 bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 p-3 rounded-xl h-fit">
