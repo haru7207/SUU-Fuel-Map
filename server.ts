@@ -95,19 +95,24 @@ async function startServer() {
         }
       });
 
+      if (response.status === 204) {
+        res.setHeader('Content-Type', 'application/json');
+        return res.status(200).send('[]');
+      }
+
       if (!response.ok) {
         console.error(`[AWC Proxy] NOAA Error: ${response.status} for URL: ${targetUrl}`);
         return res.status(response.status).send(`NOAA Error: ${response.statusText}`);
       }
 
-      const contentType = response.headers.get('content-type') || '';
+      const contentType = response.headers.get('content-type') || 'application/json';
       if (contentType) {
         res.setHeader('Content-Type', contentType);
       }
 
       // Read as text to safely forward either JSON or XML/GeoJSON
       const bodyText = await response.text();
-      res.send(bodyText);
+      res.send(bodyText || '[]');
     } catch (error) {
       console.error(`[AWC Proxy] Failed to proxy ${targetUrl}:`, error);
       res.status(500).send('Error proxying request to NOAA AWC');

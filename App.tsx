@@ -15,7 +15,6 @@ import { ISACalculator } from './components/ISACalculator';
 import { DensityAltitudeCalculator } from './components/DensityAltitudeCalculator';
 import { WindComponentsCalculator } from './components/WindComponentsCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
-import { ReleaseNotesModal } from './components/ReleaseNotesModal';
 import { AIRPORT_DATABASE } from './constants';
 import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Thermometer, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat, Sliders } from 'lucide-react';
@@ -74,9 +73,9 @@ const App: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   
-  // Theme State
+  // Theme State (Default to White-Tinted iOS Liquid Glass 'day' mode)
   const [themeMode, setThemeMode] = useState<'day' | 'night' | 'auto'>(() => {
-    return (localStorage.getItem('suu_theme_mode') as 'day' | 'night' | 'auto') || 'auto';
+    return (localStorage.getItem('suu_theme_mode_ios') as 'day' | 'night' | 'auto') || 'day';
   });
 
   // Base Map Type State
@@ -269,6 +268,7 @@ const App: React.FC = () => {
 
   // Fuel Log State
   const [isFuelLogOpen, setIsFuelLogOpen] = useState(false);
+  const [fuelLogView, setFuelLogView] = useState<'form' | 'list' | 'calc'>('form');
   const [isFlightTimeOpen, setIsFlightTimeOpen] = useState(false);
   const [isPivotalAltOpen, setIsPivotalAltOpen] = useState(false);
   const [isNightTimeOpen, setIsNightTimeOpen] = useState(false);
@@ -354,7 +354,7 @@ const App: React.FC = () => {
 
   // Theme Effect
   useEffect(() => {
-    localStorage.setItem('suu_theme_mode', themeMode);
+    localStorage.setItem('suu_theme_mode_ios', themeMode);
     
     const updateTheme = () => {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -750,23 +750,23 @@ const App: React.FC = () => {
     (isMobile && isInstructorToolsMenuOpen);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-900">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950 relative">
       
       {/* Offline Banner */}
       {!isOnline && (
-        <div className="absolute top-0 left-0 right-0 bg-red-600 text-white z-[2000] text-center text-xs font-bold py-1 flex items-center justify-center gap-2">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-rose-600/90 backdrop-blur-xl border border-rose-400/50 text-white z-[2000] text-center text-xs font-bold shadow-lg flex items-center justify-center gap-2">
             <WifiOff size={14} />
-            <span>OFFLINE MODE ACTIVE - Displaying cached data</span>
+            <span>Offline Mode — Showing Cached Data</span>
         </div>
       )}
 
       {/* Critical Weather Banner */}
       {selectedAirport && weatherMap[selectedAirport.weatherSource || selectedAirport.id] && 
        ['IFR', 'LIFR'].includes(weatherMap[selectedAirport.weatherSource || selectedAirport.id].flightCategory) && (
-        <div className={`absolute ${!isOnline ? 'top-6' : 'top-0'} left-0 right-0 z-[1900] bg-red-600 text-white px-4 py-2 shadow-md flex items-center justify-center gap-2 animate-fade-in`}>
-            <AlertTriangle size={18} className="animate-pulse" />
-            <span className="text-sm font-bold uppercase tracking-wider">
-                CRITICAL WEATHER: {weatherMap[selectedAirport.weatherSource || selectedAirport.id].flightCategory} Conditions at {selectedAirport.id}
+        <div className={`absolute ${!isOnline ? 'top-12' : 'top-3'} left-1/2 -translate-x-1/2 z-[1900] bg-rose-600/85 backdrop-blur-2xl border border-rose-300/50 text-white px-5 py-2 rounded-full shadow-xl flex items-center justify-center gap-2 animate-fade-in`}>
+            <AlertTriangle size={16} />
+            <span className="text-xs font-bold tracking-wide">
+                Critical Weather · {weatherMap[selectedAirport.weatherSource || selectedAirport.id].flightCategory} Conditions at {selectedAirport.id}
             </span>
         </div>
       )}
@@ -775,17 +775,17 @@ const App: React.FC = () => {
       {isMobile && !isSidebarOpen && !selectedId && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          className={`absolute top-4 left-4 z-[1000] p-3 md:p-3 bg-white dark:bg-slate-800 rounded-full shadow-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 min-w-[48px] min-h-[48px] flex items-center justify-center ${!isOnline ? 'mt-6' : ''}`}
+          className={`absolute top-4 left-4 z-[1000] p-3 ios-liquid-pill rounded-full text-slate-800 dark:text-slate-100 min-w-[48px] min-h-[48px] flex items-center justify-center transition-transform active:scale-95 ${!isOnline ? 'mt-6' : ''}`}
         >
           <Menu size={22} className="md:w-6 md:h-6" />
         </button>
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-[1100] transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+      {/* Sidebar (Floating iOS Liquid Glass Panel on Desktop) */}
+      <div className={`fixed inset-y-0 left-0 z-[1100] transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 md:p-3 md:pr-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } ${!isOnline ? 'pt-6 md:pt-0' : ''}`}>
-         <div className="h-full w-[85vw] sm:w-80 md:w-96 relative">
+      } ${!isOnline ? 'pt-6 md:pt-3' : ''}`}>
+         <div className="h-full w-[85vw] sm:w-80 md:w-80 lg:w-96 relative">
            <Sidebar airports={airports} 
             selectedId={selectedId} 
             onSelect={handleSelect}
@@ -810,19 +810,25 @@ const App: React.FC = () => {
             isMetarOnly={isMetarOnly}
             setIsMetarOnly={setIsMetarOnly}
             onOpenMetarModal={() => setIsMetarModalOpen(true)}
+            isFuelLogOpen={isFuelLogOpen}
+            onOpenFuelLog={(targetView) => {
+              setFuelLogView(targetView);
+              setIsFuelLogOpen(true);
+              if (isMobile) setIsSidebarOpen(false);
+            }}
           />
          </div>
       </div>
       
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[1050]" onClick={() => setIsSidebarOpen(false)} />
+        <div className="fixed inset-0 bg-slate-900/25 backdrop-blur-xs z-[1050]" onClick={() => setIsSidebarOpen(false)} />
       )}
 
       {/* Main Content Area */}
       <div className={`flex-1 relative flex flex-col h-full ${!isOnline ? 'pt-6' : ''}`}>
-        {/* The Map */}
-        <div className="absolute inset-0 z-0">
+        {/* Full-Bleed Map */}
+        <div className="fixed inset-0 z-0">
           <Map 
             airports={airports} 
             selectedId={selectedId} 
@@ -843,7 +849,9 @@ const App: React.FC = () => {
           isOnline={isOnline} 
           isOpen={isFuelLogOpen}
           setIsOpen={setIsFuelLogOpen}
-          isHidden={isAnyCfiToolOpen || (isMobile && (!!selectedId || isSidebarOpen))}
+          view={fuelLogView}
+          setView={setFuelLogView}
+          isHidden={isAnyCfiToolOpen || (isMobile && (!!selectedId || isSidebarOpen || isLayersMenuOpen))}
           onOpenFlightTime={() => setIsFlightTimeOpen(true)}
           isFlightTimeOpen={isFlightTimeOpen}
           airports={airports}
@@ -930,7 +938,7 @@ const App: React.FC = () => {
         />
 
         {/* Toolbar */}
-        <div className={`absolute top-4 right-4 z-[1000] flex-col items-end gap-2 ${isMobile && (!!selectedId || isSidebarOpen) ? 'hidden' : 'flex'}`}>
+        <div className={`absolute top-4 right-4 z-[1000] flex-col items-end gap-2.5 ${isMobile && (!!selectedId || isSidebarOpen) ? 'hidden' : 'flex'}`}>
           
           {/* Map Layers Dropdown */}
           <div className="relative w-full">
@@ -941,53 +949,57 @@ const App: React.FC = () => {
                   setIsInstructorToolsMenuOpen(false);
                 }
               }}
-              className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
-                isLayersMenuOpen ? 'bg-indigo-600 text-white border-indigo-600 font-bold' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+              className={`flex items-center justify-center gap-2 font-semibold min-h-[44px] md:min-h-[38px] py-2 px-4 text-xs md:text-sm rounded-full transition-all active:scale-95 w-full whitespace-nowrap ${
+                isLayersMenuOpen
+                  ? 'bg-slate-900/75 text-white dark:bg-white/80 dark:text-slate-900 backdrop-blur-xl shadow-lg border border-white/50'
+                  : 'ios-liquid-pill text-slate-800 dark:text-slate-100 hover:bg-white/60'
               }`}
               title="Toggle map layers and overlay information"
             >
-              <Layers size={14} className={`md:w-4 md:h-4 ${isLayersMenuOpen ? 'text-white' : 'text-indigo-500'}`} />
+              <Layers size={15} className={`md:w-4 md:h-4 ${isLayersMenuOpen ? 'text-sky-400 dark:text-sky-600' : 'text-sky-600 dark:text-sky-400'}`} />
               <span>Map Layers</span>
             </button>
 
             {isLayersMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col z-[1050] origin-top-right">
+              <div className="absolute top-full right-0 mt-2.5 w-68 ios-liquid-glass-heavy rounded-3xl overflow-hidden flex flex-col z-[1050] origin-top-right animate-pop-in">
                 {/* Header */}
-                <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div className="px-4 py-3 bg-white/15 dark:bg-slate-800/25 border-b border-white/50 dark:border-white/10 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Layers size={14} className="text-indigo-500" />
-                    <span className="text-[10px] font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">Map Overlays</span>
+                    <Layers size={14} className="text-sky-600 dark:text-sky-400" />
+                    <span className="text-xs font-bold text-slate-900 dark:text-slate-100 tracking-tight">Map Overlays</span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => { setIsLegendInfoModalOpen(true); setIsLayersMenuOpen(false); }}
-                      className="flex items-center justify-center w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors"
+                      className="flex items-center justify-center w-6 h-6 rounded-full bg-white/40 dark:bg-slate-700/50 text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white border border-white/75 dark:border-white/15 shadow-2xs transition-colors"
                       title="Map Legend & Info"
                     >
-                      <span className="text-[10px] font-black font-serif italic">i</span>
+                      <span className="text-[11px] font-bold font-serif italic">i</span>
                     </button>
                     <button 
                       onClick={() => setIsLayersMenuOpen(false)}
-                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      className="p-1 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-white/40 transition-colors"
                     >
                       <X size={14} />
                     </button>
                   </div>
                 </div>
                 {/* Options List */}
-                <div className="p-3 space-y-3">
+                <div className="p-3.5 space-y-3">
                   {/* Layer option: Fuel Prices */}
                   <label className="flex items-center justify-between cursor-pointer group select-none">
-                    <div className="flex items-center gap-2">
-                      <Fuel size={14} className="text-emerald-500" />
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                        <Fuel size={14} />
+                      </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Fuel Prices</span>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">100LL Active rates</span>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Fuel Prices</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-300">100LL active station rates</span>
                       </div>
                     </div>
                     <input 
                       type="checkbox" 
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                      className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer" 
                       checked={mapLayers.fuelPrices}
                       onChange={() => toggleMapLayer('fuelPrices')}
                     />
@@ -995,16 +1007,18 @@ const App: React.FC = () => {
 
                   {/* Layer option: Wind Overlay */}
                   <label className="flex items-center justify-between cursor-pointer group select-none">
-                    <div className="flex items-center gap-2">
-                      <Wind size={14} className="text-blue-500 animate-[spin_8s_linear_infinite]" />
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-xl bg-sky-500/15 text-sky-600 dark:text-sky-400">
+                        <Wind size={14} />
+                      </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Wind Overlay</span>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">Speed, gust & direction (METAR)</span>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Wind Overlay</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-300">Speed, gust & direction (METAR)</span>
                       </div>
                     </div>
                     <input 
                       type="checkbox" 
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                      className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer" 
                       checked={mapLayers.weatherOverlay}
                       onChange={() => toggleMapLayer('weatherOverlay')}
                     />
@@ -1012,34 +1026,38 @@ const App: React.FC = () => {
 
                   {/* Layer option: NOTAM Warnings */}
                   <label className="flex items-center justify-between cursor-pointer group select-none">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle size={14} className="text-red-500" />
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-1.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                        <AlertTriangle size={14} />
+                      </div>
                       <div className="flex flex-col">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">NOTAM Warnings</span>
-                        <span className="text-[9px] text-slate-400 dark:text-slate-500">Runway & fuel hazards</span>
+                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">NOTAM Warnings</span>
+                        <span className="text-[10px] text-slate-600 dark:text-slate-300">Runway & fuel hazards</span>
                       </div>
                     </div>
                     <input 
                       type="checkbox" 
-                      className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                      className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer" 
                       checked={mapLayers.notamWarnings}
                       onChange={() => toggleMapLayer('notamWarnings')}
                     />
                   </label>
 
                   {/* Layer option: Wildfire Hazards */}
-                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                  <div className="pt-2.5 border-t border-white/45 dark:border-slate-700/50">
                     <label className="flex items-center justify-between cursor-pointer group select-none">
-                      <div className="flex items-center gap-2">
-                        <Flame size={14} className="text-orange-600" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-xl bg-orange-500/15 text-orange-600 dark:text-orange-400">
+                          <Flame size={14} />
+                        </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">🔥 Wildfire Hazards</span>
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500">NIFC Active Perimeters</span>
+                           <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">Wildfire Hazards</span>
+                           <span className="text-[10px] text-slate-600 dark:text-slate-300">NIFC active perimeters</span>
                         </div>
                       </div>
                       <input 
                         type="checkbox" 
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                        className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer" 
                         checked={mapLayers.wildfires}
                         onChange={() => toggleMapLayer('wildfires')}
                       />
@@ -1047,18 +1065,20 @@ const App: React.FC = () => {
                   </div>
 
                   {/* Layer option: TFR Hazards */}
-                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                  <div className="pt-2.5 border-t border-white/45 dark:border-slate-700/50">
                     <label className="flex items-center justify-between cursor-pointer group select-none">
-                      <div className="flex items-center gap-2">
-                        <ShieldAlert size={14} className="text-rose-600" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-xl bg-rose-500/15 text-rose-600 dark:text-rose-400">
+                          <ShieldAlert size={14} />
+                        </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">🚫 TFRs (Airspace)</span>
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500">FAA Temporary Restrictions</span>
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">TFRs (Airspace)</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-300">FAA temporary restrictions</span>
                         </div>
                       </div>
                       <input 
                         type="checkbox" 
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                        className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer" 
                         checked={mapLayers.tfrs}
                         onChange={() => toggleMapLayer('tfrs')}
                       />
@@ -1066,18 +1086,20 @@ const App: React.FC = () => {
                   </div>
 
                   {/* Layer option: AIRMET/SIGMET */}
-                  <div className="pt-2.5 border-t border-slate-100 dark:border-slate-800">
+                  <div className="pt-2.5 border-t border-white/45 dark:border-slate-700/50">
                     <label className="flex items-center justify-between cursor-pointer group select-none">
-                      <div className="flex items-center gap-2">
-                        <CloudFog size={14} className="text-purple-500" />
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400">
+                          <CloudFog size={14} />
+                        </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">AIRMETs & SIGMETs</span>
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500">Hazards, Icing, Convective</span>
+                          <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">AIRMETs & SIGMETs</span>
+                          <span className="text-[10px] text-slate-600 dark:text-slate-300">Hazards, icing & convective</span>
                         </div>
                       </div>
                       <input 
                         type="checkbox" 
-                        className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 h-4 w-4 cursor-pointer" 
+                        className="rounded-md border-slate-300 text-sky-600 focus:ring-sky-500 h-4 w-4 cursor-pointer" 
                         checked={showAirmet}
                         onChange={() => setShowAirmet(!showAirmet)}
                       />
@@ -1098,29 +1120,31 @@ const App: React.FC = () => {
                       setIsLayersMenuOpen(false);
                     }
                   }}
-                  className={`flex items-center justify-center gap-2 font-bold min-h-[44px] md:min-h-[32px] py-1.5 px-3 text-xs md:text-sm rounded-lg md:rounded shadow-md border transition-all active:scale-95 w-full ${
-                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                  className={`flex items-center justify-center gap-2 font-semibold min-h-[44px] md:min-h-[38px] py-2 px-4 text-xs md:text-sm rounded-full transition-all active:scale-95 w-full whitespace-nowrap ${
+                    isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen
+                      ? 'bg-sky-600/75 backdrop-blur-xl text-white shadow-lg shadow-sky-600/25 border border-white/60'
+                      : 'ios-liquid-pill text-slate-800 dark:text-slate-100 hover:bg-white/60'
                   }`}
                 >
-                  <Briefcase size={14} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen ? 'text-white' : 'text-blue-500'}`} />
+                  <Briefcase size={15} className={`md:w-4 md:h-4 ${isInstructorToolsMenuOpen || isFlightTimeOpen || isPivotalAltOpen || isNightTimeOpen || isHoldingOpen || isCheatSheetOpen || isE6BOpen || isVORCheckOpen || isVaOpen || isIsaOpen || isWindOpen || isDinnerOpen ? 'text-white' : 'text-sky-600 dark:text-sky-400'}`} />
                   <span>CFI Tools</span>
                 </button>
 
                 {!isMobile && isInstructorToolsMenuOpen && (
-                  <div className="absolute top-full right-0 mt-2 w-[calc(100vw-2rem)] sm:w-[480px] bg-white dark:bg-slate-800 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1050] origin-top-right">
+                  <div className="absolute top-full right-0 mt-2.5 w-[calc(100vw-2rem)] sm:w-[480px] ios-liquid-glass-heavy rounded-3xl overflow-hidden flex flex-col z-[1050] origin-top-right animate-pop-in">
                     
                     {/* Header */}
-                    <div className="px-5 py-4 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center gap-3">
-                      <div className="bg-blue-100 dark:bg-blue-900/40 p-2 rounded-lg text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40">
+                    <div className="px-5 py-4 bg-white/15 dark:bg-slate-800/25 border-b border-white/50 dark:border-white/10 flex items-center gap-3">
+                      <div className="bg-sky-500/15 p-2.5 rounded-2xl text-sky-600 dark:text-sky-400 border border-sky-400/25">
                         <Briefcase size={20} />
                       </div>
                       <div>
-                        <div className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">CFI Digital Toolkit</div>
-                        <div className="text-xs text-slate-500 font-medium mt-0.5">Quick reference tools for instructors</div>
+                        <div className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">CFI Digital Toolkit</div>
+                        <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">Quick reference flight calculators for instructors</div>
                       </div>
                     </div>
 
-                    <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                    <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 max-h-[60vh] overflow-y-auto custom-scrollbar">
                       
                       {/* Column 1 */}
                       <div className="space-y-4">
@@ -1409,16 +1433,19 @@ const App: React.FC = () => {
                   animate={{ y: 0, x: 0 }}
                   exit={isMobile ? { y: '100%' } : { x: '100%' }}
                   transition={{ type: 'spring', damping: 30, stiffness: 240 }}
-                  className="absolute z-[1000] bg-white dark:bg-slate-900 shadow-2xl 
-                      md:top-4 md:right-4 md:bottom-4 md:w-[420px] md:rounded-xl md:border md:border-slate-200 dark:md:border-slate-700
-                      inset-x-0 bottom-0 h-[85vh] md:h-auto rounded-t-3xl md:inset-auto"
+                  className="absolute z-[1000] ios-liquid-glass overflow-hidden
+                      md:top-3 md:right-3 md:bottom-3 md:w-[430px] md:rounded-[28px]
+                      inset-x-0 bottom-0 h-[85vh] md:h-auto rounded-t-[28px] md:inset-auto"
               >
                   <AirportDetails 
                       airport={selectedAirport} 
                       onClose={() => setSelectedId(null)} 
                       isFavorite={favorites.includes(selectedAirport.id)}
                       onToggleFavorite={handleToggleFavorite}
-                      onOpenFuelLog={() => setIsFuelLogOpen(true)}
+                      onOpenFuelLog={() => {
+                        setFuelLogView('form');
+                        setIsFuelLogOpen(true);
+                      }}
                       weatherMap={weatherMap}
                       notamMap={notamMap}
                   />
@@ -1437,7 +1464,7 @@ const App: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsInstructorToolsMenuOpen(false)}
-                className="fixed inset-0 bg-slate-900/60 backdrop-blur-[2px] z-[1200]"
+                className="fixed inset-0 bg-slate-900/35 backdrop-blur-xs z-[1200]"
               />
 
               {/* Drawer Container */}
@@ -1447,26 +1474,26 @@ const App: React.FC = () => {
                 animate={{ y: 0 }}
                 exit={{ y: '100%' }}
                 transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                className="fixed bottom-0 inset-x-0 bg-white dark:bg-slate-800 rounded-t-3xl shadow-2xl border-t border-slate-200 dark:border-slate-700 z-[1210] overflow-hidden flex flex-col max-h-[85vh] select-none"
+                className="fixed bottom-0 inset-x-0 ios-liquid-glass-heavy rounded-t-[28px] z-[1210] overflow-hidden flex flex-col max-h-[85vh] select-none"
               >
                 {/* Drag Handle Indicator */}
-                <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full mx-auto my-3 shrink-0" />
+                <div className="w-12 h-1.5 bg-slate-400/50 dark:bg-slate-500/60 rounded-full mx-auto my-3 shrink-0" />
 
                 {/* Header */}
-                <div className="px-5 pb-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between shrink-0">
+                <div className="px-5 pb-4 border-b border-white/70 dark:border-white/10 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="bg-blue-100 dark:bg-blue-900/40 p-2.5 rounded-xl text-blue-600 dark:text-blue-400">
+                    <div className="bg-sky-500/15 p-2.5 rounded-2xl text-sky-600 dark:text-sky-400">
                       <Briefcase size={20} />
                     </div>
                     <div>
-                      <h2 className="text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest">CFI Digital Toolkit</h2>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">Quick reference tools for instructors</p>
+                      <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">CFI Digital Toolkit</h2>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Quick reference tools for instructors</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsInstructorToolsMenuOpen(false)}
                     aria-label="Close Toolkit"
-                    className="p-2 -mr-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+                    className="p-2 -mr-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-full hover:bg-white/60 dark:hover:bg-slate-700/50 transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -1767,17 +1794,17 @@ const App: React.FC = () => {
                 initial={{ opacity: 0, y: 50, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                className="bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-4 min-w-[300px] pointer-events-auto"
+                className="ios-liquid-glass-heavy rounded-2xl p-4 min-w-[300px] pointer-events-auto"
               >
                 <div className="flex items-start gap-3">
-                  <div className="text-emerald-400 mt-0.5">
+                  <div className="text-emerald-600 dark:text-emerald-400 mt-0.5">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                   </div>
                   <div>
-                    <h4 className="text-white text-sm font-bold m-0">Live Update</h4>
-                    <p className="text-slate-300 text-xs mt-1 leading-snug m-0">{toast.message}</p>
+                    <h4 className="text-slate-900 dark:text-white text-sm font-bold m-0">Live Update</h4>
+                    <p className="text-slate-600 dark:text-slate-300 text-xs mt-1 leading-snug m-0">{toast.message}</p>
                   </div>
-                  <button onClick={() => setNotifications(n => n.filter(x => x.id !== toast.id))} className="ml-auto text-slate-500 hover:text-white transition-colors">
+                  <button onClick={() => setNotifications(n => n.filter(x => x.id !== toast.id))} className="ml-auto text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                   </button>
                 </div>
@@ -1785,8 +1812,6 @@ const App: React.FC = () => {
             ))}
           </AnimatePresence>
         </div>
-
-        <ReleaseNotesModal />
       </div>
     </div>
   );

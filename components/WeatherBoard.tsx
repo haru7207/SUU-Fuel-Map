@@ -86,116 +86,96 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
   const observationDate = weather.observationTime ? new Date(Number(weather.observationTime) * 1000) : new Date();
 
   return (
-    <div className="bg-white border rounded">
+    <div className="ios-liquid-card rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-[#E0E0E0] px-3 py-1.5 border-b shadow-sm">
-        <h4 className="text-[11px] font-bold text-slate-600 uppercase tracking-widest leading-none">Current Conditions</h4>
+      <div className="bg-white/15 dark:bg-slate-800/25 px-4 py-2.5 border-b border-white/50 dark:border-slate-700/50">
+        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">Current Surface Conditions</h4>
       </div>
 
       <div className="p-0">
-        <div className={`p-2 font-mono text-sm border-b ${getMetarColor()}`}>
+        <div className={`px-4 py-3 font-mono text-xs font-semibold leading-relaxed border-b border-white/45 dark:border-slate-700/50 bg-white/15 dark:bg-slate-900/20 ${getMetarColor()}`}>
           {weather.metar}
         </div>
 
-        <table className="w-full text-sm">
-          <tbody>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600 w-1/2">Flight Category</td>
-              <td className="py-1 px-3 text-right flex justify-end items-center gap-1.5">
-                 <div className={`h-3 w-3 rounded-full bg-current ${getFlightCategoryColor()}`}></div>
-                 <span className={`font-medium ${getFlightCategoryColor()}`}>{weather.flightCategory}</span>
+        <table className="w-full text-xs">
+          <tbody className="divide-y divide-white/40 dark:divide-slate-700/40">
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium w-1/2">Flight Category</td>
+              <td className="py-2 px-4 text-right">
+                 <span className={`font-bold ${getFlightCategoryColor()}`}>{weather.flightCategory}</span>
               </td>
             </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Observation</td>
-              <td className="py-1 px-3 text-right font-medium">
-                  {observationDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric'})} at {observationDate.toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit', hour12:true})}
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Observation</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-slate-100 font-mono">
+                  {observationDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric'})} · {observationDate.toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit', hour12:true})}
               </td>
             </tr>
-            <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Wind</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">
+            <tr className="bg-white/12 dark:bg-slate-800/15">
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Wind</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">
                 {!weather.wind ? '-' : 
                  weather.wind.direction === 0 && weather.wind.speed === 0 ? 'Calm' : 
-                 weather.wind.isVrb ? `Variable at ${weather.wind.speed} kts` : 
-                 `${weather.wind.direction}° at ${weather.wind.speed} kts${weather.wind.gust ? ` G ${weather.wind.gust}` : ''}`}
+                 weather.wind.isVrb ? `VRB at ${weather.wind.speed} kt` : 
+                 `${weather.wind.direction}° at ${weather.wind.speed} kt${weather.wind.gust ? ` G ${weather.wind.gust}` : ''}`}
               </td>
             </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Visibility</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">{weather.visibility || '-'} sm</td>
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Visibility</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{weather.visibility || '-'} sm</td>
             </tr>
-            <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Clouds (AGL)</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">{getCloudsText()}</td>
+            <tr className="bg-white/12 dark:bg-slate-800/15">
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Clouds (AGL)</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{getCloudsText()}</td>
             </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Temperature</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Temperature</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">
                  {temp !== null ? `${Math.round(temp)}°C (${Math.round(temp * 9/5 + 32)}°F)` : '-'}
               </td>
             </tr>
-             <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Dewpoint</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">
+             <tr className="bg-white/12 dark:bg-slate-800/15">
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Dewpoint</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">
                  {dewp !== null ? `${Math.round(dewp)}°C (${Math.round(dewp * 9/5 + 32)}°F)` : '-'}
               </td>
             </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Altimeter</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">{altimInHg ? `${altimInHg} inHg` : '-'}</td>
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Altimeter</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{altimInHg ? `${altimInHg} inHg` : '-'}</td>
             </tr>
-            <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Humidity</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">{humidity !== null ? `${humidity}%` : '-'}</td>
+            <tr className="bg-white/12 dark:bg-slate-800/15">
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Humidity</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{humidity !== null ? `${humidity}%` : '-'}</td>
             </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Density Altitude</td>
-              <td className="py-1 px-3 text-right font-medium text-slate-800">{densityAltitude !== null ? `${densityAltitude.toLocaleString()}'` : '-'}</td>
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Density Altitude</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{densityAltitude !== null ? `${densityAltitude.toLocaleString()}'` : '-'}</td>
             </tr>
-            
-            {/* Sun & Moon */}
-            <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Sunrise</td>
-              <td className="py-1 px-3 text-right font-medium flex items-center justify-end gap-1"><span className="text-amber-500">🌅</span> {formatTime(sunTimes.sunrise)}</td>
+            <tr className="bg-white/12 dark:bg-slate-800/15">
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Sunrise / Sunset</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{formatTime(sunTimes.sunrise)} · {formatTime(sunTimes.sunset)}</td>
             </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Sunset</td>
-              <td className="py-1 px-3 text-right font-medium flex items-center justify-end gap-1"><span className="text-orange-500">🌇</span> {formatTime(sunTimes.sunset)}</td>
-            </tr>
-            <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Moon Illumination</td>
-              <td className="py-1 px-3 text-right font-medium">{Math.round(moonIllumination.fraction * 100)}%</td>
-            </tr>
-            <tr className="border-b">
-              <td className="py-1 px-3 text-slate-600">Moonrise</td>
-              <td className="py-1 px-3 text-right font-medium flex items-center justify-end gap-1"><span className="text-yellow-300">🌕</span> {formatTime(moonTimes.rise)}</td>
-            </tr>
-            <tr className="border-b bg-gray-50/50">
-              <td className="py-1 px-3 text-slate-600">Moonset</td>
-              <td className="py-1 px-3 text-right font-medium flex items-center justify-end gap-1"><span className="opacity-50">🌑</span> {formatTime(moonTimes.set)}</td>
+            <tr>
+              <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Moon Illumination</td>
+              <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{Math.round(moonIllumination.fraction * 100)}%</td>
             </tr>
           </tbody>
         </table>
 
-         <div className="p-3 border-b relative">
+         <div className="p-3.5 border-t border-white/45 dark:border-slate-700/50 bg-white/15 dark:bg-slate-900/20 relative">
             {weather.taf === 'TAF NOT FETCHED' ? (
-                <div className="flex items-center gap-2 text-slate-500 text-sm">
-                    <div className="animate-spin h-3 w-3 border-2 border-slate-500 border-t-transparent rounded-full"></div>
+                <div className="flex items-center gap-2 text-slate-600 text-xs">
+                    <div className="animate-spin h-3 w-3 border-2 border-sky-500 border-t-transparent rounded-full"></div>
                     <span>Fetching TAF...</span>
                 </div>
             ) : (
-                <>
-                    <p className="font-mono text-sm leading-relaxed text-slate-700">{weather.taf}</p>
-                    <div className="absolute bottom-2 right-3">
-                       <span className="text-blue-500 text-xs cursor-pointer hover:underline">decoded</span>
-                    </div>
-                </>
+                <p className="font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-200">{weather.taf}</p>
             )}
          </div>
 
-         <div className="p-2 bg-gray-50/50 text-[10px] text-slate-400">
-           Data sourced from Aviation Weather Center (NOAA & NWS) and local sources.
+         <div className="px-4 py-2 bg-white/10 dark:bg-slate-800/15 border-t border-white/40 dark:border-slate-700/40 text-[10px] text-slate-600 dark:text-slate-300">
+           Data sourced from NOAA Aviation Weather Center (AWC).
          </div>
       </div>
     </div>

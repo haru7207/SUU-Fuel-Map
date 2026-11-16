@@ -1,7 +1,7 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Airport, CardType, WeatherData } from '../types';
-import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star, Layers, Palette, Code, Terminal, Info, Flame, Database, CloudSun, Wind } from 'lucide-react';
+import { Search, AlertCircle, MessageSquare, Settings, X, Sun, Moon, Monitor, Trash2, ChevronLeft, Mail, Phone, FileSpreadsheet, RefreshCw, Star, Layers, Palette, Code, Terminal, Info, Flame, Database, CloudSun, Wind, Fuel, Calculator, ChevronDown } from 'lucide-react';
 
 interface SidebarProps {
   airports: Airport[];
@@ -24,6 +24,8 @@ interface SidebarProps {
   isMetarOnly?: boolean;
   setIsMetarOnly?: (val: boolean) => void;
   onOpenMetarModal?: () => void;
+  isFuelLogOpen?: boolean;
+  onOpenFuelLog?: (view: 'form' | 'list' | 'calc') => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ 
@@ -46,11 +48,25 @@ const Sidebar: React.FC<SidebarProps> = ({
   weatherMap = {},
   isMetarOnly = false,
   setIsMetarOnly,
-  onOpenMetarModal
+  onOpenMetarModal,
+  isFuelLogOpen = false,
+  onOpenFuelLog
 }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [cardFilter, setCardFilter] = useState<CardType | 'ALL'>('ALL');
   const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [isFuelMenuOpen, setIsFuelMenuOpen] = useState(false);
+  const fuelMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (fuelMenuRef.current && !fuelMenuRef.current.contains(event.target as Node)) {
+        setIsFuelMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getFlightCategoryColor = (cat: string) => {
     switch (cat) {
@@ -172,158 +188,276 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [airports, searchTerm, cardFilter, showOnlyFavorites, favorites, isMetarOnly, weatherMap]);
 
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 w-full md:w-80 lg:w-96 shadow-xl z-20">
-      <div className="p-5 bg-[#0f172a] text-white flex-shrink-0 border-b border-slate-800">
-        <div className="flex items-center justify-between mb-5">
+    <div className="flex flex-col h-full ios-liquid-glass md:rounded-[28px] w-full md:w-80 lg:w-96 z-20 overflow-hidden transition-all duration-300">
+      {/* iOS Liquid Glass Header */}
+      <div className="p-4 sm:p-5 pb-3.5 bg-white/15 dark:bg-slate-900/20 text-slate-900 dark:text-white flex-shrink-0 border-b border-white/50 dark:border-white/10 relative z-30">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-             <img 
-               src="/regenerated_image_1777310555290.png" 
-               alt="SUU Aviation Logo" 
-               className="h-8 w-auto object-contain transition-all duration-300 hover:scale-110 hover:drop-shadow-[0_0_10px_rgba(255,255,255,0.5)] cursor-pointer"
-               onError={(e) => {
-                 (e.target as HTMLImageElement).src = "https://www.suu.edu/_files/images/footer-birdhead-combo.webp";
-               }}
-             />
-             <h1 className="text-xl font-bold tracking-tight text-white">SUU <span className="text-slate-400 font-light">Fuel Map</span></h1>
+             <div className="p-1.5 rounded-2xl bg-white/35 dark:bg-slate-800/40 backdrop-blur-md border border-white/75 dark:border-white/15 shadow-2xs">
+               <img 
+                 src="/regenerated_image_1777310555290.png" 
+                 alt="SUU Aviation Logo" 
+                 referrerPolicy="no-referrer"
+                 className="h-7 w-auto object-contain transition-transform duration-200 hover:scale-105 cursor-pointer"
+                 onError={(e) => {
+                   (e.target as HTMLImageElement).src = "https://www.suu.edu/_files/images/footer-birdhead-combo.webp";
+                 }}
+               />
+             </div>
+             <div>
+               <h1 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-none drop-shadow-2xs">
+                 SUU <span className="font-medium text-slate-600 dark:text-slate-300">Fuel Map</span>
+               </h1>
+             </div>
           </div>
-          <div className="flex items-center gap-2">
-             <button onClick={() => setShowSettings(!showSettings)} className="text-slate-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-800">
-               <Settings size={20} />
+          <div className="flex items-center gap-1.5">
+             <button
+               onClick={() => setShowSettings(!showSettings)}
+               className={`p-2 rounded-full transition-all duration-200 active:scale-95 ${
+                 showSettings
+                   ? 'bg-slate-900/75 text-white dark:bg-white/80 dark:text-slate-900 backdrop-blur-md shadow-sm border border-white/40'
+                   : 'ios-liquid-pill text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white'
+               }`}
+               title="Settings"
+             >
+               <Settings size={18} />
              </button>
              {isMobile && (
-               <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors p-1 rounded-full hover:bg-slate-800">
-                 <X size={20} />
+               <button
+                 onClick={onClose}
+                 className="ios-liquid-pill text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-all p-2 rounded-full active:scale-95"
+                 title="Close Sidebar"
+               >
+                 <X size={18} />
                </button>
              )}
           </div>
         </div>
         
-        {/* Search */}
+        {/* Quick Action Toggles: Fuel Ops & METAR & TAF */}
         {!showSettings && (
-          <div className="relative group mb-3">
-            <Search className="absolute left-3 top-2.5 text-slate-500 group-focus-within:text-slate-300 transition-colors" size={16} />
-            <input 
-              type="text" 
-              placeholder={isMetarOnly ? "Search METAR & TAF (ICAO, City, METAR)..." : "Search airport, city, name or ID"} 
-              className={`w-full pl-10 pr-4 py-2 border rounded text-sm text-white transition-all ${
-                isMetarOnly 
-                  ? 'bg-sky-950/60 border-sky-500/60 placeholder-sky-300 focus:ring-1 focus:ring-sky-400' 
-                  : 'bg-[#1e293b] border-slate-700 placeholder-slate-500 focus:outline-none focus:border-slate-500 focus:ring-1 focus:ring-slate-500'
+          <div className="grid grid-cols-2 gap-2 mb-3 relative z-30" ref={fuelMenuRef}>
+            {/* Fuel Ops Dropdown Trigger */}
+            <div className="relative">
+              <button
+                onClick={() => setIsFuelMenuOpen(!isFuelMenuOpen)}
+                className={`w-full flex items-center justify-between gap-1.5 px-3 py-2 rounded-2xl transition-all active:scale-95 group ${
+                  isFuelMenuOpen || isFuelLogOpen
+                    ? 'bg-red-600/80 backdrop-blur-md text-white shadow-[0_8px_20px_rgba(220,38,38,0.28)] border border-white/50'
+                    : 'ios-liquid-pill text-slate-900 dark:text-slate-100 hover:bg-white/60'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${isFuelMenuOpen || isFuelLogOpen ? 'bg-white/25 text-white' : 'bg-red-600/90 text-white shadow-2xs'}`}>
+                    <Fuel size={11} className="group-hover:rotate-12 transition-transform" />
+                  </div>
+                  <span className="font-bold tracking-tight text-xs truncate">Fuel Ops</span>
+                </div>
+                <ChevronDown size={13} className={`shrink-0 opacity-70 transition-transform duration-200 ${isFuelMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isFuelMenuOpen && (
+                <div className="absolute top-full mt-2 left-0 w-56 ios-liquid-glass-heavy rounded-2xl overflow-hidden flex flex-col z-50 p-1.5 gap-0.5 animate-pop-in">
+                  <button
+                    onClick={() => {
+                      if (onOpenFuelLog) onOpenFuelLog('form');
+                      setIsFuelMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/65 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-100 text-xs font-bold text-left transition-all"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-red-500/15 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                      <Fuel size={13} />
+                    </div>
+                    <span>Log Fuel</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (onOpenFuelLog) onOpenFuelLog('calc');
+                      setIsFuelMenuOpen(false);
+                    }}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/65 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-100 text-xs font-bold text-left transition-all"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0">
+                      <Calculator size={13} />
+                    </div>
+                    <span>Fuel Price Calculator</span>
+                  </button>
+
+                  <a
+                    href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setIsFuelMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-white/65 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-100 text-xs font-bold text-left transition-all"
+                  >
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                      <AlertCircle size={13} />
+                    </div>
+                    <span>Fuel Error Report</span>
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* METAR & TAF Toggle */}
+            <button
+              onClick={() => {
+                if (setIsMetarOnly) setIsMetarOnly(!isMetarOnly);
+                if (onOpenMetarModal && !isMetarOnly) onOpenMetarModal();
+              }}
+              className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-2xl transition-all active:scale-95 group ${
+                isMetarOnly
+                  ? 'bg-sky-500/80 backdrop-blur-md text-white shadow-[0_8px_20px_rgba(14,165,233,0.28)] border border-white/60'
+                  : 'ios-liquid-pill text-slate-800 dark:text-slate-100 hover:bg-white/60 hover:text-sky-600 dark:hover:text-sky-400'
+              }`}
+              title="Toggle METAR & TAF filter and weather station viewer"
+            >
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 transition-colors ${isMetarOnly ? 'bg-white/25 text-white' : 'bg-sky-500/15 text-sky-600 dark:text-sky-400'}`}>
+                <CloudSun size={12} className="transition-transform group-hover:scale-110" />
+              </div>
+              <span className="font-bold tracking-tight text-xs truncate">
+                {isMetarOnly ? 'METAR Active' : 'METAR & TAF'}
+              </span>
+            </button>
+          </div>
+        )}
+
+        {/* iOS Spotlight-Style Search */}
+        {!showSettings && (
+          <div className={`flex items-center w-full h-10 px-3.5 rounded-2xl mb-3 transition-all ${
+            isMetarOnly
+              ? 'bg-sky-400/20 dark:bg-sky-950/35 border border-sky-300/75 dark:border-sky-500/50 focus-within:ring-2 focus-within:ring-sky-400/40'
+              : 'ios-liquid-input focus-within:bg-white/50 dark:focus-within:bg-slate-800/50 focus-within:ring-2 focus-within:ring-sky-500/25'
+          }`}>
+            <Search className="text-slate-500 shrink-0 mr-2.5" size={16} />
+            <input
+              type="text"
+              placeholder={isMetarOnly ? "Search METAR & TAF (ICAO, City)..." : "Search airport, city, name or ID"}
+              className={`w-full bg-transparent text-sm font-medium text-slate-900 dark:text-white outline-none leading-normal ${
+                isMetarOnly ? 'placeholder-sky-700/75 dark:placeholder-sky-300/70' : 'placeholder-slate-500 dark:placeholder-slate-400'
               }`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="ml-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 bg-white/45 dark:bg-slate-700/50 rounded-full p-0.5 shrink-0"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
         )}
 
-        {/* Card & Weather Filter */}
+        {/* iOS Segmented Filter Pills */}
         {!showSettings && (
-          <div className="mb-3 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          <div className="flex flex-wrap gap-1.5">
              <button 
                 onClick={() => {
                   setCardFilter('ALL');
                   if (setIsMetarOnly) setIsMetarOnly(false);
                 }} 
-                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${!isMetarOnly && cardFilter === 'ALL' ? 'bg-slate-700 text-white' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
+                  !isMetarOnly && cardFilter === 'ALL'
+                    ? 'bg-slate-900/75 text-white dark:bg-white/80 dark:text-slate-900 backdrop-blur-md shadow-sm border border-white/40'
+                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                }`}
              >
                 All Cards
              </button>
              <button 
-                onClick={() => {
-                  if (setIsMetarOnly) setIsMetarOnly(!isMetarOnly);
-                  if (onOpenMetarModal && !isMetarOnly) onOpenMetarModal();
-                }} 
-                className={`px-3 py-1 rounded text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 border ${
-                  isMetarOnly 
-                    ? 'bg-sky-600 text-white border-sky-400 font-black shadow-md shadow-sky-600/30 ring-1 ring-sky-300' 
-                    : 'bg-[#1e293b] text-sky-400 hover:text-sky-300 border-slate-700/50'
-                }`}
-                title="Filter to METAR & TAF weather reporting airports only"
-             >
-                <CloudSun size={12} className={isMetarOnly ? "animate-pulse" : ""} />
-                <span>METAR & TAF</span>
-             </button>
-             <button 
                 onClick={() => setCardFilter(CardType.PCARD)} 
-                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${cardFilter === CardType.PCARD ? 'bg-blue-600 text-white' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
+                  cardFilter === CardType.PCARD
+                    ? 'bg-blue-600/75 text-white backdrop-blur-md shadow-sm border border-white/50'
+                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                }`}
              >
                 PCard
              </button>
              <button 
                 onClick={() => setCardFilter(CardType.AVFUEL)} 
-                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${cardFilter === CardType.AVFUEL ? 'bg-slate-800 text-white border border-slate-600' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
+                  cardFilter === CardType.AVFUEL
+                    ? 'bg-slate-800/75 text-white dark:bg-slate-200/80 dark:text-slate-900 backdrop-blur-md shadow-sm border border-white/40'
+                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                }`}
              >
                 AVFuel
              </button>
              <button 
                 onClick={() => setCardFilter(CardType.WHITE_CARD)} 
-                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors ${cardFilter === CardType.WHITE_CARD ? 'bg-red-600 text-white' : 'bg-[#1e293b] text-slate-400 hover:text-slate-200'}`}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
+                  cardFilter === CardType.WHITE_CARD
+                    ? 'bg-rose-600/75 text-white backdrop-blur-md shadow-sm border border-white/50'
+                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                }`}
              >
                 White Card
              </button>
              <button 
                 onClick={() => setShowOnlyFavorites(!showOnlyFavorites)} 
-                className={`px-3 py-1 rounded text-xs font-medium whitespace-nowrap transition-colors flex items-center gap-1 border ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all flex items-center gap-1 active:scale-95 ${
                   showOnlyFavorites 
-                    ? 'bg-amber-500 text-slate-900 border-amber-400 font-bold' 
-                    : 'bg-[#1e293b] text-amber-500 hover:text-amber-400 border-slate-700/50'
+                    ? 'bg-amber-500/80 text-white backdrop-blur-md shadow-sm border border-white/60' 
+                    : 'bg-white/25 dark:bg-slate-800/30 text-amber-700 dark:text-amber-300 hover:bg-white/45 border border-white/60 dark:border-white/15'
                 }`}
                 title="Filter to show only starred airports"
              >
-                <Star size={12} className={showOnlyFavorites ? "fill-current" : ""} />
+                <Star size={11} className={showOnlyFavorites ? "fill-current" : ""} />
                 <span>Starred ({favorites.length})</span>
              </button>
           </div>
         )}
-
-        {/* Global Action Controls */}
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-900">
+      {/* Main Scrollable List or Settings */}
+      <div className="flex-1 overflow-y-auto px-2.5 py-2 space-y-1.5">
         {showSettings ? (
-          <div className="animate-fade-in pb-10">
-            {/* Premium Header */}
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border-b border-slate-800 p-6 relative overflow-hidden">
-              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 rounded-full bg-white/5 blur-2xl"></div>
-              <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-40 h-40 rounded-full bg-white/5 blur-3xl"></div>
-              <div className="relative z-10 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <button 
-                    onClick={() => setShowSettings(false)} 
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white transition-all shadow-sm"
-                  >
-                    <ChevronLeft size={18} strokeWidth={2.5} />
-                  </button>
-                  <h2 className="text-xl font-bold text-white tracking-tight drop-shadow-sm">Settings</h2>
+          <div className="animate-fade-in pb-8 px-1.5 pt-2">
+            {/* iOS Settings Header */}
+            <div className="ios-liquid-card rounded-2xl p-4 mb-5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setShowSettings(false)} 
+                  className="flex items-center justify-center w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-white transition-all shadow-sm border border-white/90 dark:border-white/10 active:scale-95"
+                >
+                  <ChevronLeft size={18} strokeWidth={2.5} />
+                </button>
+                <div>
+                  <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Settings</h2>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Display, Map & Database</p>
                 </div>
-                <Settings className="text-slate-500/50" size={24} />
               </div>
+              <Settings className="text-slate-400/70" size={20} />
             </div>
 
-            <div className="p-5 space-y-6">
+            <div className="space-y-5">
               {/* Theme Settings */}
-              <div className="space-y-2.5">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-2 ml-1">
-                  <Palette size={12} />
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 ml-2">
+                  <Palette size={13} />
                   Appearance
                 </h3>
-                <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden p-1 flex">
+                <div className="bg-slate-200/65 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl border border-white/75 dark:border-white/10 p-1 flex gap-1">
                   {[
-                    { id: 'day', icon: Sun, label: 'Light' },
-                    { id: 'night', icon: Moon, label: 'Dark' },
+                    { id: 'day', icon: Sun, label: 'Light Glass' },
+                    { id: 'night', icon: Moon, label: 'Dark Glass' },
                     { id: 'auto', icon: Monitor, label: 'System' }
                   ].map(mode => (
                     <button
                       key={mode.id}
                       onClick={() => setThemeMode(mode.id as 'day' | 'night' | 'auto')}
-                      className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                      className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
                         themeMode === mode.id 
-                          ? 'bg-slate-100 dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-sm' 
-                          : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-300'
+                          ? 'bg-white/95 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm border border-white/90 dark:border-white/10' 
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                       }`}
                     >
-                      <mode.icon size={16} />
-                      {mode.label}
+                      <mode.icon size={14} />
+                      <span>{mode.label}</span>
                     </button>
                   ))}
                 </div>
@@ -331,32 +465,31 @@ const Sidebar: React.FC<SidebarProps> = ({
 
               {/* Map Terrain Style Settings */}
               {baseMapType && setBaseMapType && (
-                <div className="space-y-2.5">
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-2 ml-1">
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 ml-2">
                     <Layers size={13} />
                     Map Base View
                   </h3>
-                  <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden">
+                  <div className="ios-liquid-card rounded-2xl overflow-hidden divide-y divide-slate-200/60 dark:divide-slate-700/50">
                     {[
-                      { id: 'roadmap', icon: '🗺️', label: 'Google Roadmap' },
-                      { id: 'hybrid', icon: '🛰️', label: 'Google Hybrid' },
-                      { id: 'satellite', icon: '📷', label: 'Google Satellite' },
-                      { id: 'terrain', icon: '⛰️', label: 'Google Terrain' }
-                    ].map((type, i) => (
+                      { id: 'roadmap', label: 'Apple Clean Roadmap' },
+                      { id: 'hybrid', label: 'Satellite Hybrid' },
+                      { id: 'satellite', label: 'High-Res Satellite' },
+                      { id: 'terrain', label: 'Topographic Terrain' }
+                    ].map((type) => (
                       <button 
                         key={type.id}
                         onClick={() => setBaseMapType(type.id as 'roadmap'|'hybrid'|'satellite'|'terrain')}
-                        className={`w-full flex items-center justify-between p-3.5 text-sm font-medium transition-colors ${i !== 3 ? 'border-b border-slate-100 dark:border-slate-700/50' : ''} ${
+                        className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium transition-colors ${
                           baseMapType === type.id 
-                            ? 'bg-red-50/50 dark:bg-red-900/10 text-red-600 dark:text-red-400' 
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/30'
+                            ? 'bg-sky-500/10 text-sky-700 dark:text-sky-300 font-semibold' 
+                            : 'text-slate-700 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-800/40'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <span className="text-base select-none">{type.icon}</span>
-                          <span>{type.label}</span>
-                        </div>
-                        {baseMapType === type.id && <div className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-sm shadow-red-500/40"></div>}
+                        <span>{type.label}</span>
+                        {baseMapType === type.id && (
+                          <span className="text-xs font-bold text-sky-600 dark:text-sky-400">Active</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -364,12 +497,12 @@ const Sidebar: React.FC<SidebarProps> = ({
               )}
 
               {/* Data Settings */}
-              <div className="space-y-2.5">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-2 ml-1">
-                  <Database size={12} />
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 ml-2">
+                  <Database size={13} />
                   Data Management
                 </h3>
-                <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden">
+                <div className="ios-liquid-card rounded-2xl overflow-hidden divide-y divide-slate-200/60 dark:divide-slate-700/50">
                   {onRefreshFuelPrices && (
                     <button 
                       type="button"
@@ -382,21 +515,19 @@ const Sidebar: React.FC<SidebarProps> = ({
                           alert("Failed to update fuel price database: " + (e instanceof Error ? e.message : String(e)));
                         }
                       }}
-                      className="w-full flex items-center justify-between p-3.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 transition-colors border-b border-slate-100 dark:border-slate-700/50 disabled:opacity-60"
+                      className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-white/60 dark:hover:bg-slate-800/40 transition-colors disabled:opacity-60"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="bg-emerald-100 dark:bg-emerald-900/30 p-1.5 rounded-lg text-emerald-600 dark:text-emerald-400">
+                        <div className="bg-emerald-500/15 p-2 rounded-xl text-emerald-600 dark:text-emerald-400">
                           <RefreshCw size={16} className={isRefreshingFuel ? "animate-spin" : ""} />
                         </div>
-                        <div className="flex flex-col items-start">
+                        <div className="flex flex-col items-start text-left">
                           <span>Update Fuel Prices Database Now</span>
-                          <span className="text-[10px] text-slate-400 font-normal">Scans live search metrics via Gemini</span>
+                          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">Syncs latest station pricing</span>
                         </div>
                       </div>
-                      {isRefreshingFuel ? (
-                        <span className="text-xs text-slate-400 font-medium">Searching...</span>
-                      ) : (
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse"></div>
+                      {isRefreshingFuel && (
+                        <span className="text-xs text-slate-400 font-medium">Syncing...</span>
                       )}
                     </button>
                   )}
@@ -407,10 +538,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                         alert("Fuel memos cleared.");
                       }
                     }}
-                    className="w-full flex items-center justify-between p-3.5 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-white/60 dark:hover:bg-slate-800/40 transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="bg-red-100 dark:bg-red-900/30 p-1.5 rounded-lg">
+                      <div className="bg-rose-500/15 p-2 rounded-xl">
                         <Trash2 size={16} />
                       </div>
                       <span>Clear Saved Fuel Memos</span>
@@ -420,78 +551,58 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
 
               {/* Developer Information */}
-              <div className="space-y-2.5">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-2 ml-1">
-                  <Code size={12} />
-                  Developer Info
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 ml-2">
+                  <Code size={13} />
+                  Support & Disclosures
                 </h3>
-                <div className="bg-white dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-sm overflow-hidden relative">
-                  {/* Badge top color bar */}
-                  <div className="h-1.5 bg-gradient-to-r from-blue-500 to-sky-400 w-full"></div>
+                <div className="ios-liquid-card rounded-2xl overflow-hidden p-4 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl border border-white/80 dark:border-slate-700 shadow-sm bg-gradient-to-br from-sky-100 to-blue-100 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-sky-700 dark:text-sky-300 font-extrabold text-base">
+                      EJ
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-slate-100 text-sm">Elon Jun</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Aviation Finance Assistant
+                      </p>
+                    </div>
+                  </div>
                   
-                  <div className="p-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full border-2 border-white dark:border-slate-700 shadow-sm bg-gradient-to-br from-blue-100 to-blue-200 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center text-blue-700 dark:text-blue-300 font-black text-xl">
-                        EJ
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base shadow-sm">Elon Jun</h4>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-0.5">
-                          <Terminal size={10} /> Aviation Finance Assistant
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg space-y-2.5 text-sm border border-slate-100 dark:border-slate-700/50">
-                      <a href="mailto:elonjun@suu.edu" className="flex items-center gap-3 text-blue-600 dark:text-blue-400 hover:text-blue-700 transition-colors group">
-                        <div className="text-slate-400 group-hover:text-blue-500 transition-colors"><Mail size={14} /></div>
-                        <span className="font-medium">elonjun@suu.edu</span>
-                      </a>
-                      <div className="h-px w-full bg-slate-200 dark:bg-slate-700/50"></div>
-                      <a href="tel:4356811849" className="flex items-center gap-3 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors group">
-                        <div className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"><Phone size={14} /></div>
-                        <span className="font-medium">(435) 681-1849</span>
-                      </a>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 italic bg-sky-50 dark:bg-sky-900/10 p-2 rounded text-center text-sky-700 dark:text-sky-300 border border-sky-100 dark:border-sky-800/30">
-                      Instructors: Please send any bug reports or feedback to the email above.
+                  <div className="bg-white/60 dark:bg-slate-900/50 p-3 rounded-xl space-y-2 text-xs border border-white/80 dark:border-slate-700/50">
+                    <a href="mailto:elonjun@suu.edu" className="flex items-center gap-2.5 text-sky-600 dark:text-sky-400 hover:text-sky-700 transition-colors font-medium">
+                      <Mail size={14} />
+                      <span>elonjun@suu.edu</span>
+                    </a>
+                    <div className="h-px w-full bg-slate-200/70 dark:bg-slate-700/50"></div>
+                    <a href="tel:4356811849" className="flex items-center gap-2.5 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors font-medium font-mono">
+                      <Phone size={14} />
+                      <span>(435) 681-1849</span>
+                    </a>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <h5 className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center gap-1.5">
+                      <Info size={12} /> Advisory Notice
+                    </h5>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                      Weather data (METAR, TAF, G-AIRMET) is sourced from NOAA AWC. Advisory use only — never use as an official weather briefing source for flight planning.
                     </p>
                   </div>
-
-                  {/* Disclosures section */}
-                  <div className="bg-slate-50 dark:bg-slate-900/50 p-4 border-t border-slate-200/80 dark:border-slate-700/80">
-                    <h5 className="text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-2 uppercase tracking-wide flex items-center gap-1.5"><Info size={12} /> Tech Notes & Disclaimers</h5>
-                    <ul className="text-[10px] text-slate-500 dark:text-slate-400 space-y-1.5 list-disc pl-3">
-                      <li>Weather data (METAR, TAF, G-AIRMET) is sourced from the FAA AWC API. 7-day forecasts are fetched from Open-Meteo.</li>
-                      <li>CFI tools calculations use standard aeronautical formulas. Runway crosswind calculations are based on current METAR data.</li>
-                      <li>FBO & airport data are aggregated from various free APIs. For comprehensive airport data, visit <a href="https://www.airnav.com" target="_blank" rel="noreferrer" className="text-blue-500 hover:text-blue-600 underline">AirNav.com</a>.</li>
-                      <li>The Airport Cheat Sheet is under active development; data may be inaccurate.</li>
-                      <li>NOTAM integration is currently pending FAA API approval.</li>
-                      <li className="text-red-500 dark:text-red-400 font-semibold mt-2.5 bg-red-50 dark:bg-red-900/20 p-1.5 rounded border border-red-100 dark:border-red-900/30">All weather data provided here is advisory only. Never use this application as an official weather source for flight planning.</li>
-                    </ul>
-                  </div>
                 </div>
-              </div>
-
-              {/* Footer */}
-              <div className="pt-2 text-center pb-8">
-                <div className="inline-flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-1">
-                  <Flame size={14} className="text-red-500 shadow-sm" />
-                  <span className="font-bold tracking-wide text-sm text-slate-700 dark:text-slate-300">SUU Fuel Map</span>
-                </div>
-                <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">v2.7.2 • Designed for SUU Aviation</p>
               </div>
             </div>
           </div>
         ) : filteredAirports.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 dark:text-slate-500">
-            <p>No airports found.</p>
+          <div className="p-8 text-center text-slate-500 dark:text-slate-400 ios-liquid-card rounded-2xl m-2">
+            <p className="text-sm font-medium">No airports match your filter.</p>
           </div>
         ) : (
-          <ul>
+          <ul className="space-y-1.5 pb-2">
             {filteredAirports.map(airport => {
               const isSelected = airport.id === selectedId;
               const isWhiteCard = airport.cardRules.primary === CardType.WHITE_CARD;
+              const wx = weatherMap[airport.weatherSource || airport.id];
               
               return (
                 <li key={airport.id}>
@@ -505,42 +616,40 @@ const Sidebar: React.FC<SidebarProps> = ({
                         onSelect(airport.id);
                       }
                     }}
-                    className={`w-full text-left px-5 py-4 border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex justify-between items-start group relative cursor-pointer ${
-                      isSelected ? 'bg-slate-50 dark:bg-slate-800' : ''
+                    className={`w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-200 flex justify-between items-start group relative cursor-pointer ${
+                      isSelected
+                        ? 'bg-white/55 dark:bg-slate-800/60 backdrop-blur-xl shadow-[0_10px_25px_-5px_rgba(15,23,42,0.12),inset_0_1.5px_0.5px_rgba(255,255,255,0.95)] border border-white/90 dark:border-white/25'
+                        : 'bg-white/22 dark:bg-slate-800/20 hover:bg-white/42 dark:hover:bg-slate-800/40 border border-white/50 dark:border-white/10 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.03),inset_0_1px_0_rgba(255,255,255,0.65)]'
                     }`}
                   >
-                    {isSelected && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500"></div>
-                    )}
                     <div className="w-full">
                       <div className="flex items-center justify-between w-full mb-1">
                         <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className={`font-bold text-lg flex items-center gap-2 ${isSelected ? 'text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-slate-200'}`}>
-                                {airport.id}
-                                {weatherMap[airport.weatherSource || airport.id] && (
-                                  <div 
-                                    className={`w-2.5 h-2.5 rounded-full border shadow-sm ${getFlightCategoryColor(weatherMap[airport.weatherSource || airport.id].flightCategory)}`}
-                                    title={`Flight Category: ${weatherMap[airport.weatherSource || airport.id].flightCategory}`}
-                                  />
-                                )}
+                          <span className={`font-extrabold text-base tracking-tight font-mono ${isSelected ? 'text-sky-600 dark:text-sky-400' : 'text-slate-900 dark:text-slate-100'}`}>
+                            {airport.id}
+                          </span>
+                          {wx && wx.flightCategory && wx.flightCategory !== 'UNKNOWN' && (
+                            <span
+                              className={`text-[10px] font-bold tracking-wide ${
+                                wx.flightCategory === 'VFR' ? 'text-emerald-700 dark:text-emerald-400' :
+                                wx.flightCategory === 'MVFR' ? 'text-blue-700 dark:text-blue-400' :
+                                wx.flightCategory === 'IFR' ? 'text-rose-700 dark:text-rose-400' :
+                                'text-purple-700 dark:text-purple-400'
+                              }`}
+                              title={`Flight Category: ${wx.flightCategory}`}
+                            >
+                              · {wx.flightCategory}
                             </span>
-                            {airport.fuelPricesLastUpdated && (Date.now() - new Date(airport.fuelPricesLastUpdated).getTime()) < 24 * 60 * 60 * 1000 && (
-                                <div 
-                                  className="w-2 h-2 rounded-full bg-green-500 shadow-sm shadow-green-500/50" 
-                                  title="Fuel prices updated in the last 24 hours"
-                                />
-                            )}
-                          </div>
+                          )}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               if (onToggleFavorite) onToggleFavorite(airport.id);
                             }}
-                            className={`p-1 rounded transition-colors ${
+                            className={`p-1 rounded-full transition-colors ${
                               favorites.includes(airport.id)
-                                ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30'
-                                : 'text-slate-300 dark:text-slate-600 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/20'
+                                ? 'text-amber-500 hover:bg-amber-500/10'
+                                : 'text-slate-400 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-500/10'
                             }`}
                             title={favorites.includes(airport.id) ? "Remove from Favorites" : "Add to Favorites"}
                           >
@@ -551,32 +660,32 @@ const Sidebar: React.FC<SidebarProps> = ({
                               e.stopPropagation();
                               if (onOpenCheatSheet) onOpenCheatSheet(airport.id);
                             }}
-                            className="p-1 rounded-md text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                            className="p-1 rounded-full text-slate-500 hover:text-sky-600 hover:bg-sky-500/10 transition-colors"
                             title="View in Cheat Sheet"
                           >
-                            <FileSpreadsheet size={14} />
+                            <FileSpreadsheet size={13} />
                           </button>
                         </div>
                         
-                        <div className="flex items-center gap-1 flex-wrap justify-end">
+                        <div className="flex items-center gap-1.5 flex-wrap justify-end text-[11px] font-semibold">
                           {airport.cardRules.byFbo ? (
                             Array.from(new Set(airport.cardRules.byFbo.map(f => f.card))).map((card, idx) => {
                               if (card === CardType.WHITE_CARD) {
                                 return (
-                                  <span key={idx} className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
-                                      White
+                                  <span key={idx} className="text-rose-600 dark:text-rose-400">
+                                    {idx > 0 ? '· ' : ''}White Card
                                   </span>
                                 );
                               } else if (card === CardType.PCARD) {
                                 return (
-                                  <span key={idx} className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
-                                      PCard
+                                  <span key={idx} className="text-blue-600 dark:text-blue-400">
+                                    {idx > 0 ? '· ' : ''}PCard
                                   </span>
                                 );
                               } else if (card === CardType.AVFUEL) {
                                 return (
-                                  <span key={idx} className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
-                                      AVFuel
+                                  <span key={idx} className="text-slate-800 dark:text-slate-200">
+                                    {idx > 0 ? '· ' : ''}AVFuel
                                   </span>
                                 );
                               }
@@ -585,31 +694,30 @@ const Sidebar: React.FC<SidebarProps> = ({
                           ) : (
                             <>
                               {isWhiteCard && (
-                                  <span className="px-1.5 py-0.5 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 text-[10px] font-bold uppercase rounded border border-red-100 dark:border-red-800 tracking-wide">
-                                      White Card
-                                  </span>
+                                <span className="text-rose-600 dark:text-rose-400">White Card</span>
                               )}
                               {!isWhiteCard && airport.cardRules.primary === CardType.PCARD && (
-                                  <span className="px-1.5 py-0.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase rounded border border-blue-100 dark:border-blue-800 tracking-wide">
-                                      PCard
-                                  </span>
+                                <span className="text-blue-600 dark:text-blue-400">PCard</span>
                               )}
                               {!isWhiteCard && airport.cardRules.primary === CardType.AVFUEL && (
-                                  <span className="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-300 text-[10px] font-bold uppercase rounded border border-slate-300 dark:border-slate-600 tracking-wide">
-                                      AVFuel
-                                  </span>
+                                <span className="text-slate-800 dark:text-slate-200">AVFuel</span>
                               )}
                             </>
                           )}
                           
                           {airport.cardRules.warning && !isWhiteCard && (
-                               <span className="px-1.5 py-0.5 bg-yellow-50 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-800 rounded flex items-center justify-center">
-                                  <AlertCircle size={12} className="fill-current" />
-                               </span>
+                            <AlertCircle size={13} className="text-amber-500 shrink-0" />
                           )}
                         </div>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium truncate">{airport.city}, {airport.state}</p>
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                        <span className="truncate font-medium">{airport.name} · {airport.city}, {airport.state}</span>
+                        {airport.fuelPrices?.['100LL'] && (
+                          <span className="font-mono font-bold text-slate-800 dark:text-slate-100 shrink-0 ml-2">
+                            ${airport.fuelPrices['100LL'].toFixed(2)}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </li>
@@ -619,10 +727,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className="p-4 bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex-shrink-0">
-        <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center leading-relaxed">
-            For SUU Instructors Use Only.<br/>
-            <span className="font-semibold text-slate-500 dark:text-slate-400">Not for Navigation.</span>
+      <div className="px-4 py-3 bg-white/15 dark:bg-slate-900/20 border-t border-white/50 dark:border-white/10 flex-shrink-0">
+        <p className="text-[10px] text-slate-600 dark:text-slate-300 text-center leading-relaxed">
+          SUU Aviation Dispatch & Instructor Reference · <span className="font-semibold text-slate-800 dark:text-white">Advisory Use Only</span>
         </p>
       </div>
     </div>

@@ -426,11 +426,11 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
 
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-slate-900 overflow-hidden relative font-sans">
+    <div className="h-full flex flex-col bg-transparent overflow-hidden relative font-sans">
       
       {/* Mobile Drag Indicator */}
-      <div className="w-full flex justify-center pt-3 pb-1 md:hidden bg-white dark:bg-slate-900 flex-shrink-0">
-         <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+      <div className="w-full flex justify-center pt-3 pb-1 md:hidden bg-white/50 dark:bg-slate-900/50 flex-shrink-0">
+         <div className="w-10 h-1.5 bg-slate-400/50 dark:bg-slate-600 rounded-full" />
       </div>
 
       {/* Flight Category Status Bar */}
@@ -438,154 +438,150 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
         (() => {
           const catDetails = getFlightCategoryDetails(weather.flightCategory);
           return (
-            <div className={`w-full px-4 py-2 flex items-center justify-center gap-2 border-b ${catDetails.bg} ${catDetails.border} flex-shrink-0`}>
-              <div className={`${catDetails.text} drop-shadow-sm`}>
+            <div className={`w-full px-4 py-2 flex items-center justify-center gap-2 border-b border-white/50 ${catDetails.bg}/45 flex-shrink-0`}>
+              <div className={`${catDetails.text} drop-shadow-2xs`}>
                 {catDetails.icon}
               </div>
-              <span className={`text-[11px] font-extrabold uppercase tracking-widest ${catDetails.text}`}>
-                {catDetails.label} <span className="opacity-75 font-semibold ml-1 tracking-normal capitalize">{catDetails.desc}</span>
+              <span className={`text-[11px] font-extrabold tracking-wide ${catDetails.text}`}>
+                {catDetails.label} · <span className="opacity-85 font-medium tracking-normal">{catDetails.desc}</span>
               </span>
             </div>
           );
         })()
       )}
 
-      {/* --- HEADER --- */}
-      <div className="px-5 pb-5 pt-4 md:p-5 border-b border-gray-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-start flex-shrink-0">
+      {/* --- iOS LIQUID GLASS HEADER --- */}
+      <div className="px-5 pb-4 pt-4 md:p-5 border-b border-white/50 dark:border-white/10 bg-white/15 dark:bg-slate-900/20 flex justify-between items-start flex-shrink-0">
         <div>
-          <div className="flex items-center gap-3">
-             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+          <div className="flex items-center gap-2.5">
+             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-mono drop-shadow-2xs">
                 {airport.id}
              </h2>
             
             {airport.weatherSource && (
-                 <span className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded flex items-center gap-1" title={`Weather from ${airport.weatherSource}`}>
-                    <CloudSun size={10} /> {airport.weatherSource}
+                 <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1" title={`Weather from ${airport.weatherSource}`}>
+                    · <CloudSun size={12} className="text-sky-600" /> {airport.weatherSource}
                  </span>
             )}
           </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{airport.name}</p>
-          <div className="flex items-center text-xs text-slate-400 dark:text-slate-500 mt-1">
-            <MapPin size={12} className="mr-1" />
+          <p className="text-sm text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{airport.name}</p>
+          <div className="flex items-center text-xs text-slate-600 dark:text-slate-300 mt-0.5 font-medium">
+            <MapPin size={12} className="mr-1 text-sky-600 dark:text-sky-400" />
             {airport.city}, {airport.state}
           </div>
         </div>
-        <div className="flex items-center gap-1 -mr-2">
+        <div className="flex items-center gap-1.5">
             <button 
                onClick={() => onToggleFavorite && onToggleFavorite(airport.id)} 
-               className={`p-2 rounded-full transition-all duration-300 flex items-center gap-1 ${
+               className={`p-2 rounded-full ios-liquid-pill transition-all duration-200 active:scale-95 flex items-center justify-center ${
                  isFavorite 
-                   ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30' 
-                   : 'text-slate-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30'
+                   ? 'text-amber-500' 
+                   : 'text-slate-600 dark:text-slate-200 hover:text-amber-500'
                }`} 
                title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
             >
-                <Star size={20} className={isFavorite ? "fill-amber-500 text-amber-500 animate-pulse-once" : ""} />
+                <Star size={17} className={isFavorite ? "fill-amber-500 text-amber-500" : ""} />
             </button>
             <a 
                href={`https://www.airnav.com/airport/${airport.id}`} 
                target="_blank" 
                rel="noopener noreferrer" 
-               className="p-2 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-900/30 rounded-full transition-colors flex items-center gap-1" 
+               className="p-2 ios-liquid-pill text-sky-600 dark:text-sky-400 hover:text-sky-700 rounded-full transition-all active:scale-95 flex items-center justify-center" 
                title="View on AirNav"
             >
-                <ExternalLink size={20} />
+                <ExternalLink size={17} />
             </a>
-            <button onClick={onOpenFuelLog} className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full transition-colors flex items-center gap-1" title="Log Fuel">
-                <Fuel size={20} />
+            <button onClick={onOpenFuelLog} className="p-2 ios-liquid-pill text-rose-600 dark:text-rose-400 hover:text-rose-700 rounded-full transition-all active:scale-95 flex items-center justify-center" title="Log Fuel">
+                <Fuel size={17} />
             </button>
-            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full transition-colors">
-            <X size={24} />
+            <button onClick={onClose} className="p-2 ios-liquid-pill text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white rounded-full transition-all active:scale-95 flex items-center justify-center">
+              <X size={18} />
             </button>
         </div>
       </div>
 
       {airport.generalWarning && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 px-4 py-3 border-b border-amber-200 dark:border-amber-800/40 flex items-start gap-3">
-          <AlertTriangle className="text-amber-500 shrink-0 mt-0.5" size={20} />
+        <div className="bg-amber-500/15 px-4 py-3 border-b border-amber-300/50 dark:border-amber-700/40 flex items-start gap-3">
+          <AlertTriangle className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={18} />
           <div>
-            <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wider mb-0.5">Important Notice</h4>
-            <p className="text-xs text-amber-700 dark:text-amber-300/80 leading-relaxed font-medium">
+            <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300 tracking-wide mb-0.5">Important Operational Notice</h4>
+            <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed font-medium">
               {airport.generalWarning}
             </p>
           </div>
         </div>
       )}
 
-      {/* --- TABS --- */}
-      <div className="flex border-b border-gray-200 dark:border-slate-800">
-        <button 
-            onClick={() => setActiveTab('info')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'info' ? 'border-slate-800 dark:border-slate-200 text-slate-800 dark:text-slate-200' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-        >
-            FBO & Info
-        </button>
-        <button 
-            onClick={() => setActiveTab('runways')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'runways' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-        >
-            Runways
-        </button>
-        <button 
-            onClick={() => setActiveTab('weather')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors ${activeTab === 'weather' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-        >
-            Weather
-        </button>
-        <button 
-            onClick={() => setActiveTab('notam')}
-            className={`flex-1 py-3 text-sm font-bold text-center border-b-2 transition-colors flex items-center justify-center gap-1.5 ${activeTab === 'notam' ? 'border-blue-600 dark:border-blue-400 text-blue-600 dark:text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-        >
-            Remarks
-        </button>
+      {/* --- iOS SEGMENTED TABS --- */}
+      <div className="px-4 py-2.5 bg-white/10 dark:bg-slate-900/15 border-b border-white/45 dark:border-white/10 flex-shrink-0">
+        <div className="flex bg-white/22 dark:bg-slate-800/35 p-1 rounded-2xl border border-white/60 dark:border-white/15 gap-1">
+          {[
+            { id: 'info', label: 'FBO & Info' },
+            { id: 'runways', label: 'Runways' },
+            { id: 'weather', label: 'Weather' },
+            { id: 'notam', label: 'Remarks' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as Tab)}
+              className={`flex-1 py-1.5 px-2 text-xs font-semibold text-center rounded-xl transition-all whitespace-nowrap shrink-0 ${
+                activeTab === tab.id
+                  ? 'bg-white/65 dark:bg-slate-700/70 backdrop-blur-md text-slate-900 dark:text-white shadow-2xs border border-white/85 dark:border-white/20'
+                  : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* --- CONTENT AREA --- */}
-      <div className="flex-1 overflow-y-auto p-4 bg-slate-50/50 dark:bg-slate-900/50">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         
         {/* TAB: INFO */}
         {activeTab === 'info' && (
             <div className="space-y-4 animate-fadeIn">
                 {airport.cardRules.critical && (
-                <div className="bg-red-50 border border-red-200 p-4 rounded-lg flex gap-3 items-start">
-                    <AlertTriangle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="bg-rose-500/15 backdrop-blur-xl border border-rose-300/60 dark:border-rose-800/50 p-4 rounded-2xl flex gap-3 items-start">
+                    <AlertTriangle className="h-5 w-5 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
                     <div>
-                        <p className="text-sm text-red-800 font-bold uppercase tracking-wide">Restriction</p>
-                        <p className="text-sm text-red-700 font-medium">{airport.cardRules.notes}</p>
+                        <p className="text-xs text-rose-800 dark:text-rose-300 font-bold tracking-wide">Restriction</p>
+                        <p className="text-sm text-rose-700 dark:text-rose-200 font-medium">{airport.cardRules.notes}</p>
                     </div>
                 </div>
                 )}
 
-                <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden p-5 space-y-4">
+                <div className="ios-liquid-card rounded-2xl overflow-hidden p-5 space-y-4">
                     <div className="flex justify-between items-start">
                         <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">FBO Provider</span>
-                            <p className="text-base font-bold text-slate-800">{airport.fbo}</p>
+                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">FBO Provider</span>
+                            <p className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">{airport.fbo}</p>
                         </div>
                         <div className="text-right flex-1 ml-4">
-                            <div className="flex flex-col items-end mb-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Fuel & Contact</span>
+                            <div className="flex flex-col items-end mb-1.5">
+                                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block">Fuel & Contact</span>
                                 {airport.fuelPricesLastUpdated ? (
-                                    <span className="text-[8px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1 py-0.5 rounded mt-0.5 border border-emerald-100 dark:border-emerald-900/40 flex items-center gap-1">
-                                        <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span> Live (Fetched {formatLastUpdated(airport.fuelPricesLastUpdated)})
+                                    <span className="text-[10px] font-medium text-emerald-700 dark:text-emerald-400 mt-0.5">
+                                        Synced {formatLastUpdated(airport.fuelPricesLastUpdated)}
                                     </span>
                                 ) : (
-                                    <span className="text-[8px] font-semibold text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-950/20 px-1 py-0.5 rounded mt-0.5 border border-slate-100 dark:border-slate-800/40">
-                                        Original DB
+                                    <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 mt-0.5">
+                                        Database Rate
                                     </span>
                                 )}
                             </div>
                             <div className="flex flex-col gap-2">
                                 {airport.fuelTypes.map(f => (
-                                    <div key={f} className="flex items-center justify-end gap-2 border-b border-slate-50 last:border-0 pb-1 last:pb-0">
+                                    <div key={f} className="flex items-center justify-end gap-2 border-b border-slate-200/50 dark:border-slate-700/50 last:border-0 pb-1.5 last:pb-0">
                                         <div className="flex flex-col items-end">
                                             <div className="flex items-center gap-2">
-                                                 <span className="flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                                    <Droplets size={10} className={f === FuelType.LL100 ? 'text-green-500' : 'text-blue-500'} />
+                                                 <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                                    <Droplets size={11} className={f === FuelType.LL100 ? 'text-emerald-500' : 'text-sky-500'} />
                                                     {f}
                                                  </span>
                                                  {airport.fuelPhones && airport.fuelPhones[f] && (
-                                                     <a href={`tel:${airport.fuelPhones[f]}`} className="flex items-center gap-1 text-[10px] text-blue-500 hover:text-blue-700 font-bold bg-blue-50 px-1.5 py-0.5 rounded transition-colors">
+                                                     <a href={`tel:${airport.fuelPhones[f]}`} className="flex items-center gap-1 text-xs text-sky-600 dark:text-sky-400 hover:underline font-semibold font-mono">
                                                         <Phone size={10} />
                                                         <span>{airport.fuelPhones[f]}</span>
                                                      </a>
@@ -595,59 +591,58 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                         <div className="flex items-center gap-2 w-24 justify-end">
                                             <button 
                                                 onClick={() => handleSetAlert(f as FuelType)} 
-                                                className={`p-1.5 rounded-full transition-colors ${localAlert?.fuelType === f && localAlert.targetPrice > 0 ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400'}`}
+                                                className={`p-1.5 rounded-full transition-colors ${localAlert?.fuelType === f && localAlert.targetPrice > 0 ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'hover:bg-white/60 dark:hover:bg-slate-800 text-slate-400'}`}
                                                 title={localAlert?.fuelType === f ? `Alert set: <= $${localAlert.targetPrice}` : "Set Price Alert"}
                                             >
                                                 <Bell size={12} strokeWidth={localAlert?.fuelType === f ? 3 : 2} />
                                             </button>
-                                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono text-right shrink-0 min-w-[3.5rem]">
+                                            <span className="text-sm font-extrabold text-slate-900 dark:text-white font-mono text-right shrink-0 min-w-[3.5rem]">
                                                 {airport.fuelPrices && airport.fuelPrices[f] ? `$${airport.fuelPrices[f].toFixed(2)}` : 'N/A'}
                                             </span>
                                         </div>
                                     </div>
                                 ))}
                             </div>
-                            {/* Auto-updated every two hours */}
                         </div>
                     </div>
 
-                    <div className="pt-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-1">Required Card</span>
+                    <div className="pt-2 border-t border-white/60 dark:border-slate-700/50">
+                        <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-2">Accepted Payment Card</span>
                         
                         {airport.cardRules.byFbo ? (
                             <div className="mt-1 space-y-2.5">
                                 {airport.cardRules.byFbo.map((fboRule, idx) => (
-                                    <div key={idx} className={`p-3 rounded border flex flex-col gap-1.5 ${
+                                    <div key={idx} className={`p-3.5 rounded-2xl border backdrop-blur-md flex flex-col gap-1.5 ${
                                         fboRule.card === CardType.WHITE_CARD 
-                                            ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/40' 
+                                            ? 'bg-rose-500/10 border-rose-300/60 dark:border-rose-800/50' 
                                             : fboRule.card === CardType.PCARD 
-                                            ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900/40' 
-                                            : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800/60'
+                                            ? 'bg-blue-500/10 border-blue-300/60 dark:border-blue-800/50' 
+                                            : 'bg-white/50 dark:bg-slate-800/50 border-white/80 dark:border-slate-700/60'
                                     }`}>
                                          <div className="flex justify-between items-center">
-                                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 block">{fboRule.name}</span>
-                                             <span className={`text-[10px] font-extrabold tracking-wide uppercase px-1.5 py-0.5 rounded ${
+                                             <span className="text-xs font-bold text-slate-900 dark:text-slate-100 block">{fboRule.name}</span>
+                                             <span className={`text-xs font-bold ${
                                                  fboRule.card === CardType.WHITE_CARD 
-                                                 ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300' 
+                                                 ? 'text-rose-700 dark:text-rose-300' 
                                                  : fboRule.card === CardType.PCARD 
-                                                 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300' 
-                                                 : 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-300'
+                                                 ? 'text-blue-700 dark:text-blue-300' 
+                                                 : 'text-slate-800 dark:text-slate-200'
                                              }`}>
                                                  {fboRule.card === CardType.WHITE_CARD ? 'White Card' : fboRule.card === CardType.PCARD ? 'PCard' : 'AVFuel'}
                                              </span>
                                          </div>
-                                         <div className="text-[11px] text-slate-600 dark:text-slate-300 flex flex-col gap-0.5 border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5">
+                                         <div className="text-xs text-slate-600 dark:text-slate-300 flex flex-col gap-0.5 border-t border-slate-200/50 dark:border-slate-700/50 pt-1.5">
                                              {fboRule.vendor && (
-                                                <p><span className="font-semibold text-slate-400 dark:text-slate-500">Fuel Vendor:</span> {fboRule.vendor}</p>
+                                                <p><span className="font-semibold text-slate-500 dark:text-slate-400">Fuel Vendor:</span> {fboRule.vendor}</p>
                                              )}
                                              {fboRule.notes && (
-                                                <p><span className="font-semibold text-slate-400 dark:text-slate-500">Notice:</span> {fboRule.notes}</p>
+                                                <p><span className="font-semibold text-slate-500 dark:text-slate-400">Notice:</span> {fboRule.notes}</p>
                                              )}
                                          </div>
                                     </div>
                                 ))}
                                 {airport.cardRules.notes && (
-                                    <p className="text-xs text-slate-650 dark:text-slate-400 mt-1 italic">
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 italic">
                                         {airport.cardRules.notes}
                                     </p>
                                 )}
@@ -655,44 +650,45 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                         ) : airport.cardRules.byFuelType ? (
                             <div className="mt-1 space-y-2">
                                 {Object.entries(airport.cardRules.byFuelType).map(([fuelType, card]) => (
-                                    <div key={fuelType} className={`p-3 rounded border flex justify-between items-center ${
-                                        card === CardType.WHITE_CARD ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
+                                    <div key={fuelType} className={`p-3.5 rounded-2xl border backdrop-blur-md flex justify-between items-center ${
+                                        card === CardType.WHITE_CARD ? 'bg-rose-500/10 border-rose-300/60' : 'bg-blue-500/10 border-blue-300/60'
                                     }`}>
                                          <div>
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-0.5">{fuelType}</span>
+                                            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-0.5">{fuelType}</span>
                                             <span className={`text-base font-bold ${
-                                                card === CardType.WHITE_CARD ? 'text-red-700' : 'text-blue-700'
+                                                card === CardType.WHITE_CARD ? 'text-rose-700 dark:text-rose-300' : 'text-blue-700 dark:text-blue-300'
                                             }`}>
                                                 {card}
                                             </span>
                                          </div>
                                     </div>
                                 ))}
-                                <p className="text-xs text-slate-600 mt-1 italic">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 italic">
                                     {airport.cardRules.notes}
                                 </p>
                             </div>
                         ) : (
-                            <div className={`mt-1 p-4 rounded border ${
-                                airport.cardRules.primary === CardType.WHITE_CARD ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'
+                            <div className={`mt-1 p-4 rounded-2xl border backdrop-blur-md ${
+                                airport.cardRules.primary === CardType.WHITE_CARD
+                                  ? 'bg-rose-500/10 border-rose-300/60 dark:border-rose-800/50'
+                                  : 'bg-sky-500/10 border-sky-300/60 dark:border-sky-800/50'
                             }`}>
-                                <p className={`text-lg font-bold ${
-                                    airport.cardRules.primary === CardType.WHITE_CARD ? 'text-red-700' : 'text-blue-700'
+                                <p className={`text-base font-extrabold ${
+                                    airport.cardRules.primary === CardType.WHITE_CARD ? 'text-rose-700 dark:text-rose-300' : 'text-sky-700 dark:text-sky-300'
                                 }`}>
                                     {airport.cardRules.primary === CardType.WHITE_CARD ? `White Card (${airport.fbo})` : airport.cardRules.primary}
                                 </p>
-                                <p className="text-xs text-slate-600 mt-1">
+                                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
                                     {airport.cardRules.notes || "Standard fueling procedures apply."}
                                 </p>
 
-                                {/* New Fueling Notes Section */}
                                 {airport.cardRules.fuelingNotes && (
-                                    <div className="mt-3 pt-3 border-t border-black/5">
+                                    <div className="mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
                                         <div className="flex items-center gap-1.5 mb-1">
                                             <Droplets size={12} className="text-slate-500" />
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase">Fueling Notes</p>
+                                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Fueling Notes</p>
                                         </div>
-                                        <p className="text-xs text-slate-700 italic bg-white/50 p-2 rounded">
+                                        <p className="text-xs text-slate-700 dark:text-slate-200 italic bg-white/60 dark:bg-slate-900/50 p-2.5 rounded-xl border border-white/80 dark:border-white/10">
                                             "{airport.cardRules.fuelingNotes}"
                                         </p>
                                     </div>
@@ -705,18 +701,17 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                     <FuelPriceTrendChart airport={airport} />
 
                     {/* Estimated Fuel Price Calculator Card */}
-                    <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 space-y-4 shadow-sm">
-                        <div className="flex items-center gap-2 border-b border-slate-200/60 dark:border-slate-800 pb-2">
-                            <Calculator size={16} className="text-amber-500" />
-                            <h4 className="text-xs font-black text-slate-700 dark:text-slate-350 uppercase tracking-wider">
-                                Airport Est. Fuel Price Calculator
+                    <div className="bg-white/22 dark:bg-slate-900/25 border border-white/60 dark:border-slate-700/50 rounded-2xl p-4 space-y-4">
+                        <div className="flex items-center gap-2 border-b border-white/45 dark:border-slate-700/50 pb-2.5">
+                            <Calculator size={16} className="text-sky-600 dark:text-sky-400" />
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
+                                Airport Estimated Fuel Cost Calculator
                             </h4>
                         </div>
 
-                        {/* Choices - Stacked vertically for optimal responsive spacing */}
-                        <div className="space-y-4">
-                            <div className="space-y-1">
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                        <div className="space-y-3.5">
+                            <div className="space-y-1.5">
+                                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 block">
                                     Fuel Type
                                 </span>
                                 <div className="grid grid-cols-2 gap-2">
@@ -727,14 +722,14 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                                 key={t}
                                                 type="button"
                                                 onClick={() => setEstFuelType(t)}
-                                                className={`py-1.5 px-3 text-xs font-bold rounded-lg border text-left flex justify-between items-center transition-all ${
+                                                className={`py-2 px-3 text-xs font-bold rounded-xl border text-left flex justify-between items-center transition-all ${
                                                     estFuelType === t
-                                                    ? 'bg-amber-500 border-amber-600 text-white shadow-sm'
-                                                    : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300'
+                                                    ? 'bg-sky-500/75 backdrop-blur-md border-white/60 text-white shadow-sm'
+                                                    : 'bg-white/30 dark:bg-slate-800/35 border-white/65 dark:border-slate-700 hover:bg-white/50 text-slate-800 dark:text-slate-200'
                                                 }`}
                                             >
                                                 <span>{t}</span>
-                                                <span className="font-mono text-[10px]">
+                                                <span className="font-mono text-xs">
                                                     {rate ? `$${rate.toFixed(2)}` : 'N/A'}
                                                 </span>
                                             </button>
@@ -744,8 +739,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                             </div>
 
                             <div className="space-y-2">
-                                <div className="space-y-1">
-                                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">
+                                <div className="space-y-1.5">
+                                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300 block">
                                         Gallons
                                     </span>
                                     <div className="flex gap-2">
@@ -755,7 +750,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                             value={estGallons}
                                             onChange={(e) => setEstGallons(e.target.value)}
                                             placeholder="0.0"
-                                            className="flex-1 min-w-0 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
+                                            className="flex-1 min-w-0 ios-liquid-input rounded-xl px-3 py-1.5 text-xs font-bold font-mono text-slate-900 dark:text-slate-100 outline-none"
                                         />
                                         <div className="flex gap-1 shrink-0 items-center">
                                             <button
@@ -765,7 +760,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                                     const newVal = Math.max(0, current - 0.5);
                                                     setEstGallons(Number(newVal.toFixed(1)).toString());
                                                 }}
-                                                className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-350 text-[9px] font-bold h-7 px-2.5 rounded-md transition-colors"
+                                                className="ios-liquid-pill text-slate-800 dark:text-slate-200 text-xs font-bold h-8 px-2.5 rounded-xl transition-transform active:scale-95 font-mono"
                                                 title="Decrease by 0.5G"
                                             >
                                                 -0.5
@@ -777,7 +772,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                                     const newVal = current + 0.5;
                                                     setEstGallons(Number(newVal.toFixed(1)).toString());
                                                 }}
-                                                className="bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-350 text-[9px] font-bold h-7 px-2.5 rounded-md transition-colors"
+                                                className="ios-liquid-pill text-slate-800 dark:text-slate-200 text-xs font-bold h-8 px-2.5 rounded-xl transition-transform active:scale-95 font-mono"
                                                 title="Increase by 0.5G"
                                             >
                                                 +0.5
@@ -786,13 +781,13 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                     </div>
                                 </div>
 
-                                <div className="flex gap-1 overflow-x-auto py-0.5">
+                                <div className="flex gap-1.5 overflow-x-auto py-0.5">
                                     {['10', '20', '25', '30', '35', '40', '50'].map((amt) => (
                                         <button
                                             key={amt}
                                             type="button"
                                             onClick={() => setEstGallons(amt)}
-                                            className="bg-slate-200 hover:bg-slate-305 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-600 dark:text-slate-350 text-[9px] font-bold px-2 py-0.5 rounded transition-colors whitespace-nowrap"
+                                            className="bg-white/30 hover:bg-white/55 dark:bg-slate-800/40 dark:hover:bg-slate-700/60 border border-white/65 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold font-mono px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
                                         >
                                             {amt}G
                                         </button>
@@ -802,7 +797,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                         </div>
 
                         {/* Custom Price Toggle */}
-                        <div className="border-t border-slate-200/55 dark:border-slate-800 pt-3">
+                        <div className="border-t border-white/45 dark:border-slate-700/50 pt-3">
                             <label className="flex items-center gap-2 cursor-pointer mb-2">
                                 <input
                                     type="checkbox"
@@ -810,39 +805,39 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                     onChange={(e) => {
                                         setEstUseCustom(e.target.checked);
                                     }}
-                                    className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 h-3 w-3"
+                                    className="rounded border-slate-300 text-sky-600 focus:ring-sky-500 h-3.5 w-3.5"
                                 />
-                                <span className="text-[9px] uppercase font-bold text-slate-400 select-none tracking-wide">
+                                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 select-none">
                                     Override Price Per Gallon
                                 </span>
                             </label>
 
                             {estUseCustom && (
                                 <div className="flex items-center gap-1.5 animate-fade-in pl-1">
-                                    <span className="text-xs font-bold text-slate-400">$</span>
+                                    <span className="text-xs font-bold text-slate-600">$</span>
                                     <input
                                         type="number"
                                         step="0.01"
                                         value={estCustomPrice}
                                         onChange={(e) => setEstCustomPrice(e.target.value)}
                                         placeholder="0.00"
-                                        className="w-24 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1 text-xs font-bold text-slate-800 dark:text-slate-100 outline-none"
+                                        className="w-24 ios-liquid-input rounded-xl px-2.5 py-1 text-xs font-bold font-mono text-slate-900 dark:text-slate-100 outline-none"
                                     />
-                                    <span className="text-[10px] text-slate-400 font-bold">/ gal</span>
+                                    <span className="text-xs text-slate-600 font-medium">/ gal</span>
                                 </div>
                             )}
                         </div>
 
                         {/* Calculated Output */}
-                        <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-lg p-3.5 flex flex-col items-center justify-center text-center">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                                Est. Total Cost
+                        <div className="bg-white/35 dark:bg-slate-800/45 border border-white/75 dark:border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
+                                Estimated Total Cost
                             </span>
-                            <span className="text-2xl font-black text-amber-400 font-mono tracking-tight">
+                            <span className="text-2xl font-extrabold text-slate-900 dark:text-white font-mono tracking-tight">
                                 ${finalEstCost.toLocaleString([], { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </span>
-                            <span className="text-[9px] text-slate-300 mt-1 font-medium bg-white/10 px-1.5 py-0.5 rounded">
-                                {estUseCustom ? `Custom Override: $${parseFloat(estCustomPrice || '0').toFixed(2)}/gal` : estPricePerG ? (airport.fuelPricesLastUpdated ? `Live rate: $${estPricePerG}/gal` : `DB rate: $${estPricePerG}/gal`) : 'No price data'}
+                            <span className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 font-medium">
+                                {estUseCustom ? `Custom Override · $${parseFloat(estCustomPrice || '0').toFixed(2)}/gal` : estPricePerG ? (airport.fuelPricesLastUpdated ? `Live Rate · $${estPricePerG}/gal` : `DB Rate · $${estPricePerG}/gal`) : 'No price data'}
                             </span>
                         </div>
                     </div>
@@ -850,78 +845,76 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                     {/* Frequencies Info */}
                     {airport.frequencies && airport.frequencies.length > 0 && (
                         <div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide block mb-2">Frequencies</span>
+                            <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-2">Communication Frequencies</span>
                             <div className="flex flex-col gap-2">
                                 {airport.frequencies.map((freq, index) => (
-                                    <div key={index} className="flex items-center justify-between border px-3 py-2 rounded text-xs font-bold bg-slate-50 border-slate-200 text-slate-700">
+                                    <div key={index} className="flex items-center justify-between border px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/25 dark:bg-slate-800/35 border-white/65 dark:border-slate-700/60 text-slate-800 dark:text-slate-200">
                                         <div className="flex items-center gap-2">
-                                            <Radio size={14} className="text-slate-400" />
-                                            <span className="text-sm">{freq.name}</span>
+                                            <Radio size={14} className="text-sky-600 dark:text-sky-400" />
+                                            <span>{freq.name}</span>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-mono text-slate-800">{freq.freq}</span>
-                                        </div>
+                                        <span className="font-mono font-bold text-slate-900 dark:text-white">{freq.freq}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     )}
                     
-                    <a href={`tel:${airport.phone}`} className="flex items-center justify-center w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded font-bold text-sm transition-colors gap-2 shadow-sm mt-2">
-                        <Phone size={18} />
-                        Call Main FBO: {airport.phone}
+                    <a href={`tel:${airport.phone}`} className="flex items-center justify-center w-full py-3 bg-emerald-600/80 hover:bg-emerald-500/85 backdrop-blur-md border border-white/50 text-white rounded-2xl font-bold text-sm transition-all active:scale-[0.99] gap-2 shadow-md shadow-emerald-600/20 mt-2">
+                        <Phone size={17} />
+                        Call Main FBO · <span className="font-mono">{airport.phone}</span>
                     </a>
                 </div>
 
                 {/* SUU Finance Contacts Section */}
-                <div className="bg-slate-100 rounded-lg p-4 border border-slate-200">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <HelpCircle size={14} />
+                <div className="ios-liquid-card rounded-2xl p-4">
+                    <h4 className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <HelpCircle size={14} className="text-sky-600 dark:text-sky-400" />
                         Fuel & Finance Support
                     </h4>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                         <div className="flex justify-between items-start">
                             <div>
-                                <p className="text-sm font-bold text-slate-800">Katie Baca</p>
-                                <p className="text-[10px] text-slate-500 uppercase font-bold">Business Manager</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Katie Baca</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Business Manager</p>
                             </div>
                             <div className="text-right">
-                                <a href="tel:435-922-5107" className="block text-xs font-bold text-blue-600 hover:underline">
+                                <a href="tel:435-922-5107" className="block text-xs font-bold font-mono text-sky-600 dark:text-sky-400 hover:underline">
                                     (435) 922-5107
                                 </a>
-                                <a href="mailto:katiebaca@suu.edu" className="block text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-end gap-1">
-                                    <Mail size={10} />
+                                <a href="mailto:katiebaca@suu.edu" className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center justify-end gap-1 mt-0.5">
+                                    <Mail size={11} />
                                     katiebaca@suu.edu
                                 </a>
                             </div>
                         </div>
 
-                        <div className="flex justify-between items-start pt-3 border-t border-slate-200">
+                        <div className="flex justify-between items-start pt-3 border-t border-slate-200/60 dark:border-slate-700/50">
                             <div>
-                                <p className="text-sm font-bold text-slate-800">Elon Jun</p>
-                                <p className="text-[10px] text-slate-500 uppercase font-bold">Finance Assistant</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Elon Jun</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Finance Assistant</p>
                             </div>
                             <div className="text-right">
-                                <a href="tel:435-681-1849" className="block text-xs font-bold text-blue-600 hover:underline">
-                                    (435) 681 - 1849
+                                <a href="tel:435-681-1849" className="block text-xs font-bold font-mono text-sky-600 dark:text-sky-400 hover:underline">
+                                    (435) 681-1849
                                 </a>
-                                <a href="mailto:suenghunjun@suu.edu" className="block text-xs font-bold text-slate-500 hover:text-slate-700 flex items-center justify-end gap-1">
-                                    <Mail size={10} />
+                                <a href="mailto:suenghunjun@suu.edu" className="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white flex items-center justify-end gap-1 mt-0.5">
+                                    <Mail size={11} />
                                     suenghunjun@suu.edu
                                 </a>
                             </div>
                         </div>
                     </div>
                     
-                    <div className="mt-4 pt-3 border-t border-slate-200">
+                    <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-700/50">
                         <a 
                             href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform" 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="flex items-center justify-center w-full py-2 bg-white text-red-600 hover:bg-red-50 border border-red-200 rounded font-bold text-xs transition-colors gap-2 shadow-sm"
+                            className="flex items-center justify-center w-full py-2.5 bg-white/80 dark:bg-slate-800/80 text-rose-600 dark:text-rose-400 hover:bg-white border border-white/90 dark:border-slate-700 rounded-xl font-semibold text-xs transition-all gap-2 shadow-2xs"
                         >
                             <AlertCircle size={14} />
-                            Report Fuel/Card Error
+                            Report Fuel or Card Discrepancy
                         </a>
                     </div>
                 </div>
@@ -932,40 +925,32 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
         {activeTab === 'weather' && (
             <div className="space-y-4 animate-fadeIn relative p-2 -mx-2">
                 {weather && <WeatherEffects weather={weather} />}
-                <div className="flex justify-between items-center mb-2 relative z-10">
-                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Metar & Taf</h3>
-                    <div className="flex items-center gap-3">
-                        {/* Last Updated Badge */}
+                <div className="flex justify-between items-center mb-2 relative z-10 px-1">
+                    <h3 className="text-xs font-bold text-slate-600 dark:text-slate-300">Aviation Weather (METAR & TAF)</h3>
+                    <div className="flex items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400">
                         {weather?.lastUpdated && (
-                             <div className="flex items-center gap-1.5 bg-blue-50 px-2 py-1 rounded-full border border-blue-100" title="Last fetched from API">
-                                <RefreshCw size={10} className="text-blue-500" />
-                                <span className="text-[10px] font-bold text-blue-700">
-                                    Updated: {new Date(weather.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                </span>
-                             </div>
+                             <span title="Last fetched from API" className="font-mono text-[11px]">
+                                Synced {new Date(weather.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                             </span>
                         )}
-                        {/* Observation Time Badge */}
                         {weather?.observationTime && (
-                             <div className="flex items-center gap-1.5 bg-slate-100 px-2 py-1 rounded-full border border-slate-200">
-                                <Clock size={10} className="text-slate-500" />
-                                <span className="text-[10px] font-bold text-slate-600">
-                                    Observed: {formatObsTime(weather.observationTime)}
-                                </span>
-                             </div>
+                             <span className="font-mono text-[11px]">
+                                · Obs {formatObsTime(weather.observationTime)}
+                             </span>
                         )}
-                        <button onClick={() => loadWeather(true)} className={`text-blue-500 hover:text-blue-700 transition-colors ${loadingWeather ? 'animate-spin' : ''}`}>
-                            <RefreshCw size={14} />
+                        <button onClick={() => loadWeather(true)} className={`p-1.5 rounded-full ios-liquid-pill text-sky-600 dark:text-sky-400 hover:text-sky-700 transition-colors ${loadingWeather ? 'animate-spin' : ''}`} title="Refresh Weather">
+                            <RefreshCw size={13} />
                         </button>
                     </div>
                 </div>
-                {/* OFFLINE INDICATOR */}
+
                 {isOffline && (
-                    <div className="bg-amber-50 border border-amber-200 p-3 rounded-lg flex gap-3 items-center mb-2 relative z-10">
-                         <WifiOff className="h-4 w-4 text-amber-500 flex-shrink-0" />
+                    <div className="bg-amber-500/15 backdrop-blur-xl border border-amber-300/60 p-3 rounded-2xl flex gap-3 items-center mb-2 relative z-10">
+                         <WifiOff className="h-4 w-4 text-amber-600 flex-shrink-0" />
                          <div>
-                            <p className="text-xs font-bold text-amber-700">Offline Mode</p>
+                            <p className="text-xs font-bold text-amber-800 dark:text-amber-300">Offline Mode</p>
                             {weather?.lastUpdated && (
-                                <p className="text-[10px] text-amber-600">
+                                <p className="text-[11px] text-amber-700 dark:text-amber-400 font-mono">
                                     Last Updated: {new Date(weather.lastUpdated).toLocaleTimeString()}
                                 </p>
                             )}
@@ -973,48 +958,48 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                     </div>
                 )}
                 {airport.weatherSource && (
-                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex gap-3 items-center mb-2 relative z-10">
-                         <Info className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                         <p className="text-xs text-blue-700">
-                             <strong>Note:</strong> Weather reported from nearest station <strong>{airport.weatherSource}</strong>.
+                    <div className="ios-liquid-card p-3 rounded-2xl flex gap-2.5 items-center mb-2 relative z-10">
+                         <Info className="h-4 w-4 text-sky-600 dark:text-sky-400 flex-shrink-0" />
+                         <p className="text-xs text-slate-700 dark:text-slate-300">
+                             Weather reported from nearest AWOS/ASOS station <strong className="font-mono">{airport.weatherSource}</strong>.
                          </p>
                     </div>
                 )}
                 
                 {loadingWeather ? (
                     <div className="space-y-3 animate-pulse relative z-10">
-                        <div className="h-20 bg-slate-200 rounded"></div>
-                        <div className="h-20 bg-slate-200 rounded"></div>
+                        <div className="h-24 bg-white/60 dark:bg-slate-800/60 rounded-2xl"></div>
+                        <div className="h-32 bg-white/60 dark:bg-slate-800/60 rounded-2xl"></div>
                     </div>
                 ) : weather ? (
-                    <div className="relative z-10 space-y-6">
+                    <div className="relative z-10 space-y-5">
                         <WeatherBoard weather={weather} airport={airport} />
                     
                     {/* 7-Day Forecast */}
-                    <div className="mt-6">
-                        <div className="flex items-center gap-2 mb-3">
-                            <CloudSun size={16} className="text-slate-500" />
-                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">7-Day Aerial Forecast</h3>
+                    <div className="mt-5">
+                        <div className="flex items-center gap-2 mb-2.5 px-1">
+                            <CloudSun size={16} className="text-sky-600 dark:text-sky-400" />
+                            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300">7-Day Outlook</h3>
                         </div>
-                        <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-4">
+                        <div className="ios-liquid-card rounded-2xl p-4">
                             {loadingForecast ? (
                                 <div className="flex flex-col items-center justify-center py-6 text-slate-500 gap-3">
-                                    <Loader2 size={20} className="animate-spin text-blue-500" />
-                                    <span className="text-xs font-medium">Fetching forecast...</span>
+                                    <Loader2 size={20} className="animate-spin text-sky-500" />
+                                    <span className="text-xs font-medium">Fetching 7-day outlook...</span>
                                 </div>
                             ) : forecastError ? (
                                 <div className="flex flex-col items-center justify-center py-4 text-center">
-                                    <AlertCircle size={24} className="text-red-400 mb-2" />
-                                    <p className="text-xs text-slate-600">{forecastError}</p>
+                                    <AlertCircle size={24} className="text-rose-400 mb-2" />
+                                    <p className="text-xs text-slate-600 dark:text-slate-300">{forecastError}</p>
                                     <button 
                                         onClick={fetchForecast}
-                                        className="mt-3 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded transition-colors"
+                                        className="mt-3 px-3.5 py-1.5 ios-liquid-pill text-slate-700 dark:text-slate-200 text-xs font-semibold rounded-full transition-colors"
                                     >
                                         Try Again
                                     </button>
                                 </div>
                             ) : forecast ? (
-                                <div className="prose prose-sm max-w-none prose-p:leading-snug prose-p:text-slate-600 prose-li:text-slate-600 prose-headings:text-slate-800 prose-strong:text-slate-700 text-xs">
+                                <div className="prose prose-sm max-w-none prose-p:leading-snug prose-p:text-slate-600 dark:prose-p:text-slate-300 prose-headings:text-slate-800 dark:prose-headings:text-white prose-strong:text-slate-900 dark:prose-strong:text-white text-xs">
                                     <Markdown>{forecast}</Markdown>
                                 </div>
                             ) : (
@@ -1024,45 +1009,45 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                     </div>
                     </div>
                 ) : (
-                    <div className="text-center py-8 text-slate-400">Weather unavailable</div>
+                    <div className="text-center py-8 text-slate-400 ios-liquid-card rounded-2xl">Weather unavailable</div>
                 )}
             </div>
         )}
 
         {/* TAB: RUNWAYS */}
         {activeTab === 'runways' && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-5 animate-fadeIn">
                 <RunwaysList airport={airport} bestRunwayInfo={bestRunwayInfo} />
 
                 {/* Crosswind Calculator */}
                 <div>
-                    <div className="flex items-center gap-2 mb-4">
-                        <Wind size={18} className="text-slate-700" />
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Crosswind Calc</h3>
+                    <div className="flex items-center gap-2 mb-3 px-1">
+                        <Wind size={16} className="text-sky-600 dark:text-sky-400" />
+                        <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300">Runway Wind Component Calculator</h3>
                     </div>
 
                     {windData ? (
-                        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+                        <div className="ios-liquid-card rounded-2xl p-4">
                             <div className="flex justify-between items-center mb-4">
-                                     <label className="text-xs font-bold text-slate-500">Runway</label>
-                                     <select 
-                                        className="text-sm font-bold bg-slate-100 border border-slate-200 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
-                                        value={selectedRunway}
-                                        onChange={(e) => setSelectedRunway(e.target.value)}
-                                     >
-                                         {airport.runways.map(r => (
-                                             <option key={r} value={r}>RWY {r}</option>
-                                         ))}
-                                     </select>
+                                <label className="text-xs font-semibold text-slate-600 dark:text-slate-300">Active Runway</label>
+                                <select 
+                                   className="text-xs font-bold font-mono ios-liquid-input rounded-xl px-3 py-1.5 text-slate-900 dark:text-white focus:outline-none"
+                                   value={selectedRunway}
+                                   onChange={(e) => setSelectedRunway(e.target.value)}
+                                >
+                                    {airport.runways.map(r => (
+                                        <option key={r} value={r}>RWY {r}</option>
+                                    ))}
+                                </select>
                             </div>
 
-                            <div className="flex gap-4">
+                            <div className="flex gap-4 items-center">
                                 {/* Visual Graphic */}
-                                <div className="relative w-32 h-32 bg-slate-50 rounded-full border border-slate-200 flex items-center justify-center flex-shrink-0">
-                                    <div className="absolute top-1 text-[8px] font-bold text-slate-400">N</div>
-                                    <div className="absolute bottom-1 text-[8px] font-bold text-slate-400">S</div>
-                                    <div className="absolute left-1 text-[8px] font-bold text-slate-400">W</div>
-                                    <div className="absolute right-1 text-[8px] font-bold text-slate-400">E</div>
+                                <div className="relative w-32 h-32 bg-white/25 dark:bg-slate-800/35 rounded-full border border-white/75 dark:border-slate-700 shadow-[inset_0_1.5px_1px_rgba(255,255,255,0.85)] flex items-center justify-center flex-shrink-0">
+                                    <div className="absolute top-1.5 text-[9px] font-bold text-slate-500">N</div>
+                                    <div className="absolute bottom-1.5 text-[9px] font-bold text-slate-500">S</div>
+                                    <div className="absolute left-1.5 text-[9px] font-bold text-slate-500">W</div>
+                                    <div className="absolute right-1.5 text-[9px] font-bold text-slate-500">E</div>
                                     
                                     {/* Compass SVG */}
                                     <svg width="100%" height="100%" viewBox="0 0 100 100" className="p-2">
@@ -1070,19 +1055,20 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                             <>
                                                 {/* Runway Bar */}
                                                 <rect 
-                                                    x="44" y="10" width="12" height="80" rx="2" 
-                                                    fill="#334155" 
+                                                    x="44" y="10" width="12" height="80" rx="3" 
+                                                    fill="rgba(51, 65, 85, 0.72)"
+                                                    stroke="rgba(255,255,255,0.65)"
+                                                    strokeWidth="1"
                                                     transform={`rotate(${crosswindData.rwyHeading}, 50, 50)`} 
                                                 />
                                                 
                                                 {/* Wind Arrow */}
                                                 <g transform={`rotate(${windData.direction}, 50, 50)`}>
-                                                    {/* Arrow pointing to center (FROM) */}
-                                                    <line x1="50" y1="10" x2="50" y2="40" stroke="#ef4444" strokeWidth="3" markerEnd="url(#arrowhead)" />
+                                                    <line x1="50" y1="10" x2="50" y2="40" stroke="#0284c7" strokeWidth="3" markerEnd="url(#arrowhead)" />
                                                 </g>
                                                 <defs>
                                                     <marker id="arrowhead" markerWidth="6" markerHeight="4" refX="0" refY="2" orient="auto">
-                                                        <polygon points="0 0, 6 2, 0 4" fill="#ef4444" />
+                                                        <polygon points="0 0, 6 2, 0 4" fill="#0284c7" />
                                                     </marker>
                                                 </defs>
                                             </>
@@ -1094,24 +1080,24 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                 {crosswindData && (
                                     <div className="flex-1 space-y-3 py-1">
                                         <div>
-                                            <div className="text-[10px] text-slate-400 font-bold uppercase">Wind</div>
-                                            <div className="text-lg font-mono font-bold text-slate-800">
-                                                {windData.isVrb ? 'VRB' : windData.direction.toString().padStart(3, '0')}@{windData.speed}
-                                                {windData.gust > 0 ? `G${windData.gust}` : ''}kt
+                                            <div className="text-[11px] text-slate-600 dark:text-slate-300 font-medium">Surface Wind</div>
+                                            <div className="text-lg font-mono font-extrabold text-slate-900 dark:text-white">
+                                                {windData.isVrb ? 'VRB' : windData.direction.toString().padStart(3, '0')}° · {windData.speed}
+                                                {windData.gust > 0 ? `G${windData.gust}` : ''} kt
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                                                    <div className="text-[9px] text-slate-400 font-bold uppercase">X-Wind</div>
-                                                    <div className="text-sm font-mono font-bold text-slate-800">{crosswindData.crosswind}kt</div>
+                                            <div className="bg-white/25 dark:bg-slate-800/35 p-2.5 rounded-xl border border-white/70 dark:border-slate-700">
+                                                <div className="text-[10px] text-slate-600 dark:text-slate-300 font-semibold">Crosswind</div>
+                                                <div className="text-sm font-mono font-bold text-slate-900 dark:text-white">{crosswindData.crosswind} kt</div>
                                             </div>
-                                            <div className={`p-2 rounded border ${crosswindData.isTailwind ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
-                                                    <div className={`text-[9px] font-bold uppercase ${crosswindData.isTailwind ? 'text-red-400' : 'text-green-600'}`}>
+                                            <div className={`p-2.5 rounded-xl border ${crosswindData.isTailwind ? 'bg-rose-500/15 border-rose-300/60' : 'bg-emerald-500/15 border-emerald-300/60'}`}>
+                                                <div className={`text-[10px] font-semibold ${crosswindData.isTailwind ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
                                                     {crosswindData.isTailwind ? 'Tailwind' : 'Headwind'}
-                                                    </div>
-                                                    <div className={`text-sm font-mono font-bold ${crosswindData.isTailwind ? 'text-red-700' : 'text-green-700'}`}>
-                                                    {Math.abs(crosswindData.headwind)}kt
-                                                    </div>
+                                                </div>
+                                                <div className={`text-sm font-mono font-bold ${crosswindData.isTailwind ? 'text-rose-800 dark:text-rose-200' : 'text-emerald-800 dark:text-emerald-200'}`}>
+                                                    {Math.abs(crosswindData.headwind)} kt
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1119,8 +1105,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center p-4 text-slate-400 text-sm bg-slate-50 rounded">
-                            Wind data unavailable for calculation.
+                        <div className="text-center p-5 text-slate-500 dark:text-slate-400 text-xs ios-liquid-card rounded-2xl">
+                            Active wind observation unavailable for calculation.
                         </div>
                     )}
                 </div>
@@ -1136,68 +1122,53 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                 : [];
 
             return (
-                <div className="flex flex-col h-full animate-fadeIn">
-                    <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                <div className="flex flex-col h-full animate-fadeIn space-y-3">
+                    <div className="px-1 flex justify-between items-center">
                         <div className="flex items-center gap-2">
-                            <Info size={18} className="text-blue-500" />
-                            <h3 className="font-bold text-slate-800 dark:text-slate-200">Airport Remarks (Form 5010)</h3>
+                            <Info size={16} className="text-sky-600 dark:text-sky-400" />
+                            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200">Airport Remarks (FAA Form 5010)</h3>
                         </div>
                         {remarksSource && !loadingRemarks && (
-                            <div className="flex items-center gap-2">
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${
-                                    remarksSource === 'local' 
-                                    ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800' 
-                                    : 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800'
-                                }`}>
-                                    {remarksSource === 'local' ? 'Local DB' : 'Live Grounded AI'}
-                                </span>
-                            </div>
+                            <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                {remarksSource === 'local' ? 'Chart Supplement DB' : 'Live Grounded'}
+                            </span>
                         )}
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+                    <div className="space-y-4">
                         {loadingRemarks ? (
-                            <div className="space-y-3 w-full">
-                                <div className="flex items-center justify-center mb-4 text-slate-500 gap-2">
-                                    <Loader2 size={16} className="animate-spin text-blue-500" />
-                                    <span className="text-xs font-bold uppercase tracking-wider">Syncing airport remarks...</span>
-                                </div>
-                                <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-5 rounded-xl shadow-xs space-y-3 animate-pulse">
-                                    <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded w-3/4"></div>
-                                    <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded w-1/2"></div>
-                                    <div className="h-4 bg-slate-150 dark:bg-slate-700 rounded w-5/6"></div>
-                                </div>
+                            <div className="ios-liquid-card p-5 rounded-2xl space-y-3 animate-pulse">
+                                <div className="h-4 bg-white/60 dark:bg-slate-700 rounded w-3/4"></div>
+                                <div className="h-4 bg-white/60 dark:bg-slate-700 rounded w-1/2"></div>
+                                <div className="h-4 bg-white/60 dark:bg-slate-700 rounded w-5/6"></div>
                             </div>
                         ) : remarksError ? (
-                            <div className="flex flex-col items-center justify-center h-48 text-center p-6 bg-white dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-                                <Info size={32} className="text-slate-400 mb-2" />
-                                <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-4">{remarksError}</p>
+                            <div className="flex flex-col items-center justify-center h-44 text-center p-6 ios-liquid-card rounded-2xl">
+                                <Info size={28} className="text-slate-400 mb-2" />
+                                <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{remarksError}</p>
                             </div>
                         ) : remarksList.length > 0 ? (
-                            <div className="space-y-4">
-                                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-                                    <div className="border-b border-slate-100 dark:border-slate-800/70 pb-2 mb-4">
-                                        <h4 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest font-mono">Other Remarks</h4>
-                                    </div>
-                                    <ul className="space-y-3.5">
+                            <div className="space-y-3">
+                                <div className="ios-liquid-card rounded-2xl p-5">
+                                    <ul className="space-y-3">
                                         {remarksList.map((item, idx) => (
-                                            <li key={idx} className="flex gap-3 items-start text-[13px] leading-relaxed text-slate-700 dark:text-slate-300 font-sans font-medium">
-                                                <span className="text-blue-500 font-bold text-base leading-none select-none mt-0.5">•</span>
+                                            <li key={idx} className="flex gap-3 items-start text-xs leading-relaxed text-slate-700 dark:text-slate-200 font-medium border-b border-slate-200/50 dark:border-slate-700/50 last:border-0 pb-2.5 last:pb-0">
+                                                <span className="text-sky-500 font-bold text-sm leading-none select-none mt-0.5">·</span>
                                                 <span className="flex-1 whitespace-pre-wrap break-words">{item}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 </div>
                                 
-                                <div className="p-3 bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100 dark:border-blue-900/30 rounded-xl text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2 leading-relaxed">
-                                    <Lightbulb size={13} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                                    <span>These entries represent actual Form 5010 Chart Supplement records to assist flight crews and flight instructors in executing airport operations safely.</span>
+                                <div className="p-3.5 ios-liquid-card rounded-2xl text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2.5 leading-relaxed">
+                                    <Lightbulb size={14} className="text-sky-600 dark:text-sky-400 flex-shrink-0 mt-0.5" />
+                                    <span>Published FAA Form 5010 Chart Supplement remarks for preflight briefing and instructor reference.</span>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center h-48 text-center p-6 bg-white dark:bg-slate-800/10 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
-                                <Info size={32} className="text-slate-400 mb-2" />
-                                <span className="text-sm text-slate-500 mb-4">No remarks published for this location.</span>
+                            <div className="flex flex-col items-center justify-center h-44 text-center p-6 ios-liquid-card rounded-2xl">
+                                <Info size={28} className="text-slate-400 mb-2" />
+                                <span className="text-xs text-slate-500">No remarks published for this location.</span>
                             </div>
                         )}
                     </div>

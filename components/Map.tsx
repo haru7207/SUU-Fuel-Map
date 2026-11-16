@@ -70,40 +70,41 @@ const createPinIcon = (
 
   let overlaysHtml = '';
 
-  // 1. NOTAM hazard warning (focused top-left layout)
+  // 1. NOTAM hazard warning (translucent ruby liquid glass orb)
   if (activeNotam) {
     overlaysHtml += `
       <div class="animate-pulse" style="
           position: absolute;
           top: -12px;
           left: -12px;
-          background-color: #ef4444;
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.78) 0%, rgba(220, 38, 38, 0.58) 100%);
+          backdrop-filter: blur(10px) saturate(180%);
+          -webkit-backdrop-filter: blur(10px) saturate(180%);
           color: white;
-          border: 1.5px solid white;
+          border: 1px solid rgba(255, 255, 255, 0.88);
           border-radius: 50%;
-          width: 18px;
-          height: 18px;
+          width: 19px;
+          height: 19px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: 900;
           font-family: inherit;
           font-size: 11px;
-          box-shadow: 0 3px 6px rgba(239,68,68,0.4), 0 1px 3px rgba(0,0,0,0.3);
+          box-shadow: 0 4px 10px rgba(239,68,68,0.35), inset 0 1px 0.5px rgba(255,255,255,0.85);
           z-index: 50;
       " title="Active NOTAM Warning/Hazard">!</div>
     `;
   }
 
-  // 2. Wind Overlay (enhanced top-right layout with direction arrow + color state)
+  // 2. Wind Overlay (translucent iOS liquid glass pill with direction vector)
   if (showWindOverlay && windObj) {
     const { speed, gust, direction, isVrb } = windObj;
     const maxWind = Math.max(speed, gust);
     
-    // Determine background, border and text colors based on aviation safety guidelines
-    let bg = '#0f172a'; // slate-900 (ultra-high contrast on all map tile types)
-    let textAndArrowColor = '#34d399'; // emerald-400 for standard calm wind
-    let border = '1.5px solid #1e293b';
+    let bg = 'linear-gradient(135deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.36) 100%)';
+    let textAndArrowColor = '#047857'; // emerald-700
+    let border = '1px solid rgba(255, 255, 255, 0.85)';
     let windLabel = 'Calm';
     
     if (speed > 0 || gust > 0) {
@@ -112,21 +113,20 @@ const createPinIcon = (
       windLabel = `${dirText} ${valText}kt`;
       
       if (maxWind >= 20) {
-        bg = '#dc2626'; // High/Restricted Wind (Solid Red)
-        border = '1.5px solid #fecaca';
+        bg = 'linear-gradient(135deg, rgba(220, 38, 38, 0.72) 0%, rgba(185, 28, 28, 0.52) 100%)';
+        border = '1px solid rgba(254, 202, 202, 0.85)';
         textAndArrowColor = '#ffffff';
       } else if (maxWind >= 12) {
-        bg = '#d97706'; // Moderate / Warning Wind (Caution Amber/Orange)
-        border = '1.5px solid #fef3c7';
+        bg = 'linear-gradient(135deg, rgba(217, 119, 6, 0.72) 0%, rgba(180, 83, 9, 0.52) 100%)';
+        border = '1px solid rgba(254, 243, 199, 0.85)';
         textAndArrowColor = '#ffffff';
       } else {
-        bg = '#0f172a'; // Calm Light Wind (Slate 900)
-        border = '1.5px solid #1e293b';
-        textAndArrowColor = '#34d399'; // Vibrant Mint
+        bg = 'linear-gradient(135deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.36) 100%)';
+        border = '1px solid rgba(255, 255, 255, 0.88)';
+        textAndArrowColor = '#047857';
       }
     }
 
-    // Rotating Arrow SVG representing wind direction vector (Aviation reference: where the wind is coming from)
     const arrowSvg = (!isVrb && speed > 0) ? `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${textAndArrowColor}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(${direction}deg); width: 10px; height: 10px; display: inline-block; flex-shrink: 0;">
         <line x1="12" y1="4" x2="12" y2="20"></line>
@@ -137,18 +137,20 @@ const createPinIcon = (
     overlaysHtml += `
       <div style="
           position: absolute;
-          top: -12px;
-          right: -24px;
-          background-color: ${bg};
+          top: -13px;
+          right: -26px;
+          background: ${bg};
+          backdrop-filter: blur(12px) saturate(190%);
+          -webkit-backdrop-filter: blur(12px) saturate(190%);
           color: ${textAndArrowColor};
           border: ${border};
-          border-radius: 4px;
-          padding: 2.5px 5px;
+          border-radius: 9999px;
+          padding: 3px 6.5px;
           font-weight: 800;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
           font-size: 9px;
           line-height: 1;
-          box-shadow: 0 3px 6px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.2);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14), inset 0 1px 0.5px rgba(255, 255, 255, 0.9);
           z-index: 40;
           display: flex;
           align-items: center;
@@ -162,44 +164,59 @@ const createPinIcon = (
     `;
   }
 
-  // 3. Fuel price label (centered below the pin)
+  // 3. Fuel price label (translucent white-tinted liquid glass capsule)
   if (activeFuelPrice) {
     overlaysHtml += `
       <div style="
           position: absolute;
           left: 50%;
           transform: translateX(-50%);
-          bottom: -16px;
-          background-color: #020617; /* Slate 950 */
-          color: #10b981; /* Emerald 500 */
-          border: 1.5px solid #1e293b;
-          border-radius: 4px;
-          padding: 2.5px 5px;
+          bottom: -17px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.64) 0%, rgba(255, 255, 255, 0.38) 100%);
+          backdrop-filter: blur(12px) saturate(190%);
+          -webkit-backdrop-filter: blur(12px) saturate(190%);
+          color: #047857;
+          border: 1px solid rgba(255, 255, 255, 0.88);
+          border-radius: 9999px;
+          padding: 3px 7px;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
           font-weight: 800;
           font-size: 9px;
           line-height: 1;
           white-space: nowrap;
-          box-shadow: 0 3px 6px rgba(0,0,0,0.4), 0 1px 3px rgba(0,0,0,0.22);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14), inset 0 1px 0.5px rgba(255, 255, 255, 0.95);
           z-index: 30;
           letter-spacing: -0.2px;
       ">${activeFuelPrice}</div>
     `;
   }
 
+  const gradId = `pin-glass-${color.replace('#', '')}-${isSelected ? 'sel' : 'norm'}`;
+
   return new L.DivIcon({
     className: `custom-pin-icon transition-all duration-300 ${isSelected ? 'z-[1000]' : 'hover:z-[1000]'}`,
     html: `
-      <div class="animate-pop-in ${isSelected ? 'animate-pin-bounce pulse-ring drop-shadow-[0_8px_8px_rgba(0,0,0,0.5)]' : 'drop-shadow-md hover:-translate-y-1 hover:scale-110 hover:drop-shadow-[0_10px_10px_rgba(0,0,0,0.4)]'} transition-all duration-300 ease-out" style="
+      <div class="animate-pop-in ${isSelected ? 'animate-pin-bounce pulse-ring drop-shadow-[0_10px_14px_rgba(15,23,42,0.32)]' : 'drop-shadow-[0_6px_10px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:scale-110 hover:drop-shadow-[0_12px_16px_rgba(15,23,42,0.3)]'} transition-all duration-300 ease-out" style="
           position: relative;
           color: ${color};
           transform-origin: bottom center;
           width: ${width}px;
           height: ${height}px;
       ">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${color}" stroke="${isSelected ? '#1e293b' : '#ffffff'}" stroke-width="${isSelected ? '2' : '1.5'}" stroke-linecap="round" stroke-linejoin="round" style="width: 100%; height: 100%; display: block;">
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-          <circle cx="12" cy="10" r="3" fill="white"></circle>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 100%; height: 100%; display: block; overflow: visible;">
+          <defs>
+            <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${color}" stop-opacity="0.82" />
+              <stop offset="55%" stop-color="${color}" stop-opacity="0.62" />
+              <stop offset="100%" stop-color="${color}" stop-opacity="0.76" />
+            </linearGradient>
+          </defs>
+          <!-- Outer Liquid Glass Droplet -->
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="url(#${gradId})" stroke="rgba(255,255,255,0.92)" stroke-width="${isSelected ? '2' : '1.6'}" stroke-linecap="round" stroke-linejoin="round"></path>
+          <!-- Specular Glass Highlight Arc -->
+          <path d="M6.5 8.5 A 6.5 6.5 0 0 1 16.5 5.2" fill="none" stroke="rgba(255,255,255,0.68)" stroke-width="1.3" stroke-linecap="round"></path>
+          <!-- Inner Frosted Glass Core -->
+          <circle cx="12" cy="10" r="3.4" fill="rgba(255,255,255,0.78)" stroke="rgba(255,255,255,0.95)" stroke-width="0.8"></circle>
         </svg>
         ${overlaysHtml}
       </div>
@@ -210,7 +227,7 @@ const createPinIcon = (
   });
 };
 
-// Custom User Location Icon Generator
+// Custom User Location Icon Generator (Translucent iOS Blue Glass Puck)
 const createUserIcon = (heading: number | null) => {
   const rotation = heading !== null ? heading : 0;
   return new L.DivIcon({
@@ -222,23 +239,25 @@ const createUserIcon = (heading: number | null) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 32px;
-          height: 32px;
-          background-color: #3b82f6;
-          border: 3px solid white;
+          width: 34px;
+          height: 34px;
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.72) 0%, rgba(37, 99, 235, 0.52) 100%);
+          backdrop-filter: blur(10px) saturate(180%);
+          -webkit-backdrop-filter: blur(10px) saturate(180%);
+          border: 2px solid rgba(255, 255, 255, 0.92);
           border-radius: 50%;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.85);
       ">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none" style="width: 16px; height: 16px; ${heading !== null ? 'transform: translateY(-2px);' : ''}">
           ${heading !== null 
-            ? '<path d="M12 2L22 20L12 17L2 20L12 2Z" />' // Navigation arrow if heading is available
-            : '<circle cx="12" cy="12" r="6" />' // Simple dot if no heading
+            ? '<path d="M12 2L22 20L12 17L2 20L12 2Z" />'
+            : '<circle cx="12" cy="12" r="6" />'
           }
         </svg>
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
   });
 };
 
@@ -517,7 +536,7 @@ const Map: React.FC<MapProps> = ({
       {/* Top Center Loading Indicators */}
       <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] flex flex-col items-center gap-1.5 pointer-events-none">
         {isFetchingWildfires && (
-          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-orange-500/50 shadow-lg dark:shadow-orange-900/20 text-orange-600 dark:text-orange-400 py-1 px-3.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 animate-pulse">
+          <div className="ios-liquid-pill text-orange-600 dark:text-orange-400 py-1.5 px-4 rounded-full text-[11px] font-bold flex items-center gap-1.5 animate-pulse">
              <svg className="animate-spin h-3.5 w-3.5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -526,7 +545,7 @@ const Map: React.FC<MapProps> = ({
           </div>
         )}
         {isFetchingTfrs && (
-          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-rose-500/50 shadow-lg dark:shadow-rose-900/20 text-rose-600 dark:text-rose-400 py-1 px-3.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 animate-pulse">
+          <div className="ios-liquid-pill text-rose-600 dark:text-rose-400 py-1.5 px-4 rounded-full text-[11px] font-bold flex items-center gap-1.5 animate-pulse">
              <svg className="animate-spin h-3.5 w-3.5 text-rose-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -535,7 +554,7 @@ const Map: React.FC<MapProps> = ({
           </div>
         )}
         {tfrsError && mapLayers.tfrs && (
-          <div className="bg-red-50 dark:bg-red-950/95 border border-red-200 dark:border-red-900/60 shadow-md text-red-600 dark:text-red-400 py-1.5 px-3.5 rounded-md text-[10px] font-bold flex items-center gap-1 pointer-events-auto">
+          <div className="ios-liquid-pill text-red-600 dark:text-red-400 py-1.5 px-3.5 rounded-full text-[10px] font-bold flex items-center gap-1 pointer-events-auto">
              <span className="text-[12px]">⚠️</span> {tfrsError}
           </div>
         )}
@@ -545,17 +564,17 @@ const Map: React.FC<MapProps> = ({
       <div className={`absolute top-4 left-20 md:top-auto md:left-auto md:bottom-6 md:right-4 z-[1000] transition-all ${!isOnline ? 'mt-6 md:mt-0' : ''}`}>
         <button 
           onClick={toggleTracking}
-          className={`p-3 md:p-3 rounded-full shadow-lg transition-all min-w-[48px] min-h-[48px] flex items-center justify-center ${
+          className={`p-3 md:p-3 rounded-full transition-all min-w-[48px] min-h-[48px] flex items-center justify-center active:scale-95 ${
             isTracking 
-              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-              : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+              ? 'bg-sky-500/75 backdrop-blur-xl text-white border border-white/80 shadow-[0_8px_24px_rgba(14,165,233,0.35)]' 
+              : 'ios-liquid-pill text-slate-800 dark:text-slate-100 hover:bg-white/60'
           }`}
           title={isTracking ? "Center on my location" : "Start GPS tracking"}
         >
           <Navigation size={22} className={`md:w-6 md:h-6 ${isTracking ? 'fill-current' : ''}`} />
         </button>
         {locationError && (
-          <div className="absolute top-full left-0 md:top-auto md:bottom-full md:left-auto md:right-0 mt-2 md:mt-0 md:mb-2 w-48 bg-red-100 border border-red-200 text-red-700 text-xs p-2 rounded shadow-md">
+          <div className="absolute top-full left-0 md:top-auto md:bottom-full md:left-auto md:right-0 mt-2 md:mt-0 md:mb-2 w-48 ios-liquid-glass text-red-700 text-xs p-2.5 rounded-2xl">
             {locationError}
           </div>
         )}
@@ -563,14 +582,14 @@ const Map: React.FC<MapProps> = ({
 
       {/* Map Hazard Legend Overlay */}
       {(mapLayers.wildfires || mapLayers.tfrs || showAirmet) && (
-        <div className="absolute bottom-6 left-4 z-[1000] flex flex-col items-start pointer-events-auto select-none font-sans">
+        <div className="absolute bottom-6 left-4 md:left-[395px] z-[1000] flex flex-col items-start pointer-events-auto select-none font-sans">
           {isLegendOpen ? (
-            <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200 dark:border-slate-800 rounded-xl shadow-2xl p-3.5 max-w-[250px] text-xs flex flex-col gap-2.5 transition-all text-slate-800 dark:text-slate-200">
-              <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-1.5 flex items-center justify-between w-full">
+            <div className="ios-liquid-glass rounded-2xl p-3.5 max-w-[250px] text-xs flex flex-col gap-2.5 transition-all text-slate-800 dark:text-slate-200">
+              <div className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-white/50 dark:border-slate-700/50 pb-1.5 flex items-center justify-between w-full">
                 <span>Map Hazard Legend</span>
                 <button 
                   onClick={() => setIsLegendOpen(false)} 
-                  className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-extrabold ml-4 p-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center w-4 h-4 line-height-none"
+                  className="text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 font-extrabold ml-4 p-0.5 rounded-full hover:bg-white/40 flex items-center justify-center w-4 h-4 line-height-none"
                   title="Collapse legend"
                 >
                   ✕
@@ -582,43 +601,43 @@ const Map: React.FC<MapProps> = ({
                     <div className="w-6 h-3.5 border-2 border-dashed border-[#db2777] bg-[#f43f5e]/15 rounded-sm self-center"></div>
                     <div className="flex flex-col">
                       <span className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] leading-tight flex items-center gap-1">🚫 FAA TFR Airspace</span>
-                      <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">Strict flight restriction zone</p>
+                      <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">Strict flight restriction zone</p>
                     </div>
                   </div>
                 )}
                 {mapLayers.wildfires && (
                   <>
                     <div className="flex items-start gap-2.5">
-                      <div className="relative flex items-center justify-center w-5 h-5 bg-red-650 rounded-full border border-amber-300 self-center">
+                      <div className="relative flex items-center justify-center w-5 h-5 bg-red-500/70 backdrop-blur-md rounded-full border border-white/80 self-center">
                         <span className="text-[11px] leading-none select-none">🔥</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] leading-tight">Active Wildfire (WF)</span>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">Emergency wildfire incident</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">Emergency wildfire incident</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-2.5">
-                      <div className="relative flex items-center justify-center w-5 h-5 bg-slate-900 rounded-full border border-emerald-400 self-center">
+                      <div className="relative flex items-center justify-center w-5 h-5 bg-slate-900/60 backdrop-blur-md rounded-full border border-emerald-400/80 self-center">
                         <span className="text-[10px] leading-none select-none">💨</span>
                       </div>
                       <div className="flex flex-col">
                         <span className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] leading-tight">Prescribed Burn (RX)</span>
-                        <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight">Planned & monitored fire</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 leading-tight">Planned & monitored fire</p>
                       </div>
                     </div>
                   </>
                 )}
                 {showAirmet && (
-                  <div className="flex flex-col gap-1.5 mt-0.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">G-AIRMET Advisories</span>
+                  <div className="flex flex-col gap-1.5 mt-0.5 pt-2 border-t border-white/50 dark:border-slate-700/50">
+                    <span className="text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">G-AIRMET Advisories</span>
                     <div className="flex flex-wrap gap-1">
-                      <span className="inline-flex items-center gap-1 bg-purple-500/10 px-1.5 py-0.5 rounded border border-purple-500/25 text-[8px] font-bold text-purple-600 dark:text-purple-400 uppercase">
+                      <span className="inline-flex items-center gap-1 bg-purple-500/15 px-1.5 py-0.5 rounded-full border border-purple-500/30 text-[8px] font-bold text-purple-700 dark:text-purple-300 uppercase">
                         <span className="w-1 h-1 rounded-full bg-purple-500"></span> IFR (Sierra)
                       </span>
-                      <span className="inline-flex items-center gap-1 bg-orange-500/10 px-1.5 py-0.5 rounded border border-orange-500/25 text-[8px] font-bold text-orange-600 dark:text-orange-400 uppercase">
+                      <span className="inline-flex items-center gap-1 bg-orange-500/15 px-1.5 py-0.5 rounded-full border border-orange-500/30 text-[8px] font-bold text-orange-700 dark:text-orange-300 uppercase">
                         <span className="w-1 h-1 rounded-full bg-orange-500"></span> Turb (Tango)
                       </span>
-                      <span className="inline-flex items-center gap-1 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/25 text-[8px] font-bold text-blue-600 dark:text-blue-400 uppercase">
+                      <span className="inline-flex items-center gap-1 bg-blue-500/15 px-1.5 py-0.5 rounded-full border border-blue-500/30 text-[8px] font-bold text-blue-700 dark:text-blue-300 uppercase">
                         <span className="w-1 h-1 rounded-full bg-blue-500"></span> Icing (Zulu)
                       </span>
                     </div>
@@ -629,7 +648,7 @@ const Map: React.FC<MapProps> = ({
           ) : (
             <button 
               onClick={() => setIsLegendOpen(true)}
-              className="bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 py-1.5 px-3 rounded-full shadow-lg text-[10px] font-extrabold flex items-center gap-1 transition-all active:scale-95 border-b-2"
+              className="ios-liquid-pill text-slate-800 dark:text-slate-100 py-1.5 px-3.5 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all active:scale-95"
               title="Expand hazard legend"
             >
               <span>ℹ️</span>

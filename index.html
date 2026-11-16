@@ -16,14 +16,164 @@
       }
     </script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-      body { margin: 0; padding: 0; overflow: hidden; }
-      /* Custom Scrollbar for sleek look */
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: #f1f1f1; }
-      ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-      ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-      
+      :root {
+        --ios-glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.36) 0%, rgba(255, 255, 255, 0.18) 50%, rgba(245, 250, 255, 0.28) 100%);
+        --ios-glass-heavy-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0.26) 60%, rgba(245, 250, 255, 0.38) 100%);
+        --ios-glass-card-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0.12) 100%);
+        --ios-glass-border: rgba(255, 255, 255, 0.68);
+        --ios-glass-shadow:
+          0 24px 60px -12px rgba(15, 23, 42, 0.14),
+          0 8px 24px -6px rgba(15, 23, 42, 0.06),
+          inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.92),
+          inset 0 -1px 1px 0 rgba(255, 255, 255, 0.38),
+          inset 1px 0 1px 0 rgba(255, 255, 255, 0.45);
+        --ios-card-shadow:
+          0 8px 24px -6px rgba(15, 23, 42, 0.05),
+          0 2px 6px -1px rgba(15, 23, 42, 0.03),
+          inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.85),
+          inset 0 -0.5px 0.5px 0 rgba(255, 255, 255, 0.35);
+      }
+
+      .dark {
+        --ios-glass-bg: linear-gradient(135deg, rgba(28, 38, 56, 0.38) 0%, rgba(15, 23, 42, 0.24) 100%);
+        --ios-glass-heavy-bg: linear-gradient(145deg, rgba(30, 41, 59, 0.50) 0%, rgba(15, 23, 42, 0.34) 100%);
+        --ios-glass-card-bg: linear-gradient(145deg, rgba(38, 49, 68, 0.32) 0%, rgba(22, 30, 46, 0.18) 100%);
+        --ios-glass-border: rgba(255, 255, 255, 0.22);
+        --ios-glass-shadow:
+          0 24px 60px -12px rgba(0, 0, 0, 0.45),
+          0 8px 24px -6px rgba(0, 0, 0, 0.25),
+          inset 0 1.5px 1px 0 rgba(255, 255, 255, 0.28),
+          inset 0 -1px 1px 0 rgba(255, 255, 255, 0.1);
+        --ios-card-shadow:
+          0 8px 24px -6px rgba(0, 0, 0, 0.25),
+          inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.2);
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .font-mono {
+        font-family: "SF Mono", "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* iOS Liquid Glass Surfaces */
+      .ios-liquid-glass {
+        background: var(--ios-glass-bg);
+        backdrop-filter: blur(28px) saturate(190%) brightness(1.03);
+        -webkit-backdrop-filter: blur(28px) saturate(190%) brightness(1.03);
+        border: 1px solid var(--ios-glass-border);
+        box-shadow: var(--ios-glass-shadow);
+      }
+
+      .ios-liquid-glass-heavy {
+        background: var(--ios-glass-heavy-bg);
+        backdrop-filter: blur(32px) saturate(200%) brightness(1.03);
+        -webkit-backdrop-filter: blur(32px) saturate(200%) brightness(1.03);
+        border: 1px solid var(--ios-glass-border);
+        box-shadow: var(--ios-glass-shadow);
+      }
+
+      .ios-liquid-card {
+        background: var(--ios-glass-card-bg);
+        backdrop-filter: blur(18px) saturate(180%);
+        -webkit-backdrop-filter: blur(18px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.62);
+        box-shadow: var(--ios-card-shadow);
+      }
+
+      .dark .ios-liquid-card {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+      }
+
+      .ios-liquid-pill {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.48) 0%, rgba(255, 255, 255, 0.24) 100%);
+        backdrop-filter: blur(22px) saturate(190%) brightness(1.04);
+        -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.04);
+        border: 1px solid rgba(255, 255, 255, 0.78);
+        box-shadow:
+          0 8px 24px -4px rgba(15, 23, 42, 0.10),
+          0 2px 8px -2px rgba(15, 23, 42, 0.05),
+          inset 0 1.5px 0.5px 0 rgba(255, 255, 255, 0.92),
+          inset 0 -1px 0.5px 0 rgba(255, 255, 255, 0.35);
+      }
+
+      .dark .ios-liquid-pill {
+        background: linear-gradient(180deg, rgba(38, 50, 72, 0.45) 0%, rgba(22, 30, 46, 0.28) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        box-shadow:
+          0 8px 24px -4px rgba(0, 0, 0, 0.35),
+          inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.24);
+      }
+
+      .ios-liquid-input {
+        background: rgba(255, 255, 255, 0.36);
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        box-shadow:
+          inset 0 1px 2px rgba(15, 23, 42, 0.04),
+          inset 0 1px 0 rgba(255, 255, 255, 0.85),
+          0 2px 6px rgba(15, 23, 42, 0.03);
+      }
+
+      .dark .ios-liquid-input {
+        background: rgba(15, 23, 42, 0.36);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+      }
+
+      /* Custom Scrollbar for iOS sleek look */
+      ::-webkit-scrollbar { width: 5px; height: 5px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 9999px; }
+      ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.55); }
+
+      /* Leaflet iOS Liquid Glass Popups & Tooltips */
+      .leaflet-popup-content-wrapper,
+      .leaflet-popup-tip {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0.30) 100%) !important;
+        backdrop-filter: blur(26px) saturate(190%) !important;
+        -webkit-backdrop-filter: blur(26px) saturate(190%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.78) !important;
+        border-radius: 22px !important;
+        box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.16), inset 0 1.5px 0.5px rgba(255, 255, 255, 0.92) !important;
+        color: #0f172a !important;
+      }
+
+      .leaflet-tooltip {
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.56) 0%, rgba(255, 255, 255, 0.34) 100%) !important;
+        backdrop-filter: blur(20px) saturate(190%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(190%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.82) !important;
+        border-radius: 14px !important;
+        box-shadow: 0 8px 20px -4px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+        color: #0f172a !important;
+      }
+
+      .leaflet-control-zoom {
+        border: none !important;
+        border-radius: 16px !important;
+        overflow: hidden !important;
+        box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.88) !important;
+      }
+
+      .leaflet-control-zoom a {
+        background: rgba(255, 255, 255, 0.45) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        color: #1e293b !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.55) !important;
+      }
+
       /* Animation Keyframes */
       @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
@@ -44,10 +194,10 @@
         100% { transform: scale(2); opacity: 0; }
       }
       .animate-slide-in-right {
-        animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       .animate-slide-in-up {
-        animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        animation: slideInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       @keyframes popIn {
         0% { transform: scale(0.5); opacity: 0; }

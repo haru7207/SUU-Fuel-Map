@@ -10,6 +10,8 @@ interface FuelLogToggleProps {
   isOnline?: boolean;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
+  view?: 'form' | 'list' | 'calc';
+  setView?: (view: 'form' | 'list' | 'calc') => void;
   isHidden?: boolean;
   onOpenFlightTime?: () => void;
   isFlightTimeOpen?: boolean;
@@ -39,7 +41,9 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
   currentAirportId, 
   isOnline = true, 
   isOpen, 
-  setIsOpen, 
+  setIsOpen,
+  view: controlledView,
+  setView: controlledSetView,
   isHidden = false,
   onOpenFlightTime,
   isFlightTimeOpen,
@@ -48,7 +52,9 @@ const FuelLogToggle: React.FC<FuelLogToggleProps> = ({
   onToggleMetarOnly,
   onOpenMetarModal
 }) => {
-  const [view, setView] = useState<'form' | 'list' | 'calc'>('form');
+  const [internalView, setInternalView] = useState<'form' | 'list' | 'calc'>('form');
+  const view = controlledView ?? internalView;
+  const setView = controlledSetView ?? setInternalView;
   const [showSavedToast, setShowSavedToast] = useState(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
@@ -488,7 +494,7 @@ Notes: ${log.notes || 'None'}
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [dropdownRef]);
 
@@ -522,30 +528,38 @@ Notes: ${log.notes || 'None'}
 
   return (
     <>
-      {/* Floating Action Buttons */}
+      {/* Floating Action Buttons (Mobile only, stacked vertically under Menu to avoid colliding with Map Layers) */}
       {!isOpen && !isFlightTimeOpen && !isHidden && (
-        <div className={`absolute top-20 left-4 md:top-4 md:left-6 z-[1050] flex flex-col items-start gap-2.5 transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
+        <div className={`md:hidden absolute top-[70px] left-4 z-[1050] flex flex-col items-start gap-2 transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
           {/* Fuel Ops Toggle Dropdown */}
           <div className="relative">
             <button
               onClick={() => setIsFuelMenuOpen(!isFuelMenuOpen)}
-              className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${isFuelMenuOpen ? 'bg-red-700 text-white ring-2 ring-red-400' : 'bg-red-600 text-white hover:bg-red-700 hover:scale-105'}`}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all active:scale-95 group min-h-[44px] ${
+                isFuelMenuOpen
+                  ? 'bg-red-600/85 text-white shadow-[0_8px_24px_rgba(220,38,38,0.35)] border border-white/50'
+                  : 'ios-liquid-pill text-slate-900 dark:text-slate-100 hover:bg-white/60'
+              }`}
             >
-              <Fuel size={16} className="md:w-5 md:h-5 group-hover:rotate-12 transition-transform" />
-              <span className="font-bold tracking-wide text-sm md:text-base">Fuel Ops</span>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isFuelMenuOpen ? 'bg-white/20 text-white' : 'bg-red-600 text-white shadow-sm'}`}>
+                <Fuel size={13} className="group-hover:rotate-12 transition-transform" />
+              </div>
+              <span className="font-bold tracking-tight text-xs md:text-sm">Fuel Ops</span>
             </button>
 
             {isFuelMenuOpen && (
-              <div className="absolute top-full mt-2 left-0 w-full min-w-[200px] bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col z-[1060]">
+              <div className="absolute top-full mt-2.5 left-0 w-full min-w-[220px] ios-liquid-glass-heavy rounded-2xl overflow-hidden flex flex-col z-[1060] p-1.5 gap-0.5">
                 <button
                   onClick={() => {
                     setIsOpen(true);
                     setView('form');
                     setIsFuelMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/75 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 text-xs font-bold text-left transition-all"
                 >
-                  <Fuel size={16} className="text-red-500" />
+                  <div className="w-7 h-7 rounded-lg bg-red-500/12 text-red-600 flex items-center justify-center">
+                    <Fuel size={15} />
+                  </div>
                   Log Fuel
                 </button>
 
@@ -555,9 +569,11 @@ Notes: ${log.notes || 'None'}
                     setView('calc');
                     setIsFuelMenuOpen(false);
                   }}
-                  className="flex items-center gap-3 px-4 py-3 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/75 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 text-xs font-bold text-left transition-all"
                 >
-                  <Calculator size={16} className="text-blue-500" />
+                  <div className="w-7 h-7 rounded-lg bg-blue-500/12 text-blue-600 flex items-center justify-center">
+                    <Calculator size={15} />
+                  </div>
                   Fuel Price Calculator
                 </button>
                 
@@ -566,106 +582,113 @@ Notes: ${log.notes || 'None'}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setIsFuelMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-bold text-left transition-colors"
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl hover:bg-white/75 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 text-xs font-bold text-left transition-all"
                 >
-                  <AlertCircle size={16} className="text-orange-500" />
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/12 text-amber-600 flex items-center justify-center">
+                    <AlertCircle size={15} />
+                  </div>
                   Fuel Error Report
                 </a>
               </div>
             )}
           </div>
 
-          {/* Dedicated METAR & TAF Weather Only Toggle Button */}
+          {/* Dedicated METAR & TAF Weather Only Toggle Button (Mobile) */}
           <button
             onClick={() => {
               if (onToggleMetarOnly) onToggleMetarOnly();
-              if (onOpenMetarModal) onOpenMetarModal();
+              if (onOpenMetarModal && !isMetarOnly) onOpenMetarModal();
             }}
-            className={`flex items-center gap-2 px-4 py-2 md:px-5 md:py-2.5 rounded-full shadow-xl transition-all active:scale-95 group ${
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-full transition-all active:scale-95 group min-h-[44px] ${
               isMetarOnly 
-                ? 'bg-sky-600 text-white hover:bg-sky-500 ring-2 ring-sky-300 shadow-sky-600/40 font-extrabold scale-105' 
-                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 hover:bg-sky-50 dark:hover:bg-slate-700 hover:text-sky-600 dark:hover:text-sky-400 border border-slate-200 dark:border-slate-700'
+                ? 'bg-sky-500/80 backdrop-blur-md text-white shadow-[0_8px_24px_rgba(2,132,199,0.3)] border border-white/60 font-extrabold' 
+                : 'ios-liquid-pill text-slate-800 dark:text-slate-100 hover:bg-white/60 hover:text-sky-600 dark:hover:text-sky-400'
             }`}
             title="Search METAR & TAF weather data only"
           >
-            <CloudSun size={16} className={`md:w-5 md:h-5 transition-transform group-hover:scale-110 ${isMetarOnly ? 'text-white animate-pulse' : 'text-sky-500'}`} />
-            <span className="font-bold tracking-wide text-sm md:text-base">
-              {isMetarOnly ? 'METAR & TAF (Active)' : 'METAR & TAF'}
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-colors ${isMetarOnly ? 'bg-white/20 text-white' : 'bg-sky-500/15 text-sky-600 dark:text-sky-400'}`}>
+              <CloudSun size={14} className="transition-transform group-hover:scale-110" />
+            </div>
+            <span className="font-bold tracking-tight text-xs whitespace-nowrap">
+              {isMetarOnly ? 'METAR Active' : 'METAR & TAF'}
             </span>
           </button>
         </div>
       )}
 
-      {/* Slide-up/Popover Panel - Bottom Sheet on Mobile */}
+      {/* Slide-up/Popover Panel - Bottom Sheet on Mobile, aligned next to Sidebar on Desktop */}
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-20 md:left-6 md:right-auto md:w-96 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-3 md:left-[344px] lg:left-[408px] md:right-auto md:w-96 ios-liquid-glass-heavy rounded-t-3xl md:rounded-[28px] flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[82vh]">
           
           {/* Header */}
-          <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="bg-red-600 p-1.5 rounded-lg">
-                <Fuel size={18} className="text-white" />
+          <div className="bg-white/15 dark:bg-slate-900/25 text-slate-900 dark:text-white px-5 py-4 flex justify-between items-center border-b border-white/50 dark:border-slate-700/60 flex-shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="bg-gradient-to-br from-red-500/80 to-red-600/80 backdrop-blur-md border border-white/50 p-2 rounded-xl shadow-xs">
+                <Fuel size={16} className="text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-base leading-tight">Quick Fuel Memo</h3>
+                <h3 className="font-extrabold text-sm tracking-tight leading-tight text-slate-900 dark:text-white">Quick Fuel Memo</h3>
+                <p className="text-[10px] font-semibold text-slate-600 dark:text-slate-300">Temporary Flight Ramp Log</p>
               </div>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-white hover:bg-slate-700 p-1.5 rounded-full transition-colors"
+              className="ios-liquid-pill text-slate-600 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-full transition-colors"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+          {/* Tab Navigation - iOS Segmented Control */}
+          <div className="px-4 py-2.5 bg-white/10 dark:bg-slate-900/15 border-b border-white/45 dark:border-slate-800/60">
+            <div className="flex p-1 rounded-2xl bg-white/22 dark:bg-slate-800/35 border border-white/60 dark:border-white/15">
               <button 
                 onClick={() => setView('form')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold tracking-tight flex items-center justify-center gap-1.5 transition-all ${
                     view === 'form' 
-                    ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 border-b-2 border-red-600 dark:border-red-400 font-extrabold' 
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-white/65 dark:bg-slate-700/70 backdrop-blur-md text-red-600 dark:text-red-400 shadow-2xs border border-white/85' 
+                    : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Edit2 size={13} />
+                <Edit2 size={12} />
                 {editingId ? 'Edit Memo' : 'New Memo'}
               </button>
               <button 
                 onClick={() => setView('calc')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold tracking-tight flex items-center justify-center gap-1.5 transition-all ${
                     view === 'calc' 
-                    ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 border-b-2 border-amber-600 dark:border-amber-400 font-extrabold' 
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-white/65 dark:bg-slate-700/70 backdrop-blur-md text-amber-600 dark:text-amber-400 shadow-2xs border border-white/85' 
+                    : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <Calculator size={13} />
+                <Calculator size={12} />
                 Calculator
               </button>
               <button 
                 onClick={() => setView('list')}
-                className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors ${
+                className={`flex-1 py-1.5 rounded-xl text-[11px] font-bold tracking-tight flex items-center justify-center gap-1.5 transition-all ${
                     view === 'list' 
-                    ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 dark:border-blue-400 font-extrabold' 
-                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    ? 'bg-white/65 dark:bg-slate-700/70 backdrop-blur-md text-blue-600 dark:text-blue-400 shadow-2xs border border-white/85' 
+                    : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
               >
-                <List size={13} />
+                <List size={12} />
                 Saved ({logs.length})
               </button>
+            </div>
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 custom-scrollbar relative">
+          <div className="flex-1 overflow-y-auto bg-transparent custom-scrollbar relative">
             
             {/* VIEW: FORM */}
             {view === 'form' && (
                 <div className="p-5 space-y-4">
                     
                     {/* Instruction Sticky Note */}
-                    <div className="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r shadow-sm flex gap-3 items-start">
+                    <div className="bg-amber-500/15 border border-amber-300/60 p-3 rounded-2xl flex gap-3 items-start">
                     <Info size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-900 font-medium leading-relaxed">
+                    <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed">
                         Use this for fuel log quick memo. Please note this is for temporary reference only before official portal entry.
                     </p>
                     </div>

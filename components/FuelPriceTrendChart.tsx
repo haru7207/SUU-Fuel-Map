@@ -137,11 +137,11 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
       });
 
       return (
-        <div className="bg-slate-900 border border-slate-800 p-3 rounded-lg shadow-xl text-xs space-y-1.5 text-white" id="fuel-chart-tooltip">
-          <p className="font-bold text-slate-400 flex items-center gap-1">
+        <div className="ios-liquid-glass-heavy p-3 rounded-2xl text-xs space-y-1.5 text-slate-900 dark:text-white" id="fuel-chart-tooltip">
+          <p className="font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1">
             <Calendar size={12} /> {fullDate}
           </p>
-          <div className="space-y-1 pt-1.5 border-t border-slate-800">
+          <div className="space-y-1 pt-1.5 border-t border-white/50 dark:border-slate-700/60">
             {payload.map((entry: any, index: number) => (
               <div key={index} className="flex items-center justify-between gap-6">
                 <span className="flex items-center gap-1.5 font-semibold" style={{ color: entry.color }}>
@@ -165,36 +165,35 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-lg shadow-sm" id="fuel-chart-loading">
-        <Loader2 className="h-8 w-8 text-cyan-600 animate-spin mb-3" />
-        <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Loading Fuel Price Trends...</p>
+      <div className="flex flex-col items-center justify-center py-16 bg-white/20 dark:bg-slate-900/25 border border-white/60 dark:border-slate-700/50 rounded-2xl" id="fuel-chart-loading">
+        <Loader2 className="h-7 w-7 text-sky-600 animate-spin mb-2.5" />
+        <p className="text-xs font-semibold text-slate-600">Loading Fuel Price Trends...</p>
       </div>
     );
   }
 
   if (error || history.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-amber-50/50 dark:bg-slate-950/20 border border-amber-100 dark:border-slate-850 rounded-lg text-center" id="fuel-chart-error">
-        <AlertCircle className="h-8 w-8 text-amber-500 mb-2" />
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Trend data unavailable</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">No recorded historical instances are matching this airport criteria. Complete a database action to generate telemetry.</p>
+      <div className="flex flex-col items-center justify-center p-6 bg-amber-500/10 border border-amber-300/50 rounded-2xl text-center" id="fuel-chart-error">
+        <AlertCircle className="h-7 w-7 text-amber-500 mb-2" />
+        <p className="text-xs font-bold text-slate-700 dark:text-slate-300">Trend data unavailable</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-850 rounded-lg p-5 shadow-sm space-y-4" id="fuel-price-trend-card">
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-900 pb-3">
+    <div className="bg-white/22 dark:bg-slate-900/25 border border-white/60 dark:border-slate-700/50 rounded-2xl p-4 space-y-4" id="fuel-price-trend-card">
+      <div className="flex items-center justify-between border-b border-white/45 dark:border-slate-700/50 pb-3">
         <div className="flex items-center gap-2">
-          <Activity size={18} className="text-cyan-600" />
+          <Activity size={16} className="text-sky-600 dark:text-sky-400" />
           <div>
-            <h4 className="text-sm font-bold text-slate-800 dark:text-white tracking-tight">Fuel Price Trend Chart</h4>
-            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">Historical pricing trend over the last 6 months</p>
+            <h4 className="text-xs font-bold text-slate-900 dark:text-white tracking-tight">Fuel Price History</h4>
+            <p className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">6-month historical station rate trend</p>
           </div>
         </div>
         
-        {/* Toggle Switch */}
-        <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded-lg p-0.5" id="fuel-type-toggle">
+        {/* iOS Segmented Switch */}
+        <div className="flex items-center bg-white/25 dark:bg-slate-800/40 rounded-xl p-0.5 border border-white/65 dark:border-white/15" id="fuel-type-toggle">
           {['both', 'll100', 'jetA'].map((tab) => {
             if (tab === 'll100' && !hasLL100) return null;
             if (tab === 'jetA' && !hasJetA) return null;
@@ -203,10 +202,10 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
                 key={tab}
                 type="button"
                 onClick={() => setSelectedFuelType(tab as any)}
-                className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all ${
+                className={`px-2.5 py-1 text-[10px] font-bold rounded-lg transition-all whitespace-nowrap shrink-0 ${
                   selectedFuelType === tab
-                    ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-white shadow-xs'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                    ? 'bg-white/65 dark:bg-slate-700/70 backdrop-blur-md text-slate-900 dark:text-white shadow-2xs border border-white/80'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                 }`}
                 id={`fuel-toggle-${tab}`}
               >
@@ -221,21 +220,21 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
       {trendAnalysis && (
         <div className="grid grid-cols-2 gap-3" id="fuel-chart-trends-summary">
           {hasLL100 && (selectedFuelType === 'both' || selectedFuelType === 'll100') && trendAnalysis.avgas && (
-            <div className={`p-3 rounded-lg border leading-tight ${
+            <div className={`p-3 rounded-xl border leading-tight ${
               trendAnalysis.avgas.direction === 'down' 
-                ? 'bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-900 dark:text-emerald-350' 
+                ? 'bg-emerald-500/12 border-emerald-300/60 dark:border-emerald-800/40 text-emerald-900 dark:text-emerald-200' 
                 : trendAnalysis.avgas.direction === 'up'
-                ? 'bg-rose-50/50 dark:bg-rose-950/10 border-rose-100 dark:border-rose-900/30 text-rose-900 dark:text-rose-350'
-                : 'bg-slate-50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-800 text-slate-700 dark:text-slate-350'
+                ? 'bg-rose-500/12 border-rose-300/60 dark:border-rose-800/40 text-rose-900 dark:text-rose-200'
+                : 'bg-white/25 border-white/65 dark:bg-slate-800/35 dark:border-slate-700 text-slate-800 dark:text-slate-200'
             }`} id="trend-summary-avgas">
-              <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Avgas 100LL Trend</span>
+              <span className="text-[9px] uppercase font-bold text-slate-600 dark:text-slate-300 tracking-wider">Avgas 100LL Trend</span>
               <div className="flex items-center gap-1.5 mt-1 font-mono">
                 {trendAnalysis.avgas.direction === 'down' ? (
-                  <TrendingDown size={14} className="text-emerald-500" />
+                  <TrendingDown size={14} className="text-emerald-600" />
                 ) : trendAnalysis.avgas.direction === 'up' ? (
-                  <TrendingUp size={14} className="text-rose-500" />
+                  <TrendingUp size={14} className="text-rose-600" />
                 ) : (
-                  <Minus size={14} className="text-slate-400" />
+                  <Minus size={14} className="text-slate-500" />
                 )}
                 <span className="text-sm font-black">${trendAnalysis.avgas.end.toFixed(2)}</span>
                 <span className="text-[10px] font-bold">
@@ -246,21 +245,21 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
           )}
 
           {hasJetA && (selectedFuelType === 'both' || selectedFuelType === 'jetA') && trendAnalysis.jetA && (
-            <div className={`p-3 rounded-lg border leading-tight ${
+            <div className={`p-3 rounded-xl border leading-tight ${
               trendAnalysis.jetA.direction === 'down' 
-                ? 'bg-emerald-50/50 dark:bg-emerald-950/10 border-emerald-100 dark:border-emerald-900/30 text-emerald-900 dark:text-emerald-350' 
+                ? 'bg-emerald-500/12 border-emerald-300/60 dark:border-emerald-800/40 text-emerald-900 dark:text-emerald-200' 
                 : trendAnalysis.jetA.direction === 'up'
-                ? 'bg-rose-50/50 dark:bg-rose-950/10 border-rose-100 dark:border-rose-900/30 text-rose-900 dark:text-rose-350'
-                : 'bg-slate-50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-800 text-slate-700 dark:text-slate-350'
+                ? 'bg-rose-500/12 border-rose-300/60 dark:border-rose-800/40 text-rose-900 dark:text-rose-200'
+                : 'bg-white/25 border-white/65 dark:bg-slate-800/35 dark:border-slate-700 text-slate-800 dark:text-slate-200'
             }`} id="trend-summary-jeta">
-              <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">Jet A Trend</span>
+              <span className="text-[9px] uppercase font-bold text-slate-600 dark:text-slate-300 tracking-wider">Jet A Trend</span>
               <div className="flex items-center gap-1.5 mt-1 font-mono">
                 {trendAnalysis.jetA.direction === 'down' ? (
-                  <TrendingDown size={14} className="text-emerald-500" />
+                  <TrendingDown size={14} className="text-emerald-600" />
                 ) : trendAnalysis.jetA.direction === 'up' ? (
-                  <TrendingUp size={14} className="text-rose-500" />
+                  <TrendingUp size={14} className="text-rose-600" />
                 ) : (
-                  <Minus size={14} className="text-slate-400" />
+                  <Minus size={14} className="text-slate-500" />
                 )}
                 <span className="text-sm font-black">${trendAnalysis.jetA.end.toFixed(2)}</span>
                 <span className="text-[10px] font-bold">
@@ -276,17 +275,17 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
       <div className="h-[180px] w-full" id="fuel-price-trend-graph">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" className="dark:hidden" />
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#1e293b" className="hidden dark:block" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.45)" className="dark:hidden" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.12)" className="hidden dark:block" />
             
             <XAxis 
               dataKey="dateLabel" 
-              tick={{ fontSize: 9, fontWeight: 600, fill: '#64748b' }} 
+              tick={{ fontSize: 9, fontWeight: 600, fill: '#475569' }} 
               axisLine={false}
               tickLine={false}
             />
             <YAxis 
-              tick={{ fontSize: 9, fontWeight: 600, fill: '#64748b' }}
+              tick={{ fontSize: 9, fontWeight: 600, fill: '#475569' }}
               domain={['auto', 'auto']}
               axisLine={false}
               tickLine={false}
@@ -300,7 +299,7 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
                 name="Avgas 100LL"
                 type="monotone" 
                 dataKey="ll100Price" 
-                stroke="#10b981" // elegant emerald
+                stroke="#10b981"
                 strokeWidth={2.5}
                 dot={{ r: 3, strokeWidth: 1 }}
                 activeDot={{ r: 5 }}
@@ -312,7 +311,7 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
                 name="Jet A"
                 type="monotone" 
                 dataKey="jetAPrice" 
-                stroke="#06b6d4" // elegant cyan
+                stroke="#06b6d4"
                 strokeWidth={2.5}
                 dot={{ r: 3, strokeWidth: 1 }}
                 activeDot={{ r: 5 }}
@@ -323,8 +322,8 @@ export const FuelPriceTrendChart: React.FC<FuelPriceTrendChartProps> = ({ airpor
         </ResponsiveContainer>
       </div>
 
-      <div className="flex items-center gap-1.5 text-[10px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-900/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-900" id="fuel-chart-footer">
-        <DollarSign size={10} className="text-cyan-500 flex-shrink-0" />
+      <div className="flex items-center gap-1.5 text-[10px] text-slate-600 dark:text-slate-300 bg-white/20 dark:bg-slate-900/30 p-2.5 rounded-xl border border-white/55 dark:border-slate-800" id="fuel-chart-footer">
+        <DollarSign size={10} className="text-cyan-600 flex-shrink-0" />
         <span>Green represents Avgas 100LL pricing, while blue tracks Jet A turbine rates. Updates generate new timeline points.</span>
       </div>
     </div>

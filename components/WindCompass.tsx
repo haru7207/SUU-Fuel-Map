@@ -56,29 +56,29 @@ export const WindCompass: React.FC<WindCompassProps> = ({ weatherMap, airports }
   if (!nearestWind) return null;
 
   return (
-    <div className="group absolute bottom-8 right-4 md:bottom-24 md:right-4 z-[1000] pointer-events-auto bg-white/90 dark:bg-slate-800/90 backdrop-blur shadow-md rounded-full w-14 h-14 border border-slate-200 dark:border-slate-700 flex flex-col items-center justify-center transition-all hover:scale-110">
+    <div className="group absolute bottom-8 right-4 md:bottom-24 md:right-4 z-[1000] pointer-events-auto ios-liquid-pill rounded-full w-14 h-14 flex flex-col items-center justify-center transition-all hover:scale-110">
       {/* Compass rose layout */}
       <div className="relative w-full h-full rounded-full flex items-center justify-center">
-          <div className="absolute top-0.5 text-[8px] font-black text-slate-400">N</div>
-          <div className="absolute bottom-0.5 text-[8px] font-black text-slate-400">S</div>
-          <div className="absolute left-1 text-[8px] font-black text-slate-400">W</div>
-          <div className="absolute right-1 text-[8px] font-black text-slate-400">E</div>
+          <div className="absolute top-1 text-[8px] font-extrabold text-slate-600 dark:text-slate-300">N</div>
+          <div className="absolute bottom-1 text-[8px] font-extrabold text-slate-600 dark:text-slate-300">S</div>
+          <div className="absolute left-1.5 text-[8px] font-extrabold text-slate-600 dark:text-slate-300">W</div>
+          <div className="absolute right-1.5 text-[8px] font-extrabold text-slate-600 dark:text-slate-300">E</div>
           
           <div 
              className="absolute inset-0 flex items-center justify-center transition-transform duration-1000 ease-in-out"
              style={{ transform: `rotate(${nearestWind.direction}deg)` }}
           >
-             <Navigation size={18} className="text-red-500 transform rotate-180 drop-shadow-sm" fill="currentColor" />
+             <Navigation size={18} className="text-rose-500/90 transform rotate-180 drop-shadow-xs" fill="currentColor" />
           </div>
           
           {/* Inner stats */}
           <div className="absolute z-10 flex flex-col items-center justify-center pointer-events-none mt-1">
-             <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 drop-shadow-md">{nearestWind.speed}</span>
-             <span className="text-[6px] uppercase font-bold text-slate-500 drop-shadow-md">KT</span>
+             <span className="text-[10px] font-black font-mono text-slate-900 dark:text-white drop-shadow-xs">{nearestWind.speed}</span>
+             <span className="text-[6px] uppercase font-bold text-slate-600 dark:text-slate-300">KT</span>
           </div>
       </div>
       
-      <div className="absolute -bottom-4 bg-slate-800 dark:bg-slate-900 text-white text-[8px] font-bold px-1.5 py-0.5 rounded shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+      <div className="absolute -bottom-5 ios-liquid-pill text-slate-900 dark:text-white text-[8px] font-mono font-bold px-2 py-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
         {nearestWind.airport}
       </div>
     </div>

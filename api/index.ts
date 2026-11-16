@@ -90,4 +90,45 @@ app.get('/api/dinner', async (req: express.Request, res: express.Response) => {
     }
 });
 
+app.get('/api/awc/*all', async (req: express.Request, res: express.Response) => {
+    const rawAll = (req.params as any).all;
+    const subPath = Array.isArray(rawAll) ? rawAll.join('/') : rawAll;
+
+    const queryParams = new URLSearchParams(req.query as any);
+    queryParams.delete('_cb');
+    const queryString = queryParams.toString();
+
+    const targetUrl = `https://aviationweather.gov/api/data/${subPath}${queryString ? '?' + queryString : ''}`;
+
+    try {
+        const response = await fetch(targetUrl, {
+            method: 'GET',
+            headers: {
+                'User-Agent': 'SUUFuelMap/3.0 (admin@suu.edu)',
+                'Accept': 'application/json, text/plain, */*'
+            }
+        });
+
+        if (response.status === 204) {
+            res.setHeader('Content-Type', 'application/json');
+            return res.status(200).send('[]');
+        }
+
+        if (!response.ok) {
+            console.error(`[AWC Proxy] NOAA Error: ${response.status} for URL: ${targetUrl}`);
+            return res.status(response.status).send(`NOAA Error: ${response.statusText}`);
+        }
+
+        const contentType = response.headers.get('content-type') || 'application/json';
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+
+        const bodyText = await response.text();
+        res.send(bodyText || '[]');
+    } catch (error) {
+        console.error(`[AWC Proxy] Failed to proxy ${targetUrl}:`, error);
+        res.status(500).send('Error proxying request to NOAA AWC');
+    }
+});
+
 export default app;

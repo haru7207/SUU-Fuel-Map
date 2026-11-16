@@ -31,8 +31,11 @@ const saveWorkingStrategy = (strategy: string) => {
  * Validates that the response is JSON if requireJson is true.
  */
 export const fetchSafe = async (url: string, requireJson: boolean = false, skipCacheBuster: boolean = false): Promise<Response> => {
-  // Add 5-minute aligned cache buster to URL directly to leverage browser/CDN cache but ensure update every 5m
-  const urlWithCb = skipCacheBuster ? url : (() => {
+  // Never append _cb to NOAA AWC URLs because aviationweather.gov strictly validates query params and returns HTTP 400 if _cb is present
+  const isAwcUrl = url.startsWith('/api/awc') || url.includes('aviationweather.gov');
+  const effectiveSkipCb = skipCacheBuster || isAwcUrl;
+
+  const urlWithCb = effectiveSkipCb ? url : (() => {
     const separator = url.includes('?') ? '&' : '?';
     // Align cache buster to 5 minutes (300,000 milliseconds)
     const interval = Math.floor(Date.now() / 300000);
@@ -41,6 +44,13 @@ export const fetchSafe = async (url: string, requireJson: boolean = false, skipC
 
   // Helper to validate response content
   const validate = async (res: Response, strategy: string): Promise<Response> => {
+      if (res.status === 204) {
+          return new Response('[]', {
+              status: 200,
+              statusText: 'OK',
+              headers: { 'Content-Type': 'application/json' }
+          });
+      }
       if (!res.ok) throw new Error(`${strategy}: HTTP Error ${res.status}`);
       
       if (requireJson) {
@@ -49,9 +59,16 @@ export const fetchSafe = async (url: string, requireJson: boolean = false, skipC
           try {
               const text = await clone.text();
               if (!text || !text.trim()) {
+                  if (isAwcUrl) {
+                      return new Response('[]', {
+                          status: 200,
+                          statusText: 'OK',
+                          headers: { 'Content-Type': 'application/json' }
+                      });
+                  }
                   throw new Error(`${strategy}: Empty response body`);
               }
-              // Fast fail if it looks like HTML (likely error page) instead of JSON
+              // Fast fail if it looks like HTML (likely error page or SPA index.html fallback) instead of JSON
               if (text.trim().startsWith('<')) {
                   throw new Error(`${strategy}: Received HTML instead of JSON`);
               }
@@ -63,26 +80,42 @@ export const fetchSafe = async (url: string, requireJson: boolean = false, skipC
       return res;
   };
 
-  // If the URL is relative (e.g. starting with '/'), fetch directly and bypass all external proxy strategies
+  // If the URL is relative (e.g. starting with '/'), try direct relative fetch first
   if (url.startsWith('/')) {
     try {
       const response = await fetch(urlWithCb, {
           method: 'GET',
           redirect: 'follow',
-          mode: 'cors'
+          mode: 'cors',
+          headers: {
+              'Accept': 'application/json, text/plain, */*'
+          }
       });
       return await validate(response, 'DirectRelative');
     } catch (e) {
-      console.warn(`[AviationService] Direct relative fetch failed for ${urlWithCb}`, e);
-      throw e;
+      console.warn(`[AviationService] Direct relative fetch failed for ${urlWithCb}, falling back if AWC...`, e);
+      if (!url.startsWith('/api/awc')) {
+        throw e;
+      }
     }
   }
+
+  // Convert relative /api/awc URLs to full NOAA AWC URLs for fallback strategies
+  const targetExternalUrl = urlWithCb.startsWith('/api/awc')
+    ? urlWithCb.replace(/^\/api\/awc/, 'https://aviationweather.gov/api/data')
+    : urlWithCb;
+
+  const fetchWithTimeout = (input: string, init?: RequestInit, timeoutMs = 8000): Promise<Response> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+  };
 
   const strategies = [
     {
       name: 'Direct',
       fn: async () => {
-        const response = await fetch(urlWithCb, {
+        const response = await fetchWithTimeout(targetExternalUrl, {
             method: 'GET',
             credentials: 'omit', // Essential for 'Anyone' scripts to avoid cookie/auth redirects
             redirect: 'follow',
@@ -92,47 +125,50 @@ export const fetchSafe = async (url: string, requireJson: boolean = false, skipC
       }
     },
     {
+      name: 'AllOriginsWrapped',
+      fn: async () => {
+        const encodedUrl = encodeURIComponent(targetExternalUrl);
+        const proxyUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
+        const response = await fetchWithTimeout(proxyUrl);
+        if (!response.ok) throw new Error(`Proxy status ${response.status}`);
+        const wrapper = await response.json();
+        if (!wrapper || wrapper.contents === undefined || wrapper.contents === null) {
+            throw new Error("Invalid AllOrigins response");
+        }
+        const contentsStr = typeof wrapper.contents === 'string' ? wrapper.contents : JSON.stringify(wrapper.contents);
+        const wrappedResponse = new Response(contentsStr || (isAwcUrl ? '[]' : ''), { 
+            status: 200, 
+            statusText: "OK",
+            headers: { 'Content-Type': 'application/json' }
+        });
+        return await validate(wrappedResponse, 'AllOriginsWrapped');
+      }
+    },
+    {
       name: 'AllOriginsRaw',
       fn: async () => {
-        const encodedUrl = encodeURIComponent(urlWithCb);
+        const encodedUrl = encodeURIComponent(targetExternalUrl);
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodedUrl}`;
-        const response = await fetch(proxyUrl);
+        const response = await fetchWithTimeout(proxyUrl);
         return await validate(response, 'AllOriginsRaw');
       }
     },
     {
       name: 'CodeTabs',
       fn: async () => {
-        const encodedUrl = encodeURIComponent(urlWithCb);
+        const encodedUrl = encodeURIComponent(targetExternalUrl);
         const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodedUrl}`;
-        const response = await fetch(proxyUrl);
+        const response = await fetchWithTimeout(proxyUrl);
         return await validate(response, 'CodeTabs');
       }
     },
     {
       name: 'CorsProxy',
       fn: async () => {
-        const encodedUrl = encodeURIComponent(urlWithCb);
+        const encodedUrl = encodeURIComponent(targetExternalUrl);
         const proxyUrl = `https://corsproxy.io/?${encodedUrl}`;
-        const response = await fetch(proxyUrl);
+        const response = await fetchWithTimeout(proxyUrl);
         return await validate(response, 'CorsProxy');
-      }
-    },
-    {
-      name: 'AllOriginsWrapped',
-      fn: async () => {
-        const encodedUrl = encodeURIComponent(urlWithCb);
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodedUrl}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`Proxy status ${response.status}`);
-        const wrapper = await response.json();
-        if (!wrapper || !wrapper.contents) throw new Error("Invalid AllOrigins response");
-        const wrappedResponse = new Response(wrapper.contents, { 
-            status: 200, 
-            statusText: "OK",
-            headers: { 'Content-Type': 'application/json' }
-        });
-        return await validate(wrappedResponse, 'AllOriginsWrapped');
       }
     }
   ];
@@ -220,8 +256,10 @@ export const fetchWeather = async (airportId: string, forceRefresh = false): Pro
     }
   }
   
+  const queryId = /^[A-Z]{3}$/i.test(airportId.trim()) ? `K${airportId.trim().toUpperCase()}` : airportId.trim().toUpperCase();
+  
   try {
-    const metarRes = await fetchSafe(`${AWC_API_BASE}/metar?ids=${airportId}&format=json&taf=true`, true);
+    const metarRes = await fetchSafe(`${AWC_API_BASE}/metar?ids=${queryId}&format=json&taf=true`, true);
 
     let metarData: any[] = [];
     

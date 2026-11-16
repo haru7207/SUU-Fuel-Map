@@ -1036,7 +1036,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     cardRules: {
       primary: CardType.PCARD,
       notes: ''
-    }
+    },
+    weatherSource: 'KCNY'
   },
   {
     id: 'KSPK',
@@ -1089,7 +1090,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     cardRules: {
       primary: CardType.PCARD,
       notes: ''
-    }
+    },
+    weatherSource: 'KFOM'
   },
   {
     id: '41U',
@@ -1115,7 +1117,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     cardRules: {
       primary: CardType.PCARD,
       notes: ''
-    }
+    },
+    weatherSource: 'KPUC'
   },
   {
     id: 'IGM',
@@ -1141,7 +1144,8 @@ export const AIRPORT_DATABASE: Airport[] = [
     cardRules: {
       primary: CardType.PCARD,
       notes: ''
-    }
+    },
+    weatherSource: 'KIGM'
   },
   {
     id: 'KAZC',
