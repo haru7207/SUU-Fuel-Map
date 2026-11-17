@@ -1,30 +1,29 @@
-
 export function register() {
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      // Use relative path './sw.js' instead of absolute '/sw.js'
-      // This ensures it works in subdirectories or preview environments where the app root isn't the domain root.
-      const swUrl = './sw.js';
-      navigator.serviceWorker
-        .register(swUrl)
-        .then((registration) => {
-          console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        })
-        .catch((error) => {
-          console.warn('ServiceWorker registration failed: ', error);
-        });
-    });
-  }
+  unregister();
 }
 
 export function unregister() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready
-      .then((registration) => {
-        registration.unregister();
+  if ('caches' in window) {
+    caches
+      .keys()
+      .then((keys) => {
+        keys.forEach((key) => {
+          if (key.startsWith('suu-fuel-map')) {
+            caches.delete(key);
+          }
+        });
       })
-      .catch((error) => {
-        console.error(error.message);
-      });
+      .catch(() => {});
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker
+      .getRegistrations()
+      .then((registrations) => {
+        for (const registration of registrations) {
+          registration.unregister();
+        }
+      })
+      .catch(() => {});
   }
 }

@@ -530,7 +530,7 @@ Notes: ${log.notes || 'None'}
     <>
       {/* Floating Action Buttons (Mobile only, stacked vertically under Menu to avoid colliding with Map Layers) */}
       {!isOpen && !isFlightTimeOpen && !isHidden && (
-        <div className={`md:hidden absolute top-[70px] left-4 z-[1050] flex flex-col items-start gap-2 transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
+        <div className={`md:hidden absolute top-[max(4.5rem,calc(env(safe-area-inset-top)+4rem))] left-4 z-[1050] flex flex-col items-start gap-2 transition-all ${!isOnline ? 'mt-6' : ''}`} ref={dropdownRef}>
           {/* Fuel Ops Toggle Dropdown */}
           <div className="relative">
             <button
@@ -618,7 +618,7 @@ Notes: ${log.notes || 'None'}
 
       {/* Slide-up/Popover Panel - Bottom Sheet on Mobile, aligned next to Sidebar on Desktop */}
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-3 md:left-[344px] lg:left-[408px] md:right-auto md:w-96 ios-liquid-glass-heavy rounded-t-3xl md:rounded-[28px] flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[82vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-3 md:left-[344px] lg:left-[408px] md:right-auto md:w-96 ios-liquid-glass-heavy rounded-t-3xl md:rounded-[28px] flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[82dvh]">
           
           {/* Header */}
           <div className="bg-white/15 dark:bg-slate-900/25 text-slate-900 dark:text-white px-5 py-4 flex justify-between items-center border-b border-white/50 dark:border-slate-700/60 flex-shrink-0">
@@ -679,11 +679,11 @@ Notes: ${log.notes || 'None'}
           </div>
 
           {/* Content Area */}
-          <div className="flex-1 overflow-y-auto bg-transparent custom-scrollbar relative">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y bg-transparent custom-scrollbar relative pb-20 md:pb-4">
             
             {/* VIEW: FORM */}
             {view === 'form' && (
-                <div className="p-5 space-y-4">
+                <div className="p-5 pb-12 space-y-4">
                     
                     {/* Instruction Sticky Note */}
                     <div className="bg-amber-500/15 border border-amber-300/60 p-3 rounded-2xl flex gap-3 items-start">
@@ -874,7 +874,7 @@ Notes: ${log.notes || 'None'}
 
             {/* VIEW: CALCULATOR */}
             {view === 'calc' && (
-                <div className="p-5 space-y-4">
+                <div className="p-5 pb-16 space-y-4">
                     <div className="bg-amber-50 dark:bg-amber-950/20 border-l-4 border-amber-400 p-3 rounded-r shadow-sm flex gap-3 items-start">
                         <Calculator size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
                         <p className="text-xs text-amber-900 dark:text-amber-200 font-medium leading-relaxed">
@@ -1233,7 +1233,7 @@ Notes: ${log.notes || 'None'}
 
             {/* VIEW: LIST */}
             {view === 'list' && (
-                <div className="p-4 space-y-3">
+                <div className="p-4 pb-16 space-y-3">
                     {logs.length === 0 ? (
                         <div className="text-center py-10 opacity-50 flex flex-col items-center">
                             <History size={48} className="text-slate-300 mb-2" />
@@ -1355,7 +1355,7 @@ Notes: ${log.notes || 'None'}
 
           {/* Footer Actions (Only for Form View) */}
           {view === 'form' && (
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+            <div className="p-4 pb-[max(1rem,calc(env(safe-area-inset-bottom)+0.75rem))] md:p-4 bg-white/30 dark:bg-slate-900/40 backdrop-blur-md border-t border-white/50 dark:border-slate-700 flex items-center justify-between flex-shrink-0">
                 <button 
                 onClick={handleClearForm}
                 className="flex items-center gap-1.5 px-3 py-2 rounded text-xs font-bold text-slate-500 hover:bg-slate-200 hover:text-slate-700 transition-colors"

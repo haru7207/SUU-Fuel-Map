@@ -183,11 +183,11 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-5xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-hidden border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 md:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-5xl h-[90dvh] md:h-auto max-h-[90dvh] rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden overscroll-y-contain touch-pan-y border border-slate-200 dark:border-slate-800">
         
         {/* Left Column - Inputs */}
-        <div className="flex-1 overflow-y-auto border-r border-slate-200 dark:border-slate-800 p-6">
+        <div className="flex-1 md:min-h-0 md:overflow-y-auto border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-5 md:p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
               <Calculator className="text-blue-500" />
@@ -356,10 +356,10 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
         </div>
 
         {/* Right Column - Illustration */}
-        <div className="hidden md:flex flex-1 bg-slate-50 dark:bg-slate-950 p-6 flex-col items-center justify-center relative">
+        <div className="flex flex-1 bg-slate-50 dark:bg-slate-950 p-6 pb-24 md:pb-6 flex-col items-center justify-center relative shrink-0">
             <button 
               onClick={onClose}
-              className="absolute top-4 right-4 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors"
+              className="hidden md:flex absolute top-4 right-4 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors"
             >
               <X size={20} />
             </button>

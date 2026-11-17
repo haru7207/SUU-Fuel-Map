@@ -10,12 +10,12 @@ export const LegendInfoModal: React.FC<LegendInfoModalProps> = ({ isOpen, onClos
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300" onClick={onClose}>
       <div 
-        className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 animate-pop-in overflow-hidden"
+        className="bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col shadow-2xl border border-slate-200 dark:border-slate-800 animate-pop-in overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <AlertTriangle size={18} />
@@ -33,7 +33,7 @@ export const LegendInfoModal: React.FC<LegendInfoModalProps> = ({ isOpen, onClos
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-8 custom-scrollbar">
+        <div className="flex-1 min-h-0 p-6 pb-24 sm:pb-6 overflow-y-auto overscroll-y-contain touch-pan-y space-y-8 custom-scrollbar">
           {/* Weather Categories */}
           <section>
             <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Flight Categories</h3>

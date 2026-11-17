@@ -1,7 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import MainApp from './MainApp';
 import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+
+// Unregister any stale service workers and clear legacy module caches before mounting
+serviceWorkerRegistration.unregister();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -11,9 +14,6 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
-    <App />
+    <MainApp />
   </React.StrictMode>
 );
-
-// Register Service Worker for PWA functionality
-serviceWorkerRegistration.register();

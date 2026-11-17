@@ -170,7 +170,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
   return (
     <div className="fixed inset-0 z-[1200] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/25 backdrop-blur-md animate-fade-in" onClick={onClose}>
       <div 
-        className="w-full md:max-w-3xl ios-liquid-glass-heavy rounded-t-3xl md:rounded-[28px] overflow-hidden flex flex-col max-h-[90vh] md:max-h-[85vh] animate-slide-in-up"
+        className="w-full md:max-w-3xl ios-liquid-glass-heavy rounded-t-3xl md:rounded-[28px] overflow-hidden flex flex-col max-h-[90dvh] md:max-h-[85dvh] animate-slide-in-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
@@ -268,7 +268,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
         </div>
 
         {/* Scrollable Main Content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-transparent">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-5 pb-20 md:pb-6 space-y-5 bg-transparent custom-scrollbar">
           {isLoading && (
             <div className="py-12 flex flex-col items-center justify-center text-slate-600 dark:text-slate-300 gap-3">
               <RefreshCw size={32} className="animate-spin text-sky-600" />
@@ -433,7 +433,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-white/15 dark:bg-slate-900/25 border-t border-white/45 dark:border-slate-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 shrink-0">
+        <div className="p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.5rem))] md:p-3 bg-white/15 dark:bg-slate-900/25 border-t border-white/45 dark:border-slate-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 shrink-0">
           <span className="font-semibold text-[11px]">
             Data Source: NOAA / Aviation Weather Center (AWC API)
           </span>

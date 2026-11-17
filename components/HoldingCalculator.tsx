@@ -270,7 +270,7 @@ export const HoldingCalculator: React.FC<HoldingCalculatorProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   return (
-    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
+    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[75dvh]">
       
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-4 flex justify-between items-center flex-shrink-0 border-b border-slate-200 dark:border-slate-700">
@@ -289,7 +289,7 @@ export const HoldingCalculator: React.FC<HoldingCalculatorProps> = ({ isOpen, on
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-50 dark:bg-slate-900 flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-5 pb-24 md:pb-5 custom-scrollbar bg-slate-50 dark:bg-slate-900 flex flex-col lg:flex-row gap-6">
         
         {/* Visualization area */}
         <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 relative shadow-sm">

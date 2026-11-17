@@ -69,8 +69,8 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
   });
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
+      <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-t-3xl md:rounded-xl w-full max-w-6xl h-[90dvh] md:h-auto max-h-[90dvh] flex flex-col overflow-hidden">
         
         {/* Header */}
         <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
@@ -108,7 +108,7 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
         </div>
 
         {/* Table Content */}
-        <div className="flex-1 overflow-auto bg-slate-900 p-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y bg-slate-900 p-4 pb-24 md:pb-6 custom-scrollbar">
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>

@@ -41,9 +41,9 @@ export const DinnerRecommendation: React.FC<DinnerRecommendationProps> = ({ onCl
     };
 
     return (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-orange-50/50 dark:bg-orange-950/20">
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
+            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[88dvh]" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-orange-50/50 dark:bg-orange-950/20 shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="bg-orange-100 dark:bg-orange-900/40 p-2 rounded-xl text-orange-600 dark:text-orange-400">
                             <ChefHat size={20} />
@@ -61,7 +61,7 @@ export const DinnerRecommendation: React.FC<DinnerRecommendationProps> = ({ onCl
                     </button>
                 </div>
 
-                <div className="p-5 flex-1 overflow-y-auto custom-scrollbar flex flex-col">
+                <div className="p-5 pb-24 sm:pb-6 flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y custom-scrollbar flex flex-col">
                     <form onSubmit={searchRecipes} className="mb-6 relative">
                         <input
                             type="text"

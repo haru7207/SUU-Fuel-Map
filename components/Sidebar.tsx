@@ -188,9 +188,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   }, [airports, searchTerm, cardFilter, showOnlyFavorites, favorites, isMetarOnly, weatherMap]);
 
   return (
-    <div className="flex flex-col h-full ios-liquid-glass md:rounded-[28px] w-full md:w-80 lg:w-96 z-20 overflow-hidden transition-all duration-300">
+    <div className="flex flex-col h-full min-h-0 ios-liquid-glass md:rounded-[28px] w-full md:w-80 lg:w-96 z-20 overflow-hidden transition-all duration-300">
       {/* iOS Liquid Glass Header */}
-      <div className="p-4 sm:p-5 pb-3.5 bg-white/15 dark:bg-slate-900/20 text-slate-900 dark:text-white flex-shrink-0 border-b border-white/50 dark:border-white/10 relative z-30">
+      <div className="p-3.5 sm:p-5 pt-[max(0.875rem,calc(env(safe-area-inset-top)+0.5rem))] md:pt-5 pb-3 bg-white/15 dark:bg-slate-900/20 text-slate-900 dark:text-white flex-shrink-0 border-b border-white/50 dark:border-white/10 relative z-30">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
              <div className="p-1.5 rounded-2xl bg-white/35 dark:bg-slate-800/40 backdrop-blur-md border border-white/75 dark:border-white/15 shadow-2xs">
@@ -414,9 +414,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* Main Scrollable List or Settings */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-2 space-y-1.5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y px-2.5 py-2 pb-16 md:pb-3 space-y-1.5 custom-scrollbar">
         {showSettings ? (
-          <div className="animate-fade-in pb-8 px-1.5 pt-2">
+          <div className="animate-fade-in pb-16 md:pb-8 px-1.5 pt-2">
             {/* iOS Settings Header */}
             <div className="ios-liquid-card rounded-2xl p-4 mb-5 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -598,7 +598,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <p className="text-sm font-medium">No airports match your filter.</p>
           </div>
         ) : (
-          <ul className="space-y-1.5 pb-2">
+          <ul className="space-y-1.5 pb-12 md:pb-2">
             {filteredAirports.map(airport => {
               const isSelected = airport.id === selectedId;
               const isWhiteCard = airport.cardRules.primary === CardType.WHITE_CARD;
@@ -727,7 +727,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className="px-4 py-3 bg-white/15 dark:bg-slate-900/20 border-t border-white/50 dark:border-white/10 flex-shrink-0">
+      <div className="px-4 py-2.5 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.5rem))] md:py-3 bg-white/15 dark:bg-slate-900/20 border-t border-white/50 dark:border-white/10 flex-shrink-0">
         <p className="text-[10px] text-slate-600 dark:text-slate-300 text-center leading-relaxed">
           SUU Aviation Dispatch & Instructor Reference · <span className="font-semibold text-slate-800 dark:text-white">Advisory Use Only</span>
         </p>

@@ -1,10 +1,10 @@
 
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Airport, CardType, WeatherData, FuelType, NotamData } from '../types';
 import { fetchWeather } from '../services/aviationService';
 import { auth, signInWithGoogle, logOut } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star, Bell, CheckCircle, CloudFog, CloudRain } from 'lucide-react';
+import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star, Bell, CheckCircle, CloudFog, CloudRain, ChevronUp, ChevronDown } from 'lucide-react';
 import { GoogleGenAI } from '@google/genai';
 import Markdown from 'react-markdown';
 import { REMARKS_DATABASE } from './remarksDb';
@@ -23,6 +23,8 @@ interface AirportDetailsProps {
   onRefreshFuelPrices?: () => Promise<void>;
   isFavorite?: boolean;
   onToggleFavorite?: (id: string) => void;
+  isMobileExpanded?: boolean;
+  onToggleMobileExpand?: () => void;
 }
 
 type Tab = 'info' | 'runways' | 'weather' | 'notam';
@@ -36,12 +38,22 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   isRefreshingFuel = false,
   onRefreshFuelPrices,
   isFavorite = false,
-  onToggleFavorite
+  onToggleFavorite,
+  isMobileExpanded = false,
+  onToggleMobileExpand
 }) => {
   const [activeTab, setActiveTab] = useState<Tab>('info');
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(true);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [airport.id, activeTab]);
 
   // Crosswind Calculator State
   const [selectedRunway, setSelectedRunway] = useState<string>(airport.runways[0] || '18/36');
@@ -426,19 +438,27 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
 
 
   return (
-    <div className="h-full flex flex-col bg-transparent overflow-hidden relative font-sans">
+    <div className="h-full min-h-0 flex flex-col bg-transparent overflow-hidden relative font-sans">
       
-      {/* Mobile Drag Indicator */}
-      <div className="w-full flex justify-center pt-3 pb-1 md:hidden bg-white/50 dark:bg-slate-900/50 flex-shrink-0">
-         <div className="w-10 h-1.5 bg-slate-400/50 dark:bg-slate-600 rounded-full" />
-      </div>
+      {/* Mobile Interactive Drag / Expand Bar */}
+      <button
+        type="button"
+        onClick={() => onToggleMobileExpand && onToggleMobileExpand()}
+        className="w-full flex items-center justify-center gap-1.5 pt-2.5 pb-1 md:hidden bg-white/35 dark:bg-slate-900/35 flex-shrink-0 active:bg-white/50 transition-colors cursor-pointer"
+        title={isMobileExpanded ? "Collapse panel" : "Expand panel to full screen"}
+      >
+        <div className="w-10 h-1.5 bg-slate-400/60 dark:bg-slate-500 rounded-full" />
+        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center">
+          {isMobileExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+        </span>
+      </button>
 
-      {/* Flight Category Status Bar */}
+      {/* Flight Category Status Bar (Desktop fixed, Mobile inside scroll view to save header space) */}
       {weather && (
         (() => {
           const catDetails = getFlightCategoryDetails(weather.flightCategory);
           return (
-            <div className={`w-full px-4 py-2 flex items-center justify-center gap-2 border-b border-white/50 ${catDetails.bg}/45 flex-shrink-0`}>
+            <div className={`hidden md:flex w-full px-4 py-2 items-center justify-center gap-2 border-b border-white/50 ${catDetails.bg}/45 flex-shrink-0`}>
               <div className={`${catDetails.text} drop-shadow-2xs`}>
                 {catDetails.icon}
               </div>
@@ -451,26 +471,40 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       )}
 
       {/* --- iOS LIQUID GLASS HEADER --- */}
-      <div className="px-5 pb-4 pt-4 md:p-5 border-b border-white/50 dark:border-white/10 bg-white/15 dark:bg-slate-900/20 flex justify-between items-start flex-shrink-0">
-        <div>
-          <div className="flex items-center gap-2.5">
-             <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-mono drop-shadow-2xs">
+      <div className="px-4 py-2.5 md:p-5 border-b border-white/50 dark:border-white/10 bg-white/15 dark:bg-slate-900/20 flex justify-between items-start flex-shrink-0">
+        <div className="min-w-0 pr-2">
+          <div className="flex items-center gap-2 flex-wrap">
+             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-mono drop-shadow-2xs">
                 {airport.id}
              </h2>
-            
+            {weather && (
+              <span className={`md:hidden text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${getFlightCategoryDetails(weather.flightCategory).bg}/70 ${getFlightCategoryDetails(weather.flightCategory).text} ${getFlightCategoryDetails(weather.flightCategory).border}`}>
+                {weather.flightCategory}
+              </span>
+            )}
             {airport.weatherSource && (
                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1" title={`Weather from ${airport.weatherSource}`}>
                     · <CloudSun size={12} className="text-sky-600" /> {airport.weatherSource}
                  </span>
             )}
           </div>
-          <p className="text-sm text-slate-800 dark:text-slate-200 font-semibold mt-0.5">{airport.name}</p>
-          <div className="flex items-center text-xs text-slate-600 dark:text-slate-300 mt-0.5 font-medium">
-            <MapPin size={12} className="mr-1 text-sky-600 dark:text-sky-400" />
-            {airport.city}, {airport.state}
+          <p className="text-xs md:text-sm text-slate-800 dark:text-slate-200 font-semibold mt-0.5 truncate">{airport.name}</p>
+          <div className="flex items-center text-[11px] md:text-xs text-slate-600 dark:text-slate-300 mt-0.5 font-medium">
+            <MapPin size={11} className="mr-1 text-sky-600 dark:text-sky-400 shrink-0" />
+            <span className="truncate">{airport.city}, {airport.state}</span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5 shrink-0">
+            {onToggleMobileExpand && (
+              <button
+                type="button"
+                onClick={onToggleMobileExpand}
+                className="md:hidden p-2 rounded-full ios-liquid-pill text-slate-700 dark:text-slate-200 active:scale-95 flex items-center justify-center"
+                title={isMobileExpanded ? "Standard height" : "Full height"}
+              >
+                {isMobileExpanded ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+              </button>
+            )}
             <button 
                onClick={() => onToggleFavorite && onToggleFavorite(airport.id)} 
                className={`p-2 rounded-full ios-liquid-pill transition-all duration-200 active:scale-95 flex items-center justify-center ${
@@ -500,20 +534,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
         </div>
       </div>
 
-      {airport.generalWarning && (
-        <div className="bg-amber-500/15 px-4 py-3 border-b border-amber-300/50 dark:border-amber-700/40 flex items-start gap-3">
-          <AlertTriangle className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={18} />
-          <div>
-            <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300 tracking-wide mb-0.5">Important Operational Notice</h4>
-            <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed font-medium">
-              {airport.generalWarning}
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* --- iOS SEGMENTED TABS --- */}
-      <div className="px-4 py-2.5 bg-white/10 dark:bg-slate-900/15 border-b border-white/45 dark:border-white/10 flex-shrink-0">
+      <div className="px-3.5 py-2 md:px-4 md:py-2.5 bg-white/10 dark:bg-slate-900/15 border-b border-white/45 dark:border-white/10 flex-shrink-0">
         <div className="flex bg-white/22 dark:bg-slate-800/35 p-1 rounded-2xl border border-white/60 dark:border-white/15 gap-1">
           {[
             { id: 'info', label: 'FBO & Info' },
@@ -537,7 +559,22 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       </div>
 
       {/* --- CONTENT AREA --- */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div
+        ref={scrollContainerRef}
+        onScroll={(e) => setShowScrollTop(e.currentTarget.scrollTop > 180)}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-4 pb-28 md:pb-8 space-y-4 custom-scrollbar"
+      >
+        {airport.generalWarning && (
+          <div className="bg-amber-500/15 px-3.5 py-3 rounded-2xl border border-amber-300/60 dark:border-amber-700/40 flex items-start gap-2.5">
+            <AlertTriangle className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" size={17} />
+            <div>
+              <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300 tracking-wide mb-0.5">Important Operational Notice</h4>
+              <p className="text-xs text-amber-800 dark:text-amber-200/90 leading-relaxed font-medium">
+                {airport.generalWarning}
+              </p>
+            </div>
+          </div>
+        )}
         
         {/* TAB: INFO */}
         {activeTab === 'info' && (
@@ -1177,6 +1214,19 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
             })()}
 
       </div>
+
+      {/* Quick Scroll-to-Top Floating Button */}
+      {showScrollTop && (
+        <button
+          type="button"
+          onClick={() => scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="absolute bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] right-4 z-30 ios-liquid-pill px-3 py-2 rounded-full text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all"
+          title="Back to top"
+        >
+          <ArrowUpCircle size={15} className="text-sky-600 dark:text-sky-400" />
+          <span>Top</span>
+        </button>
+      )}
     </div>
   );
 };

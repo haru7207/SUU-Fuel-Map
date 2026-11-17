@@ -561,7 +561,7 @@ const Map: React.FC<MapProps> = ({
       </div>
 
       {/* GPS Tracking Button */}
-      <div className={`absolute top-4 left-20 md:top-auto md:left-auto md:bottom-6 md:right-4 z-[1000] transition-all ${!isOnline ? 'mt-6 md:mt-0' : ''}`}>
+      <div className={`absolute top-[max(1rem,calc(env(safe-area-inset-top)+0.5rem))] left-20 md:top-auto md:left-auto md:bottom-6 md:right-4 z-[1000] transition-all ${!isOnline ? 'mt-6 md:mt-0' : ''}`}>
         <button 
           onClick={toggleTracking}
           className={`p-3 md:p-3 rounded-full transition-all min-w-[48px] min-h-[48px] flex items-center justify-center active:scale-95 ${
@@ -582,7 +582,7 @@ const Map: React.FC<MapProps> = ({
 
       {/* Map Hazard Legend Overlay */}
       {(mapLayers.wildfires || mapLayers.tfrs || showAirmet) && (
-        <div className="absolute bottom-6 left-4 md:left-[395px] z-[1000] flex flex-col items-start pointer-events-auto select-none font-sans">
+        <div className="absolute bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.75rem))] left-4 md:left-[395px] z-[1000] flex flex-col items-start pointer-events-auto select-none font-sans">
           {isLegendOpen ? (
             <div className="ios-liquid-glass rounded-2xl p-3.5 max-w-[250px] text-xs flex flex-col gap-2.5 transition-all text-slate-800 dark:text-slate-200">
               <div className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-white/50 dark:border-slate-700/50 pb-1.5 flex items-center justify-between w-full">

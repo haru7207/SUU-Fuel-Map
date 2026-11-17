@@ -51,7 +51,7 @@ export const DensityAltitudeCalculator: React.FC<DensityAltitudeCalculatorProps>
   }
 
   return (
-    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[32rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-auto md:max-h-[85vh]">
+    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[32rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-auto md:max-h-[85dvh]">
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-4 flex justify-between items-center flex-shrink-0 border-b border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
@@ -69,7 +69,7 @@ export const DensityAltitudeCalculator: React.FC<DensityAltitudeCalculatorProps>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-5 custom-scrollbar bg-slate-50 dark:bg-slate-900 flex flex-col gap-5">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-5 pb-24 md:pb-5 custom-scrollbar bg-slate-50 dark:bg-slate-900 flex flex-col gap-5">
         
         {selectedAirport && (
           <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800/50 flex justify-between items-center">

@@ -161,7 +161,7 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
   return (
     <>
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[85vh] md:h-[600px] md:max-h-[75vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[75dvh]">
           
           {/* Header */}
           <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">
@@ -207,9 +207,9 @@ export const FlightTimeCalculator: React.FC<FlightTimeCalculatorProps> = ({
               </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y pb-20 md:pb-4 custom-scrollbar">
             {view === 'form' ? (
-                <div className="p-5 space-y-6">
+                <div className="p-5 pb-12 space-y-6">
                     {/* Aircraft Section */}
                     <div className="space-y-3">
                         <label className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-slate-200 tracking-wide">

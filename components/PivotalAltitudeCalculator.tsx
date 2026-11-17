@@ -30,7 +30,7 @@ export const PivotalAltitudeCalculator: React.FC<PivotalAltitudeCalculatorProps>
   return (
     <>
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-80 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up md:max-h-[75vh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-80 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up max-h-[88dvh] md:max-h-[75dvh]">
           
           {/* Header */}
           <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">
@@ -50,7 +50,7 @@ export const PivotalAltitudeCalculator: React.FC<PivotalAltitudeCalculatorProps>
             </button>
           </div>
 
-          <div className="p-5 overflow-y-auto flex-1">
+          <div className="p-5 pb-20 md:pb-5 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y flex-1 custom-scrollbar">
              <div className="space-y-6">
                 
                 <div className="bg-blue-50 dark:bg-slate-800/50 p-4 rounded-xl border border-blue-100 dark:border-slate-700 text-center">

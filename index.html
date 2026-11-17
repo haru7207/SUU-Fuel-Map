@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#C41230" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -53,13 +53,25 @@
           inset 0 1px 0.5px 0 rgba(255, 255, 255, 0.2);
       }
 
-      body {
+      html, body, #root {
         margin: 0;
         padding: 0;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
         overflow: hidden;
+        overscroll-behavior: none;
         font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Plus Jakarta Sans", sans-serif;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+      }
+
+      .overflow-y-auto,
+      .overflow-auto,
+      .custom-scrollbar {
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
       }
 
       .font-mono {
@@ -233,20 +245,35 @@
         filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    "react-leaflet": "https://esm.sh/react-leaflet@^5.0.0",
-    "leaflet": "https://esm.sh/leaflet@^1.9.4"
-  }
-}
-</script>
-<link rel="stylesheet" href="/index.css">
-</head>
+    <script>
+      (function() {
+        var swPromise = ('serviceWorker' in navigator)
+          ? navigator.serviceWorker.getRegistrations().then(function(regs) {
+              return Promise.all(regs.map(function(r) { return r.unregister(); }));
+            }).catch(function() { return []; })
+          : Promise.resolve([]);
+
+        var cachePromise = ('caches' in window)
+          ? caches.keys().then(function(keys) {
+              var stale = keys.filter(function(k) { return k.indexOf('suu-fuel-map') === 0; });
+              return Promise.all(stale.map(function(k) { return caches.delete(k); })).then(function() {
+                return stale.length > 0;
+              });
+            }).catch(function() { return false; })
+          : Promise.resolve(false);
+
+        Promise.all([swPromise, cachePromise]).then(function(results) {
+          var hadSw = results[0] && results[0].length > 0;
+          var hadCache = results[1];
+          if ((hadSw || hadCache) && !sessionStorage.getItem('sw_cache_purged_v5')) {
+            sessionStorage.setItem('sw_cache_purged_v5', '1');
+            window.location.reload();
+          }
+        });
+      })();
+    </script>
+    <link rel="stylesheet" href="/index.css">
+  </head>
   <body>
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>

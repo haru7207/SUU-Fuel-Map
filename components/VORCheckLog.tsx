@@ -226,8 +226,8 @@ Signature: ____________________`;
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-fadeIn">
+    <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90dvh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-fadeIn">
         
         {/* Header */}
         <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
@@ -277,7 +277,7 @@ Signature: ____________________`;
 
         {/* Content */}
         {activeTab === 'form' ? (
-        <div className="p-4 md:p-6 overflow-y-auto space-y-6">
+        <div className="flex-1 min-h-0 p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto overscroll-y-contain touch-pan-y space-y-6 custom-scrollbar">
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between p-3 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-800 dark:text-cyan-400 rounded-lg border border-cyan-200 dark:border-cyan-800/50">
               <span className="text-sm font-medium">Ensure compliance with 14 CFR 91.171 for IFR operations. This tool formats the legally required logbook entry.</span>
               <button onClick={loadDraft} className="whitespace-nowrap text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 px-3 rounded shadow-sm transition-colors">
@@ -422,7 +422,7 @@ Signature: ____________________`;
             )}
         </div>
         ) : (
-        <div className="p-4 md:p-6 overflow-y-auto max-h-[60vh] space-y-4">
+        <div className="flex-1 min-h-0 p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto overscroll-y-contain touch-pan-y space-y-4 custom-scrollbar">
             {history.length === 0 ? (
             <div className="text-center py-8 text-slate-400">
                 <History size={32} className="mx-auto mb-2 opacity-50" />

@@ -346,7 +346,7 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
   if (!isOpen) return null;
 
   return (
-    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-24 md:right-4 md:left-auto md:w-[40rem] lg:w-[54rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up md:animate-fade-in max-h-[90vh]">
+    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-24 md:right-4 md:left-auto md:w-[40rem] lg:w-[54rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up md:animate-fade-in h-[88dvh] md:h-auto max-h-[90dvh]">
       
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 px-5 py-4 flex justify-between items-center border-b border-slate-200 dark:border-slate-700 shrink-0">
@@ -364,7 +364,7 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
         </button>
       </div>
 
-      <div className="overflow-y-auto p-4 custom-scrollbar">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-4 pb-24 md:pb-6 custom-scrollbar">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           
           {/* Inputs Section */}
