@@ -77,11 +77,11 @@ const createPinIcon = (
           position: absolute;
           top: -12px;
           left: -12px;
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.78) 0%, rgba(220, 38, 38, 0.58) 100%);
-          backdrop-filter: blur(10px) saturate(180%);
-          -webkit-backdrop-filter: blur(10px) saturate(180%);
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.68) 0%, rgba(220, 38, 38, 0.44) 100%);
+          backdrop-filter: blur(14px) saturate(210%);
+          -webkit-backdrop-filter: blur(14px) saturate(210%);
           color: white;
-          border: 1px solid rgba(255, 255, 255, 0.88);
+          border: 1px solid rgba(255, 255, 255, 0.92);
           border-radius: 50%;
           width: 19px;
           height: 19px;
@@ -91,7 +91,7 @@ const createPinIcon = (
           font-weight: 900;
           font-family: inherit;
           font-size: 11px;
-          box-shadow: 0 4px 10px rgba(239,68,68,0.35), inset 0 1px 0.5px rgba(255,255,255,0.85);
+          box-shadow: 0 4px 10px rgba(239,68,68,0.32), inset 0 1px 0.5px rgba(255,255,255,0.92);
           z-index: 50;
       " title="Active NOTAM Warning/Hazard">!</div>
     `;
@@ -102,9 +102,9 @@ const createPinIcon = (
     const { speed, gust, direction, isVrb } = windObj;
     const maxWind = Math.max(speed, gust);
     
-    let bg = 'linear-gradient(135deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.36) 100%)';
+    let bg = 'linear-gradient(135deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.16) 100%)';
     let textAndArrowColor = '#047857'; // emerald-700
-    let border = '1px solid rgba(255, 255, 255, 0.85)';
+    let border = '1px solid rgba(255, 255, 255, 0.9)';
     let windLabel = 'Calm';
     
     if (speed > 0 || gust > 0) {
@@ -113,16 +113,16 @@ const createPinIcon = (
       windLabel = `${dirText} ${valText}kt`;
       
       if (maxWind >= 20) {
-        bg = 'linear-gradient(135deg, rgba(220, 38, 38, 0.72) 0%, rgba(185, 28, 28, 0.52) 100%)';
-        border = '1px solid rgba(254, 202, 202, 0.85)';
+        bg = 'linear-gradient(135deg, rgba(220, 38, 38, 0.62) 0%, rgba(185, 28, 28, 0.38) 100%)';
+        border = '1px solid rgba(254, 202, 202, 0.9)';
         textAndArrowColor = '#ffffff';
       } else if (maxWind >= 12) {
-        bg = 'linear-gradient(135deg, rgba(217, 119, 6, 0.72) 0%, rgba(180, 83, 9, 0.52) 100%)';
-        border = '1px solid rgba(254, 243, 199, 0.85)';
+        bg = 'linear-gradient(135deg, rgba(217, 119, 6, 0.62) 0%, rgba(180, 83, 9, 0.38) 100%)';
+        border = '1px solid rgba(254, 243, 199, 0.9)';
         textAndArrowColor = '#ffffff';
       } else {
-        bg = 'linear-gradient(135deg, rgba(255, 255, 255, 0.62) 0%, rgba(255, 255, 255, 0.36) 100%)';
-        border = '1px solid rgba(255, 255, 255, 0.88)';
+        bg = 'linear-gradient(135deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.16) 100%)';
+        border = '1px solid rgba(255, 255, 255, 0.92)';
         textAndArrowColor = '#047857';
       }
     }
@@ -140,8 +140,8 @@ const createPinIcon = (
           top: -13px;
           right: -26px;
           background: ${bg};
-          backdrop-filter: blur(12px) saturate(190%);
-          -webkit-backdrop-filter: blur(12px) saturate(190%);
+          backdrop-filter: blur(14px) saturate(210%);
+          -webkit-backdrop-filter: blur(14px) saturate(210%);
           color: ${textAndArrowColor};
           border: ${border};
           border-radius: 9999px;
@@ -150,7 +150,7 @@ const createPinIcon = (
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
           font-size: 9px;
           line-height: 1;
-          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14), inset 0 1px 0.5px rgba(255, 255, 255, 0.9);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12), inset 0 1px 0.5px rgba(255, 255, 255, 0.95);
           z-index: 40;
           display: flex;
           align-items: center;
@@ -172,11 +172,11 @@ const createPinIcon = (
           left: 50%;
           transform: translateX(-50%);
           bottom: -17px;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.64) 0%, rgba(255, 255, 255, 0.38) 100%);
-          backdrop-filter: blur(12px) saturate(190%);
-          -webkit-backdrop-filter: blur(12px) saturate(190%);
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.16) 100%);
+          backdrop-filter: blur(14px) saturate(210%);
+          -webkit-backdrop-filter: blur(14px) saturate(210%);
           color: #047857;
-          border: 1px solid rgba(255, 255, 255, 0.88);
+          border: 1px solid rgba(255, 255, 255, 0.92);
           border-radius: 9999px;
           padding: 3px 7px;
           font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -184,7 +184,7 @@ const createPinIcon = (
           font-size: 9px;
           line-height: 1;
           white-space: nowrap;
-          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14), inset 0 1px 0.5px rgba(255, 255, 255, 0.95);
+          box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12), inset 0 1px 0.5px rgba(255, 255, 255, 0.96);
           z-index: 30;
           letter-spacing: -0.2px;
       ">${activeFuelPrice}</div>
@@ -196,7 +196,7 @@ const createPinIcon = (
   return new L.DivIcon({
     className: `custom-pin-icon transition-all duration-300 ${isSelected ? 'z-[1000]' : 'hover:z-[1000]'}`,
     html: `
-      <div class="animate-pop-in ${isSelected ? 'animate-pin-bounce pulse-ring drop-shadow-[0_10px_14px_rgba(15,23,42,0.32)]' : 'drop-shadow-[0_6px_10px_rgba(15,23,42,0.22)] hover:-translate-y-1 hover:scale-110 hover:drop-shadow-[0_12px_16px_rgba(15,23,42,0.3)]'} transition-all duration-300 ease-out" style="
+      <div class="animate-pop-in ${isSelected ? 'animate-pin-bounce pulse-ring drop-shadow-[0_10px_14px_rgba(15,23,42,0.28)]' : 'drop-shadow-[0_6px_10px_rgba(15,23,42,0.18)] hover:-translate-y-1 hover:scale-110 hover:drop-shadow-[0_12px_16px_rgba(15,23,42,0.26)]'} transition-all duration-300 ease-out" style="
           position: relative;
           color: ${color};
           transform-origin: bottom center;
@@ -206,17 +206,17 @@ const createPinIcon = (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 100%; height: 100%; display: block; overflow: visible;">
           <defs>
             <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="${color}" stop-opacity="0.82" />
-              <stop offset="55%" stop-color="${color}" stop-opacity="0.62" />
-              <stop offset="100%" stop-color="${color}" stop-opacity="0.76" />
+              <stop offset="0%" stop-color="${color}" stop-opacity="0.68" />
+              <stop offset="55%" stop-color="${color}" stop-opacity="0.46" />
+              <stop offset="100%" stop-color="${color}" stop-opacity="0.62" />
             </linearGradient>
           </defs>
           <!-- Outer Liquid Glass Droplet -->
-          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="url(#${gradId})" stroke="rgba(255,255,255,0.92)" stroke-width="${isSelected ? '2' : '1.6'}" stroke-linecap="round" stroke-linejoin="round"></path>
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" fill="url(#${gradId})" stroke="rgba(255,255,255,0.95)" stroke-width="${isSelected ? '2' : '1.6'}" stroke-linecap="round" stroke-linejoin="round"></path>
           <!-- Specular Glass Highlight Arc -->
-          <path d="M6.5 8.5 A 6.5 6.5 0 0 1 16.5 5.2" fill="none" stroke="rgba(255,255,255,0.68)" stroke-width="1.3" stroke-linecap="round"></path>
+          <path d="M6.5 8.5 A 6.5 6.5 0 0 1 16.5 5.2" fill="none" stroke="rgba(255,255,255,0.78)" stroke-width="1.4" stroke-linecap="round"></path>
           <!-- Inner Frosted Glass Core -->
-          <circle cx="12" cy="10" r="3.4" fill="rgba(255,255,255,0.78)" stroke="rgba(255,255,255,0.95)" stroke-width="0.8"></circle>
+          <circle cx="12" cy="10" r="3.4" fill="rgba(255,255,255,0.68)" stroke="rgba(255,255,255,0.96)" stroke-width="0.9"></circle>
         </svg>
         ${overlaysHtml}
       </div>
@@ -241,12 +241,12 @@ const createUserIcon = (heading: number | null) => {
           justify-content: center;
           width: 34px;
           height: 34px;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.72) 0%, rgba(37, 99, 235, 0.52) 100%);
-          backdrop-filter: blur(10px) saturate(180%);
-          -webkit-backdrop-filter: blur(10px) saturate(180%);
-          border: 2px solid rgba(255, 255, 255, 0.92);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.56) 0%, rgba(37, 99, 235, 0.36) 100%);
+          backdrop-filter: blur(14px) saturate(210%);
+          -webkit-backdrop-filter: blur(14px) saturate(210%);
+          border: 2px solid rgba(255, 255, 255, 0.95);
           border-radius: 50%;
-          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.85);
+          box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.92);
       ">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" stroke="none" style="width: 16px; height: 16px; ${heading !== null ? 'transform: translateY(-2px);' : ''}">
           ${heading !== null 

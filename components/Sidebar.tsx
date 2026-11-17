@@ -190,10 +190,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <div className="flex flex-col h-full min-h-0 ios-liquid-glass md:rounded-[28px] w-full md:w-80 lg:w-96 z-20 overflow-hidden transition-all duration-300">
       {/* iOS Liquid Glass Header */}
-      <div className="p-3.5 sm:p-5 pt-[max(0.875rem,calc(env(safe-area-inset-top)+0.5rem))] md:pt-5 pb-3 bg-white/15 dark:bg-slate-900/20 text-slate-900 dark:text-white flex-shrink-0 border-b border-white/50 dark:border-white/10 relative z-30">
+      <div className="p-3.5 sm:p-5 pt-[max(0.875rem,calc(env(safe-area-inset-top)+0.5rem))] md:pt-5 pb-3 bg-white/6 dark:bg-slate-900/10 text-slate-900 dark:text-white flex-shrink-0 border-b border-white/55 dark:border-white/15 relative z-30">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-             <div className="p-1.5 rounded-2xl bg-white/35 dark:bg-slate-800/40 backdrop-blur-md border border-white/75 dark:border-white/15 shadow-2xs">
+             <div className="p-1.5 rounded-2xl bg-white/18 dark:bg-slate-800/25 backdrop-blur-md border border-white/80 dark:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.9)]">
                <img 
                  src="/regenerated_image_1777310555290.png" 
                  alt="SUU Aviation Logo" 
@@ -206,7 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({
              </div>
              <div>
                <h1 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-white leading-none drop-shadow-2xs">
-                 SUU <span className="font-medium text-slate-600 dark:text-slate-300">Fuel Map</span>
+                 SUU <span className="font-medium text-slate-700 dark:text-slate-300">Fuel Map</span>
                </h1>
              </div>
           </div>
@@ -361,8 +361,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }} 
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
                   !isMetarOnly && cardFilter === 'ALL'
-                    ? 'bg-slate-900/75 text-white dark:bg-white/80 dark:text-slate-900 backdrop-blur-md shadow-sm border border-white/40'
-                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                    ? 'bg-slate-900/65 text-white dark:bg-white/75 dark:text-slate-900 backdrop-blur-md shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.45)] border border-white/50'
+                    : 'bg-white/14 dark:bg-slate-800/20 text-slate-800 dark:text-slate-200 hover:bg-white/30 border border-white/65 dark:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.75)]'
                 }`}
              >
                 All Cards
@@ -371,8 +371,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setCardFilter(CardType.PCARD)} 
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
                   cardFilter === CardType.PCARD
-                    ? 'bg-blue-600/75 text-white backdrop-blur-md shadow-sm border border-white/50'
-                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                    ? 'bg-blue-600/70 text-white backdrop-blur-md shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.5)] border border-white/60'
+                    : 'bg-white/14 dark:bg-slate-800/20 text-slate-800 dark:text-slate-200 hover:bg-white/30 border border-white/65 dark:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.75)]'
                 }`}
              >
                 PCard
@@ -381,8 +381,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setCardFilter(CardType.AVFUEL)} 
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
                   cardFilter === CardType.AVFUEL
-                    ? 'bg-slate-800/75 text-white dark:bg-slate-200/80 dark:text-slate-900 backdrop-blur-md shadow-sm border border-white/40'
-                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                    ? 'bg-slate-800/65 text-white dark:bg-slate-200/75 dark:text-slate-900 backdrop-blur-md shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.45)] border border-white/50'
+                    : 'bg-white/14 dark:bg-slate-800/20 text-slate-800 dark:text-slate-200 hover:bg-white/30 border border-white/65 dark:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.75)]'
                 }`}
              >
                 AVFuel
@@ -391,8 +391,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setCardFilter(CardType.WHITE_CARD)} 
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all active:scale-95 ${
                   cardFilter === CardType.WHITE_CARD
-                    ? 'bg-rose-600/75 text-white backdrop-blur-md shadow-sm border border-white/50'
-                    : 'bg-white/25 dark:bg-slate-800/30 text-slate-700 dark:text-slate-200 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                    ? 'bg-rose-600/70 text-white backdrop-blur-md shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.5)] border border-white/60'
+                    : 'bg-white/14 dark:bg-slate-800/20 text-slate-800 dark:text-slate-200 hover:bg-white/30 border border-white/65 dark:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.75)]'
                 }`}
              >
                 White Card
@@ -401,8 +401,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 onClick={() => setShowOnlyFavorites(!showOnlyFavorites)} 
                 className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap shrink-0 transition-all flex items-center gap-1 active:scale-95 ${
                   showOnlyFavorites 
-                    ? 'bg-amber-500/80 text-white backdrop-blur-md shadow-sm border border-white/60' 
-                    : 'bg-white/25 dark:bg-slate-800/30 text-amber-700 dark:text-amber-300 hover:bg-white/45 border border-white/60 dark:border-white/15'
+                    ? 'bg-amber-500/75 text-white backdrop-blur-md shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.55)] border border-white/65' 
+                    : 'bg-white/14 dark:bg-slate-800/20 text-amber-800 dark:text-amber-300 hover:bg-white/30 border border-white/65 dark:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.75)]'
                 }`}
                 title="Filter to show only starred airports"
              >
@@ -422,26 +422,26 @@ const Sidebar: React.FC<SidebarProps> = ({
               <div className="flex items-center gap-3">
                 <button 
                   onClick={() => setShowSettings(false)} 
-                  className="flex items-center justify-center w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-white transition-all shadow-sm border border-white/90 dark:border-white/10 active:scale-95"
+                  className="flex items-center justify-center w-8 h-8 rounded-full ios-liquid-pill text-slate-700 dark:text-slate-200 hover:text-slate-900 transition-all active:scale-95"
                 >
                   <ChevronLeft size={18} strokeWidth={2.5} />
                 </button>
                 <div>
                   <h2 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">Settings</h2>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">Display, Map & Database</p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">Display, Map & Database</p>
                 </div>
               </div>
-              <Settings className="text-slate-400/70" size={20} />
+              <Settings className="text-slate-500/70" size={20} />
             </div>
 
             <div className="space-y-5">
               {/* Theme Settings */}
               <div className="space-y-2">
-                <h3 className="text-xs font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-1.5 ml-2">
+                <h3 className="text-xs font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5 ml-2">
                   <Palette size={13} />
                   Appearance
                 </h3>
-                <div className="bg-slate-200/65 dark:bg-slate-800/70 backdrop-blur-xl rounded-2xl border border-white/75 dark:border-white/10 p-1 flex gap-1">
+                <div className="bg-white/15 dark:bg-slate-800/35 backdrop-blur-xl rounded-2xl border border-white/70 dark:border-white/15 p-1 flex gap-1 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.75)]">
                   {[
                     { id: 'day', icon: Sun, label: 'Light Glass' },
                     { id: 'night', icon: Moon, label: 'Dark Glass' },
@@ -452,8 +452,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                       onClick={() => setThemeMode(mode.id as 'day' | 'night' | 'auto')}
                       className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-all whitespace-nowrap shrink-0 ${
                         themeMode === mode.id 
-                          ? 'bg-white/95 dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm border border-white/90 dark:border-white/10' 
-                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                          ? 'bg-white/45 dark:bg-slate-700/60 backdrop-blur-md text-slate-900 dark:text-white shadow-[0_2px_8px_rgba(15,23,42,0.08),inset_0_1px_0.5px_rgba(255,255,255,0.92)] border border-white/85 dark:border-white/25' 
+                          : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
                       }`}
                     >
                       <mode.icon size={14} />
@@ -618,8 +618,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                     }}
                     className={`w-full text-left px-4 py-3.5 rounded-2xl transition-all duration-200 flex justify-between items-start group relative cursor-pointer ${
                       isSelected
-                        ? 'bg-white/55 dark:bg-slate-800/60 backdrop-blur-xl shadow-[0_10px_25px_-5px_rgba(15,23,42,0.12),inset_0_1.5px_0.5px_rgba(255,255,255,0.95)] border border-white/90 dark:border-white/25'
-                        : 'bg-white/22 dark:bg-slate-800/20 hover:bg-white/42 dark:hover:bg-slate-800/40 border border-white/50 dark:border-white/10 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.03),inset_0_1px_0_rgba(255,255,255,0.65)]'
+                        ? 'bg-white/30 dark:bg-slate-800/40 backdrop-blur-xl shadow-[0_10px_25px_-5px_rgba(15,23,42,0.10),inset_0_1.5px_0.5px_rgba(255,255,255,0.95),inset_0_-1px_0.5px_rgba(255,255,255,0.45)] border border-white/90 dark:border-white/30'
+                        : 'bg-white/10 dark:bg-slate-800/12 hover:bg-white/24 dark:hover:bg-slate-800/28 border border-white/60 dark:border-white/15 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.02),inset_0_1px_0.5px_rgba(255,255,255,0.82)]'
                     }`}
                   >
                     <div className="w-full">
@@ -727,9 +727,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      <div className="px-4 py-2.5 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.5rem))] md:py-3 bg-white/15 dark:bg-slate-900/20 border-t border-white/50 dark:border-white/10 flex-shrink-0">
-        <p className="text-[10px] text-slate-600 dark:text-slate-300 text-center leading-relaxed">
-          SUU Aviation Dispatch & Instructor Reference · <span className="font-semibold text-slate-800 dark:text-white">Advisory Use Only</span>
+      <div className="px-4 py-2.5 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.5rem))] md:py-3 bg-white/6 dark:bg-slate-900/10 border-t border-white/55 dark:border-white/15 flex-shrink-0">
+        <p className="text-[10px] text-slate-700 dark:text-slate-300 text-center leading-relaxed">
+          SUU Aviation Dispatch & Instructor Reference · <span className="font-semibold text-slate-900 dark:text-white">Advisory Use Only</span>
         </p>
       </div>
     </div>

@@ -270,37 +270,37 @@ export const HoldingCalculator: React.FC<HoldingCalculatorProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   return (
-    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[75dvh]">
+    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-[28rem] lg:w-[40rem] ios-liquid-glass-heavy rounded-t-[32px] md:rounded-[28px] flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[75dvh]">
       
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-5 py-4 flex justify-between items-center flex-shrink-0 border-b border-slate-200 dark:border-slate-700">
+      <div className="bg-white/6 dark:bg-slate-800/15 text-slate-900 dark:text-white px-5 py-4 flex justify-between items-center flex-shrink-0 border-b border-white/55 dark:border-slate-700/50">
         <div className="flex items-center gap-3">
-          <div className="bg-blue-100 dark:bg-blue-600/20 p-2 rounded-lg">
+          <div className="bg-blue-500/20 border border-blue-400/50 p-2 rounded-xl">
             <Compass size={24} className="text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Holding Entry Calculator</h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Determine appropriate entry based on FAA standards</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Holding Entry Calculator</h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Determine appropriate entry based on FAA standards</p>
           </div>
         </div>
-        <button onClick={onClose} className="text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
+        <button onClick={onClose} className="ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors p-2 rounded-full">
           <X size={20} />
         </button>
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-5 pb-24 md:pb-5 custom-scrollbar bg-slate-50 dark:bg-slate-900 flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y p-5 pb-24 md:pb-5 custom-scrollbar bg-transparent flex flex-col lg:flex-row gap-6">
         
         {/* Visualization area */}
-        <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-slate-800 rounded-xl p-4 border border-slate-200 dark:border-slate-700 relative shadow-sm">
+        <div className="flex-1 flex flex-col items-center justify-center ios-liquid-card rounded-2xl p-4 relative">
           <canvas ref={canvasRef} width={300} height={300} className="max-w-full h-auto drop-shadow-md" />
           
-          <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/80 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 backdrop-blur-sm shadow-sm">
-             <div className="font-bold text-slate-600 dark:text-slate-200">Recommended Entry</div>
+          <div className="absolute top-4 right-4 ios-liquid-pill px-3 py-2 rounded-xl">
+             <div className="font-bold text-xs text-slate-600 dark:text-slate-300">Recommended Entry</div>
              <div className="text-lg font-black text-blue-600 dark:text-blue-400">{entryType}</div>
           </div>
 
-          <div className="absolute bottom-4 left-4 flex flex-col gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <div className="absolute bottom-4 left-4 flex flex-col gap-1 text-xs font-medium text-slate-700 dark:text-slate-300">
              <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[#14532d] inline-block rounded border border-[#0f3e22]"></span> Direct</div>
              <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[#1e3a8a] inline-block rounded border border-[#172e6e]"></span> Parallel</div>
              <div className="flex items-center gap-1.5"><span className="w-3 h-3 bg-[#7f1d1d] inline-block rounded border border-[#5c1515]"></span> Teardrop</div>
@@ -311,41 +311,41 @@ export const HoldingCalculator: React.FC<HoldingCalculatorProps> = ({ isOpen, on
         <div className="w-full lg:w-64 flex flex-col gap-6">
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 drop-shadow-sm">Aircraft Heading</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1 drop-shadow-sm">Aircraft Heading</label>
                 <input
                   type="number"
                   min="0"
                   max="359"
                   value={heading}
                   onChange={(e) => setHeading(Number(e.target.value))}
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg shadow-inner"
+                  className="w-full ios-liquid-input rounded-xl p-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 drop-shadow-sm">Hold Radial (<span className="text-blue-600 dark:text-blue-400">Outbound</span>)</label>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1 drop-shadow-sm">Hold Radial (<span className="text-blue-600 dark:text-blue-400">Outbound</span>)</label>
                 <input
                   type="number"
                   min="0"
                   max="359"
                   value={radial}
                   onChange={(e) => setRadial(Number(e.target.value))}
-                  className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg shadow-inner"
+                  className="w-full ios-liquid-input rounded-xl p-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 drop-shadow-sm">Turn Direction</label>
-                <div className="flex rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm">
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-2 drop-shadow-sm">Turn Direction</label>
+                <div className="flex rounded-xl overflow-hidden border border-white/65 dark:border-slate-700/60 bg-white/10 dark:bg-slate-800/20">
                    <button 
                      onClick={() => setTurnDirection('left')}
-                     className={`flex-1 py-2 text-sm font-bold transition-colors ${turnDirection === 'left' ? 'bg-blue-600 text-white shadow-inner' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                     className={`flex-1 py-2 text-sm font-bold transition-colors ${turnDirection === 'left' ? 'bg-blue-600/85 text-white shadow-inner' : 'text-slate-700 dark:text-slate-300 hover:bg-white/20 dark:hover:bg-slate-700/30'}`}
                    >
                      Left
                    </button>
                    <button 
                      onClick={() => setTurnDirection('right')}
-                     className={`flex-1 py-2 text-sm font-bold transition-colors border-l border-slate-200 dark:border-slate-700 ${turnDirection === 'right' ? 'bg-blue-600 text-white shadow-inner' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                     className={`flex-1 py-2 text-sm font-bold transition-colors border-l border-white/50 dark:border-slate-700/60 ${turnDirection === 'right' ? 'bg-blue-600/85 text-white shadow-inner' : 'text-slate-700 dark:text-slate-300 hover:bg-white/20 dark:hover:bg-slate-700/30'}`}
                    >
                      Right
                    </button>

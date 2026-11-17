@@ -41,21 +41,21 @@ export const DinnerRecommendation: React.FC<DinnerRecommendationProps> = ({ onCl
     };
 
     return (
-        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4" onClick={onClose}>
-            <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-t-3xl sm:rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col max-h-[88dvh]" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-orange-50/50 dark:bg-orange-950/20 shrink-0">
+        <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center bg-slate-900/15 backdrop-blur-md p-0 sm:p-4" onClick={onClose}>
+            <div className="ios-liquid-glass-heavy w-full max-w-lg rounded-t-[32px] sm:rounded-[28px] overflow-hidden flex flex-col max-h-[88dvh]" onClick={e => e.stopPropagation()}>
+                <div className="p-4 border-b border-white/55 dark:border-slate-800/50 flex justify-between items-center bg-white/6 dark:bg-slate-800/15 shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="bg-orange-100 dark:bg-orange-900/40 p-2 rounded-xl text-orange-600 dark:text-orange-400">
+                        <div className="bg-orange-500/20 border border-orange-400/50 p-2 rounded-xl text-orange-600 dark:text-orange-400">
                             <ChefHat size={20} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Today's Dinner</h2>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">Enter ingredients to get recipe ideas</p>
+                            <h2 className="text-lg font-black text-slate-900 dark:text-slate-100 tracking-tight">Today's Dinner</h2>
+                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium mt-0.5">Enter ingredients to get recipe ideas</p>
                         </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="p-2 ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-full transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -68,35 +68,35 @@ export const DinnerRecommendation: React.FC<DinnerRecommendationProps> = ({ onCl
                             placeholder="e.g. chicken, rice, broccoli"
                             value={ingredients}
                             onChange={(e) => setIngredients(e.target.value)}
-                            className="w-full pl-4 pr-12 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-slate-800 dark:text-slate-200 shadow-sm"
+                            className="w-full pl-4 pr-12 py-3 ios-liquid-input rounded-2xl focus:ring-2 focus:ring-orange-500 text-slate-900 dark:text-slate-100"
                         />
                         <button
                             type="submit"
                             disabled={isLoading || !ingredients.trim()}
-                            className="absolute right-2 top-2 p-1.5 bg-orange-500 hover:bg-orange-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            className="absolute right-2 top-2 p-1.5 bg-orange-500/85 hover:bg-orange-500 border border-white/50 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
                         </button>
                     </form>
 
                     {error && (
-                        <div className="bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm font-medium border border-red-100 dark:border-red-900 mb-4">
+                        <div className="bg-red-500/15 dark:bg-red-950/30 text-red-700 dark:text-red-400 p-4 rounded-2xl text-sm font-medium border border-red-300/60 dark:border-red-900/50 mb-4">
                             {error}
                         </div>
                     )}
 
                     <div className="space-y-4">
                         {recipes.map((recipe) => (
-                            <div key={recipe.id} className="group relative overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 transition-all flex flex-col sm:flex-row h-auto sm:h-[120px]">
+                            <div key={recipe.id} className="group relative overflow-hidden ios-liquid-card rounded-2xl hover:bg-white/25 transition-all flex flex-col sm:flex-row h-auto sm:h-[120px]">
                                 {recipe.image ? (
                                     <img src={recipe.image} alt={recipe.title} referrerPolicy="no-referrer" className="w-full sm:w-[140px] h-[120px] object-cover shrink-0" />
                                 ) : (
-                                    <div className="w-full sm:w-[140px] h-[120px] bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 text-slate-400">
+                                    <div className="w-full sm:w-[140px] h-[120px] bg-white/15 dark:bg-slate-800/30 flex items-center justify-center shrink-0 text-slate-500">
                                         <Utensils size={32} />
                                     </div>
                                 )}
                                 <div className="p-4 flex flex-col justify-center flex-1 min-w-0">
-                                    <h3 className="font-bold text-slate-800 dark:text-slate-200 truncate pr-2 mb-1" title={recipe.title}>
+                                    <h3 className="font-bold text-slate-900 dark:text-slate-100 truncate pr-2 mb-1" title={recipe.title}>
                                         {recipe.title}
                                     </h3>
                                 </div>
@@ -105,7 +105,7 @@ export const DinnerRecommendation: React.FC<DinnerRecommendationProps> = ({ onCl
                     </div>
 
                     {!isLoading && recipes.length === 0 && !error && (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 py-8">
+                        <div className="flex-1 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 py-8">
                             <Utensils size={48} className="mb-4 opacity-50" />
                             <p className="text-sm font-medium">What's in your fridge?</p>
                         </div>

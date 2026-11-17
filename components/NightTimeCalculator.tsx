@@ -123,60 +123,60 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
   return (
     <>
       {isOpen && (
-        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-96 bg-white dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[75dvh]">
+        <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-36 md:right-4 md:left-auto md:w-96 ios-liquid-glass-heavy rounded-t-[28px] md:rounded-[28px] flex flex-col overflow-hidden animate-slide-in-up h-[88dvh] md:h-[600px] md:max-h-[75dvh]">
           
           {/* Header */}
-          <div className="bg-slate-900 text-white px-5 py-4 flex justify-between items-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="bg-indigo-600 p-1.5 rounded-lg flex items-center justify-center">
-                <Moon size={18} className="text-white" />
+          <div className="bg-white/8 dark:bg-slate-900/15 text-slate-900 dark:text-white px-5 py-4 flex justify-between items-center flex-shrink-0 border-b border-white/55 dark:border-slate-700/60">
+            <div className="flex items-center gap-2.5">
+              <div className="bg-indigo-500/15 border border-indigo-400/30 p-2 rounded-2xl flex items-center justify-center">
+                <Moon size={18} className="text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <h3 className="font-bold text-base leading-tight">FAA Night Calculator</h3>
-                <p className="text-[10px] text-slate-400 mt-0.5">Logging, Currency & Equipment</p>
+                <h3 className="font-extrabold text-base leading-tight text-slate-900 dark:text-white">FAA Night Calculator</h3>
+                <p className="text-[10px] text-slate-600 dark:text-slate-400 font-medium mt-0.5">Logging, Currency & Equipment</p>
               </div>
             </div>
             <button 
               onClick={() => setIsOpen(false)}
-              className="text-slate-400 hover:text-white hover:bg-slate-700 p-1.5 rounded-full transition-colors"
+              className="ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-full transition-colors"
             >
-              <X size={20} />
+              <X size={18} />
             </button>
           </div>
 
           <div className="p-4 pb-24 md:pb-6 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y flex-1 flex flex-col gap-4 custom-scrollbar">
             
             {/* Form */}
-            <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col gap-3">
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-1 leading-relaxed">
+            <div className="ios-liquid-card p-3.5 rounded-2xl flex flex-col gap-3">
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 mb-0.5 leading-relaxed font-medium">
                 Enter your exact block-out and block-in times to calculate how much of your flight qualifies for each specific FAA night definition.
               </p>
               <div>
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Flight Date</label>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block mb-1">Flight Date</label>
                 <input 
                   type="date" 
                   value={flightDate}
                   onChange={(e) => setFlightDate(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm font-medium"
+                  className="w-full ios-liquid-input rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-900 dark:text-white outline-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Start Time (Local)</label>
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block mb-1">Start Time (Local)</label>
                   <input 
                     type="time" 
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm font-medium"
+                    className="w-full ios-liquid-input rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-900 dark:text-white outline-none"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">End Time (Local)</label>
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block mb-1">End Time (Local)</label>
                   <input 
                     type="time" 
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded px-2 py-1.5 text-sm font-medium"
+                    className="w-full ios-liquid-input rounded-xl px-2.5 py-1.5 text-sm font-semibold text-slate-900 dark:text-white outline-none"
                   />
                 </div>
               </div>
@@ -184,18 +184,18 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
 
             {/* Results Grid */}
             {results && startTime && endTime && (
-              <div className="grid grid-cols-3 gap-2 text-center border-b border-slate-100 dark:border-slate-800 pb-4">
-                <div className="bg-blue-50 dark:bg-slate-800/50 p-2 rounded border border-blue-100 dark:border-slate-700">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Log Night</div>
-                  <div className="text-xl font-black text-blue-600 dark:text-blue-400">{results.loggingNightTime.toFixed(1)}</div>
+              <div className="grid grid-cols-3 gap-2 text-center border-b border-white/45 dark:border-slate-800 pb-4">
+                <div className="bg-blue-500/15 dark:bg-slate-800/35 p-2.5 rounded-2xl border border-blue-400/40 dark:border-slate-700">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1 truncate px-1">Log Night</div>
+                  <div className="text-xl font-black text-blue-700 dark:text-blue-400 font-mono">{results.loggingNightTime.toFixed(1)}</div>
                 </div>
-                <div className="bg-orange-50 dark:bg-slate-800/50 p-2 rounded border border-orange-100 dark:border-slate-700">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Log Day</div>
-                  <div className="text-xl font-black text-orange-600 dark:text-orange-400">{results.dayTime.toFixed(1)}</div>
+                <div className="bg-orange-500/15 dark:bg-slate-800/35 p-2.5 rounded-2xl border border-orange-400/40 dark:border-slate-700">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1 truncate px-1">Log Day</div>
+                  <div className="text-xl font-black text-orange-700 dark:text-orange-400 font-mono">{results.dayTime.toFixed(1)}</div>
                 </div>
-                <div className="bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
-                  <div className="text-[10px] font-bold text-slate-500 uppercase mb-1 truncate px-1">Total Flt</div>
-                  <div className="text-xl font-black text-slate-700 dark:text-slate-200">{results.totalFlightTime.toFixed(1)}</div>
+                <div className="ios-liquid-card p-2.5 rounded-2xl">
+                  <div className="text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1 truncate px-1">Total Flt</div>
+                  <div className="text-xl font-black text-slate-900 dark:text-slate-100 font-mono">{results.totalFlightTime.toFixed(1)}</div>
                 </div>
               </div>
             )}
@@ -203,68 +203,68 @@ export const NightTimeCalculator: React.FC<NightTimeCalculatorProps> = ({
             {/* Explanations */}
             <div className="space-y-3">
               
-              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-3 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-1.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 text-[10px] font-black tracking-wider rounded-bl-lg border-b border-l border-blue-200 dark:border-blue-800 uppercase">
+              <div className="ios-liquid-card rounded-2xl p-3.5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-1.5 bg-blue-500/15 text-blue-700 dark:text-blue-300 text-[10px] font-black tracking-wider rounded-bl-xl border-b border-l border-blue-400/35 uppercase">
                   14 CFR 1.1
                 </div>
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1.5 pr-16">
-                  <Clock size={12} className="text-blue-500" />
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-1.5 pr-16">
+                  <Clock size={12} className="text-blue-600 dark:text-blue-400" />
                   Logging Flight Time
                 </h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
                   <span className="font-bold">End of Evening Civil Twilight to Beg. Morning Civil Twilight.</span> Used for logging night flight time and determining when night VFR equipment is required.
                 </p>
                 {times && (
-                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded px-2 py-1.5 text-[10px] font-mono font-medium text-slate-700 dark:text-slate-300">
-                    <span className="flex gap-2"><span>Dusk:</span><span className="font-bold text-blue-600 dark:text-blue-400">{times.dusk}</span></span>
-                    <span className="flex gap-2"><span>Dawn:</span><span className="font-bold text-blue-600 dark:text-blue-400">{times.dawn}</span></span>
+                  <div className="flex justify-between items-center bg-white/15 dark:bg-slate-900/30 rounded-xl border border-white/60 dark:border-slate-700 px-2.5 py-1.5 text-[10px] font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="flex gap-2"><span>Dusk:</span><span className="font-bold text-blue-700 dark:text-blue-400">{times.dusk}</span></span>
+                    <span className="flex gap-2"><span>Dawn:</span><span className="font-bold text-blue-700 dark:text-blue-400">{times.dawn}</span></span>
                   </div>
                 )}
               </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-3 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-1.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-[10px] font-black tracking-wider rounded-bl-lg border-b border-l border-purple-200 dark:border-purple-800 uppercase">
+              <div className="ios-liquid-card rounded-2xl p-3.5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-1.5 bg-purple-500/15 text-purple-700 dark:text-purple-300 text-[10px] font-black tracking-wider rounded-bl-xl border-b border-l border-purple-400/35 uppercase">
                   14 CFR 61.57(b)
                 </div>
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1.5 pr-20">
-                  <Moon size={12} className="text-purple-500" />
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-1.5 pr-20">
+                  <Moon size={12} className="text-purple-600 dark:text-purple-400" />
                   Passenger Currency
                 </h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
                   <span className="font-bold">1 hr after Sunset to 1 hr before Sunrise.</span> Logging takeoffs and landings to meet recent flight experience for carrying passengers at night.
                 </p>
                 {times && (
-                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded px-2 py-1.5 text-[10px] font-mono font-medium text-slate-700 dark:text-slate-300">
-                    <span className="flex gap-2"><span>Starts:</span><span className="font-bold text-purple-600 dark:text-purple-400">{times.currencyStart}</span></span>
-                    <span className="flex gap-2"><span>Ends:</span><span className="font-bold text-purple-600 dark:text-purple-400">{times.currencyEnd}</span></span>
+                  <div className="flex justify-between items-center bg-white/15 dark:bg-slate-900/30 rounded-xl border border-white/60 dark:border-slate-700 px-2.5 py-1.5 text-[10px] font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="flex gap-2"><span>Starts:</span><span className="font-bold text-purple-700 dark:text-purple-400">{times.currencyStart}</span></span>
+                    <span className="flex gap-2"><span>Ends:</span><span className="font-bold text-purple-700 dark:text-purple-400">{times.currencyEnd}</span></span>
                   </div>
                 )}
               </div>
 
-              <div className="bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-3 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-1.5 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 text-[10px] font-black tracking-wider rounded-bl-lg border-b border-l border-amber-200 dark:border-amber-800 uppercase">
+              <div className="ios-liquid-card rounded-2xl p-3.5 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-1.5 bg-amber-500/15 text-amber-800 dark:text-amber-300 text-[10px] font-black tracking-wider rounded-bl-xl border-b border-l border-amber-400/35 uppercase">
                   14 CFR 91.209
                 </div>
-                <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1.5 pr-16">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 mb-1 flex items-center gap-1.5 pr-16">
                   <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"/>
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse -ml-2.5 outline outline-2 outline-white dark:outline-slate-800"/>
                   Aircraft Position Lights
                 </h4>
-                <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed mb-2">
+                <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
                   <span className="font-bold">Sunset to Sunrise.</span> When an aircraft must have its position lights turned on.
                   {results && results.lightsTime > 0 && (
-                    <span className="block mt-1 font-bold text-amber-600">⚠ Lights required for {results.lightsTime.toFixed(1)} hrs of this flight.</span>
+                    <span className="block mt-1 font-bold text-amber-700 dark:text-amber-400">⚠ Lights required for {results.lightsTime.toFixed(1)} hrs of this flight.</span>
                   )}
                 </p>
                 {times && (
-                  <div className="flex justify-between items-center bg-slate-50 dark:bg-slate-900/50 rounded px-2 py-1.5 text-[10px] font-mono font-medium text-slate-700 dark:text-slate-300">
-                    <span className="flex gap-2"><span>Sunset:</span><span className="font-bold text-amber-600 dark:text-amber-400">{times.sunset}</span></span>
-                    <span className="flex gap-2"><span>Sunrise:</span><span className="font-bold text-amber-600 dark:text-amber-400">{times.sunrise}</span></span>
+                  <div className="flex justify-between items-center bg-white/15 dark:bg-slate-900/30 rounded-xl border border-white/60 dark:border-slate-700 px-2.5 py-1.5 text-[10px] font-mono font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="flex gap-2"><span>Sunset:</span><span className="font-bold text-amber-700 dark:text-amber-400">{times.sunset}</span></span>
+                    <span className="flex gap-2"><span>Sunrise:</span><span className="font-bold text-amber-700 dark:text-amber-400">{times.sunrise}</span></span>
                   </div>
                 )}
               </div>
 
-              <div className="text-[10px] text-slate-400 flex flex-col items-center gap-1 mt-2 mb-4 justify-center text-center">
+              <div className="text-[10px] text-slate-600 dark:text-slate-400 flex flex-col items-center gap-1 mt-2 mb-4 justify-center text-center">
                  <div className="flex items-center gap-1">
                    <HelpCircle size={10} />
                    <span>Times calculated for Cedar City, UT (KCDC) Base</span>

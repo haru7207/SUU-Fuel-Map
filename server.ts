@@ -75,16 +75,35 @@ async function startServer() {
       }
   });
 
-  // 2. AWC Weather & TFR Proxy Route
+  // 2. AWC Weather & TFR Proxy Route with In-Memory Cache
+  const awcCache = new Map<string, { status: number; contentType: string; body: string; timestamp: number }>();
+  const AWC_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+
   app.get('/api/awc/*all', async (req: express.Request, res: express.Response) => {
-    const subPath = Array.isArray(req.params.all) ? req.params.all.join('/') : req.params.all; // e.g. "metar" or "taf"
+    const rawAll = (req.params as any).all || req.query.path;
+    const subPath = (Array.isArray(rawAll) ? rawAll.join('/') : String(rawAll || '')).replace(/^\/+/, '');
     
-    // Strip _cb parameter to prevent busting NOAA's edge cache which can cause 504s
-    const queryParams = new URLSearchParams(req.query as any);
-    queryParams.delete('_cb');
+    // Strip _cb and rewrite parameters to prevent HTTP 400 from NOAA AWC
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(req.query || {})) {
+      if (key === '_cb' || key === 'path' || key === 'all' || key === '...path') continue;
+      if (typeof value === 'string') {
+        queryParams.set(key, value);
+      } else if (Array.isArray(value) && value.length > 0) {
+        queryParams.set(key, String(value[0]));
+      }
+    }
     const queryString = queryParams.toString();
     
     const targetUrl = `https://aviationweather.gov/api/data/${subPath}${queryString ? '?' + queryString : ''}`;
+
+    const cached = awcCache.get(targetUrl);
+    if (cached && Date.now() - cached.timestamp < AWC_CACHE_TTL_MS) {
+      res.setHeader('Content-Type', cached.contentType);
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+      res.setHeader('X-AWC-Cache', 'HIT');
+      return res.status(cached.status).send(cached.body);
+    }
 
     try {
       const response = await fetch(targetUrl, {
@@ -106,15 +125,27 @@ async function startServer() {
       }
 
       const contentType = response.headers.get('content-type') || 'application/json';
+      const bodyText = (await response.text()) || '[]';
+
+      awcCache.set(targetUrl, {
+        status: 200,
+        contentType,
+        body: bodyText,
+        timestamp: Date.now()
+      });
+
       if (contentType) {
         res.setHeader('Content-Type', contentType);
       }
-
-      // Read as text to safely forward either JSON or XML/GeoJSON
-      const bodyText = await response.text();
-      res.send(bodyText || '[]');
+      res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+      res.setHeader('X-AWC-Cache', 'MISS');
+      res.send(bodyText);
     } catch (error) {
       console.error(`[AWC Proxy] Failed to proxy ${targetUrl}:`, error);
+      if (cached) {
+        res.setHeader('Content-Type', cached.contentType);
+        return res.status(cached.status).send(cached.body);
+      }
       res.status(500).send('Error proxying request to NOAA AWC');
     }
   });

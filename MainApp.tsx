@@ -16,7 +16,7 @@ import { DensityAltitudeCalculator } from './components/DensityAltitudeCalculato
 import { WindComponentsCalculator } from './components/WindComponentsCalculator';
 import { AirportCheatSheet } from './components/AirportCheatSheet';
 import { AIRPORT_DATABASE } from './constants';
-import { fetchFuelMapData, fetchAllWeather, fetchStationInfo } from './services/aviationService';
+import { fetchFuelMapData, fetchAllWeather, fetchStationInfo, loadCachedWeatherBatch, isValidWeatherData, normalizeStationId } from './services/aviationService';
 import { fetchSharedFuelPrices, saveSharedFuelPrices } from './services/firebase';
 import { Menu, X, CloudFog, WifiOff, Sun, Moon, Monitor, AlertTriangle, Clock, Briefcase, Target, FileSpreadsheet, Compass, Calculator, Radio, Plane, ThermometerSun, Thermometer, Wind, Layers, Fuel, Flame, ShieldAlert, ChefHat, Sliders } from 'lucide-react';
 import { E6BCalculator } from './components/E6BCalculator';
@@ -25,6 +25,54 @@ import { DinnerRecommendation } from './components/DinnerRecommendation';
 import { MetarTafModal } from './components/MetarTafModal';
 import { LegendInfoModal } from './components/LegendInfoModal';
 
+const getObservationTimestampMs = (obsTime?: string | number, lastUpdated?: Date | string): number | null => {
+  if (obsTime !== undefined && obsTime !== null) {
+    if (typeof obsTime === 'number') {
+      // NOAA AWC obsTime is Unix epoch in seconds (e.g. 1763365000)
+      return obsTime < 1e11 ? obsTime * 1000 : obsTime;
+    }
+    const parsed = new Date(obsTime).getTime();
+    if (!isNaN(parsed)) return parsed;
+  }
+  if (lastUpdated) {
+    const parsed = new Date(lastUpdated).getTime();
+    if (!isNaN(parsed)) return parsed;
+  }
+  return null;
+};
+
+const expandWeatherMapForAirports = (
+  sourceMap: Record<string, WeatherData>,
+  airportList: Airport[]
+): Record<string, WeatherData> => {
+  const expanded: Record<string, WeatherData> = {};
+
+  for (const [key, wx] of Object.entries(sourceMap)) {
+    if (!isValidWeatherData(wx)) continue;
+    const upperKey = key.trim().toUpperCase();
+    const normKey = normalizeStationId(upperKey);
+    expanded[upperKey] = wx;
+    expanded[normKey] = wx;
+    if (normKey.startsWith('K') && normKey.length === 4) {
+      expanded[normKey.slice(1)] = wx;
+    }
+  }
+
+  for (const airport of airportList) {
+    const stationId = normalizeStationId(airport.weatherSource || airport.id);
+    const rawSource = (airport.weatherSource || airport.id).trim().toUpperCase();
+    const wx = expanded[stationId] || expanded[rawSource] || expanded[airport.id.toUpperCase()];
+    if (wx && isValidWeatherData(wx)) {
+      expanded[airport.id] = wx;
+      if (airport.weatherSource) {
+        expanded[airport.weatherSource] = wx;
+      }
+    }
+  }
+
+  return expanded;
+};
+
 const App: React.FC = () => {
   const [airports, setAirports] = useState<Airport[]>(() => {
     const todayIso = new Date().toISOString();
@@ -32,16 +80,13 @@ const App: React.FC = () => {
       const saved = localStorage.getItem('suu_cached_airports');
       if (saved) {
         const parsed = JSON.parse(saved) as Airport[];
-        return parsed.map(cached => {
+        const merged = parsed.map(cached => {
           const staticAirport = AIRPORT_DATABASE.find(a => a.id === cached.id);
           if (staticAirport) {
             return {
               ...cached,
-              name: staticAirport.name,
-              city: staticAirport.city,
-              state: staticAirport.state,
-              lat: staticAirport.lat,
-              lon: staticAirport.lon,
+              ...staticAirport,
+              weatherSource: staticAirport.weatherSource || cached.weatherSource,
               runways: staticAirport.runways || cached.runways,
               frequencies: staticAirport.frequencies || cached.frequencies,
               cardRules: staticAirport.cardRules,
@@ -56,6 +101,13 @@ const App: React.FC = () => {
             fuelPricesLastUpdated: todayIso,
           };
         });
+        // Ensure any newly added static airports in AIRPORT_DATABASE are also present
+        for (const staticAp of AIRPORT_DATABASE) {
+          if (!merged.some(a => a.id === staticAp.id)) {
+            merged.push({ ...staticAp, fuelPricesLastUpdated: todayIso });
+          }
+        }
+        return merged;
       }
       return AIRPORT_DATABASE.map(a => ({
         ...a,
@@ -91,17 +143,37 @@ const App: React.FC = () => {
   // G-AIRMET State
   const [showAirmet, setShowAirmet] = useState(false);
 
-  // Weather State
+  // Weather State (sanitize stale or placeholder entries on boot)
   const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>(() => {
     try {
       const saved = localStorage.getItem('suu_cached_weather');
-      return saved ? JSON.parse(saved) : {};
+      if (!saved) return {};
+      const parsed = JSON.parse(saved) as Record<string, WeatherData>;
+      const now = Date.now();
+      const validMap: Record<string, WeatherData> = {};
+      for (const [key, wx] of Object.entries(parsed)) {
+        if (!isValidWeatherData(wx)) continue;
+        const ts = getObservationTimestampMs(wx.observationTime, wx.lastUpdated);
+        // Keep cached weather up to 90 minutes old for instant display while fresh batch loads
+        if (!ts || (now - ts) < 90 * 60 * 1000) {
+          validMap[key] = wx;
+        }
+      }
+      return expandWeatherMapForAirports(validMap, AIRPORT_DATABASE);
     } catch {
       return {};
     }
   });
 
-  // Weather Expiration Worker
+  const handleWeatherUpdate = useCallback((stationOrAirportId: string, data: WeatherData) => {
+    if (!isValidWeatherData(data)) return;
+    setWeatherMap(prev => expandWeatherMapForAirports({
+      ...prev,
+      [stationOrAirportId]: data
+    }, airports));
+  }, [airports]);
+
+  // Weather Expiration Worker (properly converts Unix seconds vs ms)
   useEffect(() => {
     const checkWeatherExpiration = () => {
       setWeatherMap(prevMap => {
@@ -110,15 +182,18 @@ const App: React.FC = () => {
         const nextMap = { ...prevMap };
         
         for (const [airportId, weather] of Object.entries(nextMap)) {
-          if (weather.observationTime) {
-            const obsDate = new Date(weather.observationTime);
-            if (!isNaN(obsDate.getTime())) {
-              const diffMinutes = (now - obsDate.getTime()) / (1000 * 60);
-              if (diffMinutes > 60) {
-                delete nextMap[airportId];
-                hasChanges = true;
-                console.log(`[Auto-Refresh] Expired stale weather data for ${airportId} (Age: ${diffMinutes.toFixed(1)}m)`);
-              }
+          if (!isValidWeatherData(weather)) {
+            delete nextMap[airportId];
+            hasChanges = true;
+            continue;
+          }
+          const obsMs = getObservationTimestampMs(weather.observationTime, weather.lastUpdated);
+          if (obsMs) {
+            const diffMinutes = (now - obsMs) / (1000 * 60);
+            // Allow 90 minutes before expiring since routine METARs update hourly
+            if (diffMinutes > 90) {
+              delete nextMap[airportId];
+              hasChanges = true;
             }
           }
         }
@@ -127,8 +202,8 @@ const App: React.FC = () => {
       });
     };
 
-    const intervalId = setInterval(checkWeatherExpiration, 60 * 1000); // Check every minute
-    checkWeatherExpiration(); // Also check on mount
+    const intervalId = setInterval(checkWeatherExpiration, 60 * 1000);
+    checkWeatherExpiration();
     return () => clearInterval(intervalId);
   }, []);
   
@@ -418,15 +493,30 @@ const App: React.FC = () => {
                 }));
             }
             
-            // 1. Instantly trigger weather fetch for known airports in parallel
-            try {
-                console.log("Fetching weather instantly for preloaded airports...");
-                fetchAllWeather(currentAirports.map(a => a.weatherSource || a.id)).then(weatherData => {
-                    setWeatherMap(prev => ({ ...prev, ...weatherData }));
-                });
-            } catch (e) {
-                console.error("Failed to instantly fetch weather data", e);
-            }
+            const allInitialStations = Array.from(
+                new Set(currentAirports.flatMap(a => [a.weatherSource || a.id, a.id]))
+            );
+
+            // 1a. Hydrate immediately from IndexedDB (< 10ms) if available
+            loadCachedWeatherBatch(allInitialStations).then(cachedBatch => {
+                if (Object.keys(cachedBatch).length > 0) {
+                    setWeatherMap(prev => expandWeatherMapForAirports({ ...cachedBatch, ...prev }, currentAirports));
+                }
+            }).catch(() => {});
+
+            // 1b. Automatically fetch fresh live METAR & TAF data for ALL airports on website visit
+            const initialWeatherPromise = fetchAllWeather(
+                currentAirports.map(a => a.weatherSource || a.id),
+                true // forceRefresh so visiting the website always fetches live METARs for all airports
+            ).then(weatherData => {
+                if (weatherData && Object.keys(weatherData).length > 0) {
+                    setWeatherMap(prev => expandWeatherMapForAirports({ ...prev, ...weatherData }, currentAirports));
+                }
+                return weatherData;
+            }).catch(e => {
+                console.error("Failed to fetch initial batch weather data", e);
+                return {} as Record<string, WeatherData>;
+            });
             
             // 2. Fetch fuel map data from Google Script (can be slow)
             try {
@@ -472,24 +562,21 @@ const App: React.FC = () => {
                     // Fetch station info for new airports
                     for (const { match, cardType } of newAirportsToFetch) {
                         let airportId = match.id;
-                        // Some airports in the sheet might be 3 letters (e.g. ORD instead of KORD)
-                        // The AWC API usually expects 4 letters for US airports (K + 3 letters)
                         if (airportId.length === 3 && /^[a-zA-Z]+$/.test(airportId)) {
                             airportId = 'K' + airportId;
                         }
 
                         const stationInfo = await fetchStationInfo(airportId);
                         if (stationInfo) {
-                            // Determine fuel types from string if available
                             const fuelTypes: FuelType[] = [];
                             const fuelStr = (match.fueltype || '').toLowerCase();
                             if (fuelStr.includes('100ll') || fuelStr.includes('avgas')) fuelTypes.push(FuelType.LL100);
                             if (fuelStr.includes('jet')) fuelTypes.push(FuelType.JETA);
-                            if (fuelTypes.length === 0) fuelTypes.push(FuelType.LL100, FuelType.JETA); // Default assumption
+                            if (fuelTypes.length === 0) fuelTypes.push(FuelType.LL100, FuelType.JETA);
                             
                             currentAirports.push({
-                                id: match.id, // Keep original ID from sheet for matching
-                                weatherSource: airportId, // Use the 4-letter ID for weather if we modified it
+                                id: match.id,
+                                weatherSource: airportId,
                                 name: stationInfo.name,
                                 city: stationInfo.city,
                                 state: stationInfo.state,
@@ -518,15 +605,18 @@ const App: React.FC = () => {
                 console.error("Failed to merge live fuel data", e);
             }
 
-            // Now fetch weather for ANY newly added airports from the sheet (if any)
+            // 3. Ensure any newly discovered airports from the sheet also have live weather
             try {
-                const existingWeatherIds = Object.keys(weatherMap);
-                const airportsToFetch = currentAirports.filter(a => !existingWeatherIds.includes(a.weatherSource || a.id));
-                if (airportsToFetch.length > 0) {
-                    console.log(`Fetching weather for ${airportsToFetch.length} new airports...`);
-                    fetchAllWeather(airportsToFetch.map(a => a.weatherSource || a.id)).then(weatherData => {
-                        setWeatherMap(prev => ({ ...prev, ...weatherData }));
-                    });
+                const initialFetched = await initialWeatherPromise;
+                const missingAirports = currentAirports.filter(a => {
+                    const stId = normalizeStationId(a.weatherSource || a.id);
+                    return !isValidWeatherData(initialFetched[stId]);
+                });
+                if (missingAirports.length > 0) {
+                    const extraWeather = await fetchAllWeather(missingAirports.map(a => a.weatherSource || a.id), true);
+                    setWeatherMap(prev => expandWeatherMapForAirports({ ...prev, ...extraWeather }, currentAirports));
+                } else {
+                    setWeatherMap(prev => expandWeatherMapForAirports(prev, currentAirports));
                 }
             } catch (e) {
                 console.error("Failed to fetch additional weather data", e);
@@ -708,20 +798,21 @@ const App: React.FC = () => {
     return () => clearInterval(intervalId);
   }, [airports.length]);
 
-  // Background Weather Poller for ALL tracked airports
+  // Background Weather Poller for ALL tracked airports (keeps METARs fresh automatically every 5 minutes)
   useEffect(() => {
     if (airports.length === 0) return;
 
     const refreshAllWeather = async () => {
+      if (!navigator.onLine) return;
       try {
-        console.log("[Auto-Refresh] Fetching weather update for all tracked airports...");
-        const weatherData = await fetchAllWeather(airports.map(a => a.weatherSource || a.id));
+        console.log("[Auto-Refresh] Fetching live weather update for all tracked airports...");
+        const weatherData = await fetchAllWeather(airports.map(a => a.weatherSource || a.id), true);
         
         if (weatherData && Object.keys(weatherData).length > 0) {
-            setWeatherMap(prev => ({
+            setWeatherMap(prev => expandWeatherMapForAirports({
               ...prev,
               ...weatherData
-            }));
+            }, airports));
             console.log("[Auto-Refresh] All airports weather updated successfully.");
         }
       } catch (error) {
@@ -729,10 +820,19 @@ const App: React.FC = () => {
       }
     };
 
-    // Update every 1 hour for freshness across the board
-    const intervalId = setInterval(refreshAllWeather, 60 * 60 * 1000);
-    // Don't fetch immediately on load here because loadData() already does the initial fetch on mount
-    return () => clearInterval(intervalId);
+    const intervalId = setInterval(refreshAllWeather, 5 * 60 * 1000);
+
+    const handleVisibilityOrOnline = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        refreshAllWeather();
+      }
+    };
+    window.addEventListener('online', handleVisibilityOrOnline);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('online', handleVisibilityOrOnline);
+    };
   }, [airports]);
 
   const selectedAirport = airports.find(a => a.id === selectedId);
@@ -869,6 +969,7 @@ const App: React.FC = () => {
           weatherMap={weatherMap}
           selectedAirportId={selectedId}
           onSelectAirport={(id) => handleSelect(id)}
+          onWeatherUpdate={handleWeatherUpdate}
         />
 
         {/* Legend & Info Modal */}
@@ -1135,13 +1236,13 @@ const App: React.FC = () => {
                   <div className="absolute top-full right-0 mt-2.5 w-[calc(100vw-2rem)] sm:w-[480px] ios-liquid-glass-heavy rounded-3xl overflow-hidden flex flex-col z-[1050] origin-top-right animate-pop-in">
                     
                     {/* Header */}
-                    <div className="px-5 py-4 bg-white/15 dark:bg-slate-800/25 border-b border-white/50 dark:border-white/10 flex items-center gap-3">
+                    <div className="px-5 py-4 bg-white/8 dark:bg-slate-800/18 border-b border-white/55 dark:border-white/15 flex items-center gap-3">
                       <div className="bg-sky-500/15 p-2.5 rounded-2xl text-sky-600 dark:text-sky-400 border border-sky-400/25">
                         <Briefcase size={20} />
                       </div>
                       <div>
                         <div className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">CFI Digital Toolkit</div>
-                        <div className="text-xs text-slate-600 dark:text-slate-300 font-medium">Quick reference flight calculators for instructors</div>
+                        <div className="text-xs text-slate-700 dark:text-slate-300 font-medium">Quick reference flight calculators for instructors</div>
                       </div>
                     </div>
 
@@ -1151,7 +1252,7 @@ const App: React.FC = () => {
                       <div className="space-y-4">
                         {/* Time & Logs */}
                         <div>
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Time & Logs</div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 mb-2">Time & Logs</div>
                           <button
                             onClick={() => {
                               setIsFlightTimeOpen(true);
@@ -1160,16 +1261,16 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-blue-100 dark:bg-blue-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Clock size={16} className="text-blue-600 dark:text-blue-400" /></div>
+                            <div className="bg-blue-500/15 border border-blue-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Clock size={16} className="text-blue-600 dark:text-blue-400" /></div>
                             Flight Time Calc
                           </button>
                           <button
@@ -1180,16 +1281,16 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-purple-100 dark:bg-purple-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Moon size={16} className="text-purple-600 dark:text-purple-400" /></div>
+                            <div className="bg-purple-500/15 border border-purple-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Moon size={16} className="text-purple-600 dark:text-purple-400" /></div>
                             Night Time Calc
                           </button>
                           <button
@@ -1200,23 +1301,23 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(true);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-cyan-100 dark:bg-cyan-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Radio size={16} className="text-cyan-600 dark:text-cyan-400" /></div>
+                            <div className="bg-cyan-500/15 border border-cyan-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Radio size={16} className="text-cyan-600 dark:text-cyan-400" /></div>
                             VOR Receiver Check
                           </button>
                         </div>
                         
                         {/* Performance & Weather */}
                         <div>
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Performance & WX</div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 mb-2">Performance & WX</div>
                           <button
                             onClick={() => {
                               setIsFlightTimeOpen(false);
@@ -1225,16 +1326,16 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(true);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-emerald-100 dark:bg-emerald-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Plane size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
+                            <div className="bg-emerald-500/15 border border-emerald-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Plane size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
                             SR20 Maneuvering Speed
                           </button>
                           <button
@@ -1245,15 +1346,15 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(true);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-orange-100 dark:bg-orange-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><ThermometerSun size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                            <div className="bg-orange-500/15 border border-orange-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><ThermometerSun size={16} className="text-orange-600 dark:text-orange-400" /></div>
                             ISA Dev & Atmosphere
                           </button>
                           <button
@@ -1271,9 +1372,9 @@ const App: React.FC = () => {
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-red-100 dark:bg-red-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
+                            <div className="bg-red-500/15 border border-red-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
                             Density Altitude
                           </button>
                           <button
@@ -1284,17 +1385,16 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
-                              setIsWindOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(true);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-sky-100 dark:bg-sky-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Wind size={16} className="text-sky-600 dark:text-sky-400" /></div>
+                            <div className="bg-sky-500/15 border border-sky-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Wind size={16} className="text-sky-600 dark:text-sky-400" /></div>
                             Wind Components
                           </button>
                         </div>
@@ -1304,7 +1404,7 @@ const App: React.FC = () => {
                       <div className="space-y-4">
                         {/* Navigation */}
                         <div>
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Navigation</div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 mb-2">Navigation</div>
                           <button
                             onClick={() => {
                               setIsFlightTimeOpen(false);
@@ -1313,16 +1413,16 @@ const App: React.FC = () => {
                               setIsHoldingOpen(true);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-rose-100 dark:bg-rose-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Compass size={16} className="text-rose-600 dark:text-rose-400" /></div>
+                            <div className="bg-rose-500/15 border border-rose-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Compass size={16} className="text-rose-600 dark:text-rose-400" /></div>
                             Holding Pattern Entry
                           </button>
                           <button
@@ -1333,23 +1433,23 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-indigo-100 dark:bg-indigo-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
+                            <div className="bg-indigo-500/15 border border-indigo-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
                             Pivotal Altitude
                           </button>
                         </div>
 
                         {/* Preflight & Ref */}
                         <div>
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Preflight & Ref</div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 mb-2">Preflight & Ref</div>
                           <button
                             onClick={() => {
                               setIsFlightTimeOpen(false);
@@ -1365,9 +1465,9 @@ const App: React.FC = () => {
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-amber-100 dark:bg-amber-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><Calculator size={16} className="text-amber-600 dark:text-amber-400" /></div>
+                            <div className="bg-amber-500/15 border border-amber-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><Calculator size={16} className="text-amber-600 dark:text-amber-400" /></div>
                             E6B Flight Computer
                           </button>
                           <button
@@ -1385,15 +1485,15 @@ const App: React.FC = () => {
                               setIsVORCheckOpen(false);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-teal-100 dark:bg-teal-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
+                            <div className="bg-teal-500/15 border border-teal-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
                             Airport Cheat Sheet
                           </button>
                         </div>
                         {/* Others */}
                         <div>
-                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 mb-2">Others</div>
+                          <div className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 mb-2">Others</div>
                           <button
                             onClick={() => {
                               setIsFlightTimeOpen(false);
@@ -1402,7 +1502,7 @@ const App: React.FC = () => {
                               setIsHoldingOpen(false);
                               setIsVaOpen(false);
                               setIsIsaOpen(false);
-                            setIsDensityAltOpen(false);
+                              setIsDensityAltOpen(false);
                               setIsWindOpen(false);
                               setIsE6BOpen(false);
                               setIsCheatSheetOpen(false);
@@ -1410,9 +1510,9 @@ const App: React.FC = () => {
                               setIsDinnerOpen(true);
                               setIsInstructorToolsMenuOpen(false);
                             }}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-sm font-semibold text-left transition-all group"
+                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/30 dark:hover:bg-slate-800/40 text-slate-800 dark:text-slate-100 text-sm font-semibold text-left transition-all group"
                           >
-                            <div className="bg-orange-100 dark:bg-orange-600/20 p-2 rounded-lg group-hover:scale-110 transition-transform"><ChefHat size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                            <div className="bg-orange-500/15 border border-orange-400/30 p-2 rounded-xl group-hover:scale-110 transition-transform"><ChefHat size={16} className="text-orange-600 dark:text-orange-400" /></div>
                             Today's Dinner
                           </button>
                         </div>
@@ -1448,6 +1548,7 @@ const App: React.FC = () => {
                         setIsFuelLogOpen(true);
                       }}
                       weatherMap={weatherMap}
+                      onWeatherUpdate={handleWeatherUpdate}
                       notamMap={notamMap}
                       isMobileExpanded={isMobileSheetExpanded}
                       onToggleMobileExpand={() => setIsMobileSheetExpanded(prev => !prev)}
@@ -1467,7 +1568,7 @@ const App: React.FC = () => {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setIsInstructorToolsMenuOpen(false)}
-                className="fixed inset-0 bg-slate-900/35 backdrop-blur-xs z-[1200]"
+                className="fixed inset-0 bg-slate-900/20 backdrop-blur-xs z-[1200]"
               />
 
               {/* Drawer Container */}
@@ -1480,23 +1581,23 @@ const App: React.FC = () => {
                 className="fixed bottom-0 inset-x-0 ios-liquid-glass-heavy rounded-t-[28px] z-[1210] overflow-hidden flex flex-col max-h-[88dvh] select-none"
               >
                 {/* Drag Handle Indicator */}
-                <div className="w-12 h-1.5 bg-slate-400/50 dark:bg-slate-500/60 rounded-full mx-auto my-3 shrink-0" />
+                <div className="w-12 h-1.5 bg-slate-500/50 dark:bg-slate-400/60 rounded-full mx-auto my-3 shrink-0" />
 
                 {/* Header */}
-                <div className="px-5 pb-4 border-b border-white/70 dark:border-white/10 flex items-center justify-between shrink-0">
+                <div className="px-5 pb-4 border-b border-white/60 dark:border-white/15 flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="bg-sky-500/15 p-2.5 rounded-2xl text-sky-600 dark:text-sky-400">
+                    <div className="bg-sky-500/15 border border-sky-400/25 p-2.5 rounded-2xl text-sky-600 dark:text-sky-400">
                       <Briefcase size={20} />
                     </div>
                     <div>
                       <h2 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">CFI Digital Toolkit</h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Quick reference tools for instructors</p>
+                      <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">Quick reference tools for instructors</p>
                     </div>
                   </div>
                   <button
                     onClick={() => setIsInstructorToolsMenuOpen(false)}
                     aria-label="Close Toolkit"
-                    className="p-2 -mr-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-full hover:bg-white/60 dark:hover:bg-slate-700/50 transition-colors"
+                    className="p-2 -mr-1.5 ios-liquid-pill text-slate-700 hover:text-slate-900 dark:text-slate-200 dark:hover:text-white rounded-full transition-colors"
                   >
                     <X size={20} />
                   </button>
@@ -1508,7 +1609,7 @@ const App: React.FC = () => {
                     
                     {/* Time & Logs */}
                     <div className="space-y-2">
-                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Time & Logs</div>
+                      <div className="px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 pb-1.5 mb-2">Time & Logs</div>
                       <div className="space-y-1.5">
                         <button
                           onClick={() => {
@@ -1525,9 +1626,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-blue-100 dark:bg-blue-600/20 p-1.5 rounded-lg shrink-0"><Clock size={16} className="text-blue-600 dark:text-blue-400" /></div>
+                          <div className="bg-blue-500/15 border border-blue-400/30 p-1.5 rounded-xl shrink-0"><Clock size={16} className="text-blue-600 dark:text-blue-400" /></div>
                           <span>Flight Time Calc</span>
                         </button>
                         <button
@@ -1545,9 +1646,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-purple-100 dark:bg-purple-600/20 p-1.5 rounded-lg shrink-0"><Moon size={16} className="text-purple-600 dark:text-purple-400" /></div>
+                          <div className="bg-purple-500/15 border border-purple-400/30 p-1.5 rounded-xl shrink-0"><Moon size={16} className="text-purple-600 dark:text-purple-400" /></div>
                           <span>Night Time Calc</span>
                         </button>
                         <button
@@ -1565,9 +1666,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(true);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-cyan-100 dark:bg-cyan-600/20 p-1.5 rounded-lg shrink-0"><Radio size={16} className="text-cyan-600 dark:text-cyan-400" /></div>
+                          <div className="bg-cyan-500/15 border border-cyan-400/30 p-1.5 rounded-xl shrink-0"><Radio size={16} className="text-cyan-600 dark:text-cyan-400" /></div>
                           <span>VOR Receiver Check</span>
                         </button>
                       </div>
@@ -1575,7 +1676,7 @@ const App: React.FC = () => {
 
                     {/* Performance & Weather */}
                     <div className="space-y-2">
-                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Performance & WX</div>
+                      <div className="px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 pb-1.5 mb-2">Performance & WX</div>
                       <div className="space-y-1.5">
                         <button
                           onClick={() => {
@@ -1592,9 +1693,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-emerald-100 dark:bg-emerald-600/20 p-1.5 rounded-lg shrink-0"><Plane size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
+                          <div className="bg-emerald-500/15 border border-emerald-400/30 p-1.5 rounded-xl shrink-0"><Plane size={16} className="text-emerald-600 dark:text-emerald-400" /></div>
                           <span>SR20 Maneuvering Speed</span>
                         </button>
                         <button
@@ -1611,9 +1712,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-orange-100 dark:bg-orange-600/20 p-1.5 rounded-lg shrink-0"><ThermometerSun size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                          <div className="bg-orange-500/15 border border-orange-400/30 p-1.5 rounded-xl shrink-0"><ThermometerSun size={16} className="text-orange-600 dark:text-orange-400" /></div>
                           <span>ISA Dev & Atmosphere</span>
                         </button>
                         <button
@@ -1631,9 +1732,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-red-100 dark:bg-red-600/20 p-1.5 rounded-lg shrink-0"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
+                          <div className="bg-red-500/15 border border-red-400/30 p-1.5 rounded-xl shrink-0"><Thermometer size={16} className="text-red-600 dark:text-red-400" /></div>
                           <span>Density Altitude</span>
                         </button>
                         <button
@@ -1651,9 +1752,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-sky-100 dark:bg-sky-600/20 p-1.5 rounded-lg shrink-0"><Wind size={16} className="text-sky-600 dark:text-sky-400" /></div>
+                          <div className="bg-sky-500/15 border border-sky-400/30 p-1.5 rounded-xl shrink-0"><Wind size={16} className="text-sky-600 dark:text-sky-400" /></div>
                           <span>Wind Components</span>
                         </button>
                       </div>
@@ -1661,7 +1762,7 @@ const App: React.FC = () => {
 
                     {/* Navigation */}
                     <div className="space-y-2">
-                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Navigation</div>
+                      <div className="px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 pb-1.5 mb-2">Navigation</div>
                       <div className="space-y-1.5">
                         <button
                           onClick={() => {
@@ -1678,9 +1779,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-rose-100 dark:bg-rose-600/20 p-1.5 rounded-lg shrink-0"><Compass size={16} className="text-rose-600 dark:text-rose-400" /></div>
+                          <div className="bg-rose-500/15 border border-rose-400/30 p-1.5 rounded-xl shrink-0"><Compass size={16} className="text-rose-600 dark:text-rose-400" /></div>
                           <span>Holding Pattern Entry</span>
                         </button>
                         <button
@@ -1698,9 +1799,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-955/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-indigo-100 dark:bg-indigo-600/20 p-1.5 rounded-lg shrink-0"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
+                          <div className="bg-indigo-500/15 border border-indigo-400/30 p-1.5 rounded-xl shrink-0"><Target size={16} className="text-indigo-600 dark:text-indigo-400" /></div>
                           <span>Pivotal Altitude</span>
                         </button>
                       </div>
@@ -1708,7 +1809,7 @@ const App: React.FC = () => {
 
                     {/* Preflight & Ref */}
                     <div className="space-y-2">
-                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Preflight & Ref</div>
+                      <div className="px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 pb-1.5 mb-2">Preflight & Ref</div>
                       <div className="space-y-1.5">
                         <button
                           onClick={() => {
@@ -1725,9 +1826,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-amber-100 dark:bg-amber-600/20 p-1.5 rounded-lg shrink-0"><Calculator size={16} className="text-amber-600 dark:text-amber-400" /></div>
+                          <div className="bg-amber-500/15 border border-amber-400/30 p-1.5 rounded-xl shrink-0"><Calculator size={16} className="text-amber-600 dark:text-amber-400" /></div>
                           <span>E6B Flight Computer</span>
                         </button>
                         <button
@@ -1745,9 +1846,9 @@ const App: React.FC = () => {
                             setIsVORCheckOpen(false);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-teal-100 dark:bg-teal-600/20 p-1.5 rounded-lg shrink-0"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
+                          <div className="bg-teal-500/15 border border-teal-400/30 p-1.5 rounded-xl shrink-0"><FileSpreadsheet size={16} className="text-teal-600 dark:text-teal-400" /></div>
                           <span>Airport Cheat Sheet</span>
                         </button>
                       </div>
@@ -1755,7 +1856,7 @@ const App: React.FC = () => {
 
                     {/* Others */}
                     <div className="space-y-2 sm:col-span-2">
-                      <div className="px-1 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest border-b border-slate-100 dark:border-slate-700 pb-1.5 mb-2">Others</div>
+                      <div className="px-1 text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest border-b border-white/45 dark:border-slate-700/60 pb-1.5 mb-2">Others</div>
                       <div className="space-y-1.5">
                         <button
                           onClick={() => {
@@ -1773,9 +1874,9 @@ const App: React.FC = () => {
                             setIsDinnerOpen(true);
                             setIsInstructorToolsMenuOpen(false);
                           }}
-                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-xl bg-slate-50 active:bg-slate-100 hover:bg-slate-100 dark:bg-slate-950/40 dark:active:bg-slate-900 dark:hover:bg-slate-900 text-slate-700 dark:text-slate-200 text-[13px] font-bold text-left transition-all"
+                          className="w-full h-12 flex items-center gap-3 px-3.5 rounded-2xl ios-liquid-card hover:bg-white/30 dark:hover:bg-slate-800/45 text-slate-900 dark:text-slate-100 text-[13px] font-bold text-left transition-all active:scale-[0.98]"
                         >
-                          <div className="bg-orange-100 dark:bg-orange-600/20 p-1.5 rounded-lg shrink-0"><ChefHat size={16} className="text-orange-600 dark:text-orange-400" /></div>
+                          <div className="bg-orange-500/15 border border-orange-400/30 p-1.5 rounded-xl shrink-0"><ChefHat size={16} className="text-orange-600 dark:text-orange-400" /></div>
                           <span>Today's Dinner</span>
                         </button>
                       </div>

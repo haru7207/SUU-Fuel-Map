@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { Airport, CardType, WeatherData, FuelType, NotamData } from '../types';
-import { fetchWeather } from '../services/aviationService';
+import { fetchWeather, isValidWeatherData, normalizeStationId } from '../services/aviationService';
 import { auth, signInWithGoogle, logOut } from '../services/firebase';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { X, Phone, AlertTriangle, Fuel, MapPin, CloudSun, RefreshCw, Wind, ArrowUpCircle, Droplets, Clock, WifiOff, Info, User, Send, MessageCircle, AlertCircle, Lightbulb, CornerDownRight, Trash2, Loader2, EyeOff, HelpCircle, Mail, Radio, Sparkles, ExternalLink, LogIn, Calculator, Star, Bell, CheckCircle, CloudFog, CloudRain, ChevronUp, ChevronDown } from 'lucide-react';
@@ -18,6 +18,7 @@ interface AirportDetailsProps {
   onClose: () => void;
   onOpenFuelLog: () => void;
   weatherMap: Record<string, WeatherData>;
+  onWeatherUpdate?: (stationId: string, data: WeatherData) => void;
   notamMap?: Record<string, NotamData>;
   isRefreshingFuel?: boolean;
   onRefreshFuelPrices?: () => Promise<void>;
@@ -33,7 +34,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   airport, 
   onClose, 
   onOpenFuelLog, 
-  weatherMap, 
+  weatherMap,
+  onWeatherUpdate,
   notamMap,
   isRefreshingFuel = false,
   onRefreshFuelPrices,
@@ -42,9 +44,16 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
   isMobileExpanded = false,
   onToggleMobileExpand
 }) => {
+  const weatherId = airport.weatherSource || airport.id;
+  const preloadedWeather = useMemo(() => {
+    const normId = normalizeStationId(weatherId);
+    const candidate = weatherMap?.[weatherId] || weatherMap?.[normId] || weatherMap?.[airport.id];
+    return isValidWeatherData(candidate) ? candidate : null;
+  }, [weatherMap, weatherId, airport.id]);
+
   const [activeTab, setActiveTab] = useState<Tab>('info');
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loadingWeather, setLoadingWeather] = useState(true);
+  const [weather, setWeather] = useState<WeatherData | null>(() => preloadedWeather);
+  const [loadingWeather, setLoadingWeather] = useState<boolean>(() => !preloadedWeather);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -242,34 +251,58 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
 
   // Manual refresh triggered by button
   const loadWeather = useCallback(async (forceRefresh: boolean = false) => {
-      const weatherId = airport.weatherSource || airport.id;
       setLoadingWeather(true);
       try {
-          const w = await fetchWeather(weatherId, true);
+          const w = await fetchWeather(weatherId, forceRefresh);
           setWeather(w);
+          if (isValidWeatherData(w) && onWeatherUpdate) {
+              onWeatherUpdate(weatherId, w);
+          }
       } catch (e) {
           console.error("Weather load failed", e);
       } finally {
           setLoadingWeather(false);
       }
-  }, [airport.id, airport.weatherSource]);
+  }, [weatherId, onWeatherUpdate]);
 
+  // Sync immediately whenever preloaded weather is available in weatherMap
+  useEffect(() => {
+    if (preloadedWeather) {
+      setWeather(preloadedWeather);
+      setLoadingWeather(false);
+    }
+  }, [preloadedWeather]);
+
+  // Only fetch on-demand if weather wasn't already preloaded (or silently refresh if > 10 mins old)
   useEffect(() => {
     let isMounted = true;
-    const weatherId = airport.weatherSource || airport.id;
-    
-    // 1. Instantly show cached map data if available to prevent flicker
-    if (weatherMap && weatherMap[weatherId]) {
-        setWeather(weatherMap[weatherId]);
-    } else {
-        setLoadingWeather(true);
+
+    if (preloadedWeather) {
+      setWeather(preloadedWeather);
+      setLoadingWeather(false);
+      const lastUpd = preloadedWeather.lastUpdated ? new Date(preloadedWeather.lastUpdated).getTime() : 0;
+      const isFresh = lastUpd > 0 && (Date.now() - lastUpd) < 10 * 60 * 1000;
+      if (isFresh) {
+        return () => { isMounted = false; };
+      }
+      // Silently refresh in background without showing skeleton
+      fetchWeather(weatherId, true).then(w => {
+        if (isMounted && isValidWeatherData(w)) {
+          setWeather(w);
+          onWeatherUpdate?.(weatherId, w);
+        }
+      }).catch(() => {});
+      return () => { isMounted = false; };
     }
-    
-    // 2. Automatically fetch fresh data from API in background when airport is opened
-    fetchWeather(weatherId, true).then(w => {
+
+    setLoadingWeather(true);
+    fetchWeather(weatherId, false).then(w => {
         if (isMounted) {
             setWeather(w);
             setLoadingWeather(false);
+            if (isValidWeatherData(w)) {
+                onWeatherUpdate?.(weatherId, w);
+            }
         }
     }).catch(e => {
         console.error("Auto weather load failed", e);
@@ -277,7 +310,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
     });
     
     return () => { isMounted = false; };
-  }, [airport.id, airport.weatherSource]); // intentionally omitting weatherMap to prevent overwrite loop
+  }, [airport.id, weatherId]);
 
   useEffect(() => {
     if (airport.runways.length > 0) {
@@ -444,11 +477,11 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       <button
         type="button"
         onClick={() => onToggleMobileExpand && onToggleMobileExpand()}
-        className="w-full flex items-center justify-center gap-1.5 pt-2.5 pb-1 md:hidden bg-white/35 dark:bg-slate-900/35 flex-shrink-0 active:bg-white/50 transition-colors cursor-pointer"
+        className="w-full flex items-center justify-center gap-1.5 pt-2.5 pb-1 md:hidden bg-white/12 dark:bg-slate-900/15 flex-shrink-0 active:bg-white/25 transition-colors cursor-pointer"
         title={isMobileExpanded ? "Collapse panel" : "Expand panel to full screen"}
       >
-        <div className="w-10 h-1.5 bg-slate-400/60 dark:bg-slate-500 rounded-full" />
-        <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 flex items-center">
+        <div className="w-10 h-1.5 bg-slate-500/50 dark:bg-slate-400/60 rounded-full" />
+        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300 flex items-center">
           {isMobileExpanded ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
         </span>
       </button>
@@ -458,7 +491,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
         (() => {
           const catDetails = getFlightCategoryDetails(weather.flightCategory);
           return (
-            <div className={`hidden md:flex w-full px-4 py-2 items-center justify-center gap-2 border-b border-white/50 ${catDetails.bg}/45 flex-shrink-0`}>
+            <div className={`hidden md:flex w-full px-4 py-2 items-center justify-center gap-2 border-b border-white/55 ${catDetails.bg}/30 flex-shrink-0`}>
               <div className={`${catDetails.text} drop-shadow-2xs`}>
                 {catDetails.icon}
               </div>
@@ -471,7 +504,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       )}
 
       {/* --- iOS LIQUID GLASS HEADER --- */}
-      <div className="px-4 py-2.5 md:p-5 border-b border-white/50 dark:border-white/10 bg-white/15 dark:bg-slate-900/20 flex justify-between items-start flex-shrink-0">
+      <div className="px-4 py-2.5 md:p-5 border-b border-white/55 dark:border-white/15 bg-white/6 dark:bg-slate-900/10 flex justify-between items-start flex-shrink-0">
         <div className="min-w-0 pr-2">
           <div className="flex items-center gap-2 flex-wrap">
              <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight font-mono drop-shadow-2xs">
@@ -535,8 +568,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
       </div>
 
       {/* --- iOS SEGMENTED TABS --- */}
-      <div className="px-3.5 py-2 md:px-4 md:py-2.5 bg-white/10 dark:bg-slate-900/15 border-b border-white/45 dark:border-white/10 flex-shrink-0">
-        <div className="flex bg-white/22 dark:bg-slate-800/35 p-1 rounded-2xl border border-white/60 dark:border-white/15 gap-1">
+      <div className="px-3.5 py-2 md:px-4 md:py-2.5 bg-white/5 dark:bg-slate-900/10 border-b border-white/50 dark:border-white/15 flex-shrink-0">
+        <div className="flex bg-white/12 dark:bg-slate-800/20 p-1 rounded-2xl border border-white/65 dark:border-white/20 gap-1 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.8)]">
           {[
             { id: 'info', label: 'FBO & Info' },
             { id: 'runways', label: 'Runways' },
@@ -548,7 +581,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
               onClick={() => setActiveTab(tab.id as Tab)}
               className={`flex-1 py-1.5 px-2 text-xs font-semibold text-center rounded-xl transition-all whitespace-nowrap shrink-0 ${
                 activeTab === tab.id
-                  ? 'bg-white/65 dark:bg-slate-700/70 backdrop-blur-md text-slate-900 dark:text-white shadow-2xs border border-white/85 dark:border-white/20'
+                  ? 'bg-white/38 dark:bg-slate-700/50 backdrop-blur-md text-slate-900 dark:text-white shadow-[0_2px_8px_rgba(15,23,42,0.08),inset_0_1.5px_0.5px_rgba(255,255,255,0.95)] border border-white/85 dark:border-white/25'
                   : 'text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -738,7 +771,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                     <FuelPriceTrendChart airport={airport} />
 
                     {/* Estimated Fuel Price Calculator Card */}
-                    <div className="bg-white/22 dark:bg-slate-900/25 border border-white/60 dark:border-slate-700/50 rounded-2xl p-4 space-y-4">
+                    <div className="bg-white/12 dark:bg-slate-900/18 border border-white/65 dark:border-slate-700/50 rounded-2xl p-4 space-y-4 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.85)]">
                         <div className="flex items-center gap-2 border-b border-white/45 dark:border-slate-700/50 pb-2.5">
                             <Calculator size={16} className="text-sky-600 dark:text-sky-400" />
                             <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">
@@ -761,8 +794,8 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                                 onClick={() => setEstFuelType(t)}
                                                 className={`py-2 px-3 text-xs font-bold rounded-xl border text-left flex justify-between items-center transition-all ${
                                                     estFuelType === t
-                                                    ? 'bg-sky-500/75 backdrop-blur-md border-white/60 text-white shadow-sm'
-                                                    : 'bg-white/30 dark:bg-slate-800/35 border-white/65 dark:border-slate-700 hover:bg-white/50 text-slate-800 dark:text-slate-200'
+                                                    ? 'bg-sky-500/70 backdrop-blur-md border-white/65 text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.55)]'
+                                                    : 'bg-white/16 dark:bg-slate-800/25 border-white/65 dark:border-slate-700 hover:bg-white/32 text-slate-800 dark:text-slate-200'
                                                 }`}
                                             >
                                                 <span>{t}</span>
@@ -824,7 +857,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                                             key={amt}
                                             type="button"
                                             onClick={() => setEstGallons(amt)}
-                                            className="bg-white/30 hover:bg-white/55 dark:bg-slate-800/40 dark:hover:bg-slate-700/60 border border-white/65 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold font-mono px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
+                                            className="bg-white/16 hover:bg-white/35 dark:bg-slate-800/25 dark:hover:bg-slate-700/45 border border-white/65 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-semibold font-mono px-2.5 py-1 rounded-lg transition-colors whitespace-nowrap"
                                         >
                                             {amt}G
                                         </button>
@@ -866,7 +899,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                         </div>
 
                         {/* Calculated Output */}
-                        <div className="bg-white/35 dark:bg-slate-800/45 border border-white/75 dark:border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.85)]">
+                        <div className="bg-white/18 dark:bg-slate-800/28 border border-white/75 dark:border-slate-700 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[inset_0_1.5px_0.5px_rgba(255,255,255,0.92)]">
                             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 mb-0.5">
                                 Estimated Total Cost
                             </span>
@@ -885,7 +918,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                             <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-2">Communication Frequencies</span>
                             <div className="flex flex-col gap-2">
                                 {airport.frequencies.map((freq, index) => (
-                                    <div key={index} className="flex items-center justify-between border px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/25 dark:bg-slate-800/35 border-white/65 dark:border-slate-700/60 text-slate-800 dark:text-slate-200">
+                                    <div key={index} className="flex items-center justify-between border px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/14 dark:bg-slate-800/22 border-white/65 dark:border-slate-700/60 text-slate-800 dark:text-slate-200 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.8)]">
                                         <div className="flex items-center gap-2">
                                             <Radio size={14} className="text-sky-600 dark:text-sky-400" />
                                             <span>{freq.name}</span>
@@ -948,7 +981,7 @@ const AirportDetails: React.FC<AirportDetailsProps> = ({
                             href="https://docs.google.com/forms/d/e/1FAIpQLScmBQPQeOxgMnq4UEvxzg5HwEe-x2Owj3kVpV4pWbpXrxhoHg/viewform" 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="flex items-center justify-center w-full py-2.5 bg-white/80 dark:bg-slate-800/80 text-rose-600 dark:text-rose-400 hover:bg-white border border-white/90 dark:border-slate-700 rounded-xl font-semibold text-xs transition-all gap-2 shadow-2xs"
+                            className="flex items-center justify-center w-full py-2.5 ios-liquid-pill text-rose-600 dark:text-rose-400 hover:bg-white/40 rounded-xl font-semibold text-xs transition-all gap-2"
                         >
                             <AlertCircle size={14} />
                             Report Fuel or Card Discrepancy

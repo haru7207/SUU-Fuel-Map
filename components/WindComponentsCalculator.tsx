@@ -346,20 +346,20 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
   if (!isOpen) return null;
 
   return (
-    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-24 md:right-4 md:left-auto md:w-[40rem] lg:w-[54rem] bg-slate-50 dark:bg-slate-900 rounded-t-2xl md:rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden animate-slide-in-up md:animate-fade-in h-[88dvh] md:h-auto max-h-[90dvh]">
+    <div className="absolute z-[1060] bottom-0 left-0 right-0 md:bottom-auto md:top-24 md:right-4 md:left-auto md:w-[40rem] lg:w-[54rem] ios-liquid-glass-heavy rounded-t-[32px] md:rounded-[28px] flex flex-col overflow-hidden animate-slide-in-up md:animate-fade-in h-[88dvh] md:h-auto max-h-[90dvh]">
       
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 px-5 py-4 flex justify-between items-center border-b border-slate-200 dark:border-slate-700 shrink-0">
+      <div className="bg-white/6 dark:bg-slate-800/15 px-5 py-4 flex justify-between items-center border-b border-white/55 dark:border-slate-700/50 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="bg-sky-100 dark:bg-sky-600/20 p-2 rounded-lg">
+          <div className="bg-sky-500/20 border border-sky-400/50 p-2 rounded-xl">
             <Wind size={24} className="text-sky-600 dark:text-sky-400" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">Wind Components Calculator</h2>
-            <p className="text-xs text-slate-500 font-medium">Instructional Vector Graph</p>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Wind Components Calculator</h2>
+            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Instructional Vector Graph</p>
           </div>
         </div>
-        <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 transition-colors">
+        <button onClick={onClose} className="p-2 rounded-full ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
           <X size={20} />
         </button>
       </div>
@@ -369,13 +369,13 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
           
           {/* Inputs Section */}
           <div className="flex flex-col gap-4">
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-              <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-3 border-b border-slate-100 dark:border-slate-700 pb-2 flex justify-between items-center">
+            <div className="ios-liquid-card p-4 rounded-2xl">
+              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 border-b border-white/50 dark:border-slate-700/50 pb-2 flex justify-between items-center">
                 <span>Wind Conditions</span>
                 <button
                   onClick={fetchKCDCWeather}
                   disabled={isFetchingWeather}
-                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold bg-sky-100/50 hover:bg-sky-100 dark:bg-sky-500/10 dark:hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-md transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold ios-liquid-pill text-sky-600 dark:text-sky-400 rounded-lg transition-colors disabled:opacity-50"
                   title="Auto-fill latest KCDC METAR"
                 >
                   {isFetchingWeather ? <Loader2 size={14} className="animate-spin" /> : <CloudFog size={14} />}
@@ -385,45 +385,45 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
               
               <div className="grid grid-cols-2 gap-3 mb-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Runway (1-36)</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Runway (1-36)</label>
                   <input
                     type="number" min="1" max="36"
                     value={runway}
                     onChange={(e) => setRunway(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Wind Dir (°)</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Wind Dir (°)</label>
                   <input
                     type="number" min="0" max="360"
                     value={windDir}
                     onChange={(e) => setWindDir(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Speed (kts)</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Speed (kts)</label>
                   <input
                     type="number" min="0"
                     value={windSpeed}
                     onChange={(e) => setWindSpeed(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Gusts (kts)</label>
+                  <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Gusts (kts)</label>
                   <input
                     type="number" min="0"
                     value={gustSpeed}
                     onChange={(e) => setGustSpeed(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                    className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500"
                   />
                 </div>
               </div>
               
               <label className="flex items-center gap-2 cursor-pointer pt-2 group">
-                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${useGust ? 'bg-sky-500 border-sky-500 text-white' : 'bg-slate-100 dark:bg-slate-900 border-slate-300 dark:border-slate-600'}`}>
+                <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${useGust ? 'bg-sky-500 border-sky-500 text-white' : 'bg-white/25 dark:bg-slate-900/40 border-white/60 dark:border-slate-600'}`}>
                    {useGust && <ArrowRight size={12} className="rotate-45 block" />}
                 </div>
                 <input
@@ -432,22 +432,22 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
                   onChange={(e) => setUseGust(e.target.checked)}
                   className="hidden"
                 />
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
+                <span className="text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors">
                   Use Gust Speed for highest crosswind limit
                 </span>
               </label>
             </div>
 
             {/* Numerical Results */}
-            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex-1">
-               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 mb-4 border-b border-slate-100 dark:border-slate-700 pb-2">Component Results</h3>
+            <div className="ios-liquid-card p-4 rounded-2xl flex-1">
+               <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-4 border-b border-white/50 dark:border-slate-700/50 pb-2">Component Results</h3>
                
                <div className="flex flex-col gap-4">
                  <div className="flex justify-between items-end">
                    <div>
                      <div className="text-xs font-bold text-cyan-600 dark:text-cyan-400 uppercase tracking-wider mb-1">Crosswind</div>
-                     <div className="text-3xl font-black text-slate-800 dark:text-white">
-                        {crosswind.toFixed(1)} <span className="text-lg text-slate-500 font-bold">kts</span>
+                     <div className="text-3xl font-black text-slate-900 dark:text-white">
+                        {crosswind.toFixed(1)} <span className="text-lg text-slate-600 dark:text-slate-400 font-bold">kts</span>
                      </div>
                    </div>
                    <div className="text-right">
@@ -465,12 +465,12 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
           </div>
 
           {/* Visual 1: Runway View */}
-          <div className="bg-white dark:bg-slate-800 p-[2px] rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden flex flex-col min-h-[300px] justify-center items-center">
-            <div className="absolute top-3 left-4 z-10 bg-white/90 dark:bg-slate-800/90 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg backdrop-blur-md">
-              <h3 className="text-sm font-black text-slate-800 dark:text-slate-100">Vector Breakdown</h3>
-              <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">Top-down view</p>
+          <div className="ios-liquid-card p-[2px] rounded-2xl relative overflow-hidden flex flex-col min-h-[300px] justify-center items-center">
+            <div className="absolute top-3 left-4 z-10 ios-liquid-pill px-3 py-2 rounded-xl">
+              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Vector Breakdown</h3>
+              <p className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase mt-0.5">Top-down view</p>
             </div>
-            <div className="w-full flex-1 aspect-square max-w-[400px] border border-slate-100 dark:border-slate-700/50 rounded-lg overflow-hidden bg-slate-50 dark:bg-slate-900 mt-2">
+            <div className="w-full flex-1 aspect-square max-w-[400px] border border-white/40 dark:border-slate-700/50 rounded-xl overflow-hidden bg-white/10 dark:bg-slate-900/30 mt-2">
                 <canvas ref={runwayCanvasRef} className="w-full h-full object-contain block" />
             </div>
           </div>
@@ -479,11 +479,11 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
 
         {/* Warning Feature */}
         {crosswindWarning && (
-          <div className="mb-4 bg-red-50 dark:bg-red-900/20 p-3 lg:p-4 rounded-xl border border-red-300 dark:border-red-800/60 flex gap-3 animate-fade-in shadow-sm mx-auto w-full">
+          <div className="mb-4 bg-red-500/15 dark:bg-red-900/25 p-3 lg:p-4 rounded-2xl border border-red-300/60 dark:border-red-800/60 flex gap-3 animate-fade-in shadow-sm mx-auto w-full">
              <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
              <div>
-               <h4 className="text-sm font-bold text-red-800 dark:text-red-400 uppercase tracking-widest">Max Demonstrated Crosswind Exceeded</h4>
-               <p className="text-xs lg:text-sm text-red-700 dark:text-red-300 mt-1 font-medium">
+               <h4 className="text-sm font-bold text-red-900 dark:text-red-400 uppercase tracking-widest">Max Demonstrated Crosswind Exceeded</h4>
+               <p className="text-xs lg:text-sm text-red-800 dark:text-red-300 mt-1 font-medium">
                  The calculated crosswind ({crosswind.toFixed(1)} kts) exceeds the Cirrus SR20 Max Demonstrated limit of 20 knots.
                </p>
              </div>
@@ -491,12 +491,12 @@ export const WindComponentsCalculator: React.FC<WindComponentsCalculatorProps> =
         )}
 
         {/* Visual 2: POH Chart */}
-        <div className="bg-white dark:bg-slate-800 p-[2px] rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-           <div className="absolute top-4 left-5 z-10 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lg">
-              <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 tracking-tight">Standard POH Graph</h3>
-              <p className="text-[10px] text-slate-500 font-bold uppercase mt-0.5">Plotting wind angle & velocity</p>
+        <div className="ios-liquid-card p-[2px] rounded-2xl relative overflow-hidden">
+           <div className="absolute top-4 left-5 z-10 ios-liquid-pill px-3 py-2 rounded-xl">
+              <h3 className="text-sm font-black text-slate-900 dark:text-slate-100 tracking-tight">Standard POH Graph</h3>
+              <p className="text-[10px] text-slate-600 dark:text-slate-400 font-bold uppercase mt-0.5">Plotting wind angle & velocity</p>
            </div>
-           <div className="w-full flex justify-center bg-slate-50 dark:bg-[#0f172a] rounded-lg border border-slate-100 dark:border-slate-700/50">
+           <div className="w-full flex justify-center bg-white/10 dark:bg-[#0f172a]/50 rounded-xl border border-white/40 dark:border-slate-700/50">
               <div className="w-full max-w-[600px] aspect-[6/5]">
                   <canvas ref={graphCanvasRef} className="w-full h-full object-contain block" />
               </div>

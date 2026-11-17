@@ -226,12 +226,12 @@ Signature: ____________________`;
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-lg max-h-[90dvh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 dark:border-slate-800 animate-fadeIn">
+    <div className="fixed inset-0 z-[2000] flex items-end sm:items-center justify-center bg-slate-900/15 backdrop-blur-md p-0 sm:p-4">
+      <div className="ios-liquid-glass-heavy w-full max-w-lg max-h-[90dvh] rounded-t-[32px] sm:rounded-[28px] flex flex-col overflow-hidden animate-fadeIn">
         
         {/* Header */}
-        <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
-          <h2 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+        <div className="p-4 md:p-5 border-b border-white/55 dark:border-slate-800/50 flex justify-between items-center bg-white/6 dark:bg-slate-800/15">
+          <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
             <Radio className="text-cyan-500" />
             VOR Receiver Check
           </h2>
@@ -239,62 +239,60 @@ Signature: ____________________`;
               <button 
                 onClick={saveDraft}
                 title="Save Draft"
-                className="text-slate-400 hover:text-emerald-500 transition-colors p-1"
+                className="ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-emerald-600 transition-colors p-2 rounded-full"
               >
                 <Save size={18} />
               </button>
-              <div className="h-4 w-px bg-slate-300 dark:bg-slate-700"></div>
               <button 
                 onClick={clearDraft}
                 title="Clear Form"
-                className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                className="ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-red-500 transition-colors p-2 rounded-full"
               >
                 <Trash2 size={18} />
               </button>
               <button 
                 onClick={onClose}
-                className="text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors ml-2"
+                className="ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors p-2 rounded-full"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
           </div>
         </div>
 
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div className="flex border-b border-white/50 dark:border-slate-800/50 bg-white/5 dark:bg-slate-900/15">
           <button
             onClick={() => setActiveTab('form')}
-            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'form' ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'form' ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-white/20 dark:bg-slate-800/30' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
             <Edit3 size={16} /> New Entry
           </button>
           <button
             onClick={() => setActiveTab('history')}
-            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'history' ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400' : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'}`}
+            className={`flex-1 py-3 text-sm font-bold flex items-center justify-center gap-2 border-b-2 transition-colors ${activeTab === 'history' ? 'border-cyan-500 text-cyan-600 dark:text-cyan-400 bg-white/20 dark:bg-slate-800/30' : 'border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'}`}
           >
-            <History size={16} /> History {history.length > 0 && <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-1.5 rounded-full">{history.length}</span>}
+            <History size={16} /> History {history.length > 0 && <span className="text-[10px] ios-liquid-pill text-slate-700 dark:text-slate-300 px-1.5 rounded-full">{history.length}</span>}
           </button>
         </div>
 
         {/* Content */}
         {activeTab === 'form' ? (
         <div className="flex-1 min-h-0 p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto overscroll-y-contain touch-pan-y space-y-6 custom-scrollbar">
-            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between p-3 bg-cyan-50 dark:bg-cyan-900/20 text-cyan-800 dark:text-cyan-400 rounded-lg border border-cyan-200 dark:border-cyan-800/50">
+            <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between p-3 bg-cyan-500/15 dark:bg-cyan-900/25 text-cyan-900 dark:text-cyan-300 rounded-2xl border border-cyan-300/60 dark:border-cyan-800/50">
               <span className="text-sm font-medium">Ensure compliance with 14 CFR 91.171 for IFR operations. This tool formats the legally required logbook entry.</span>
-              <button onClick={loadDraft} className="whitespace-nowrap text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 px-3 rounded shadow-sm transition-colors">
+              <button onClick={loadDraft} className="whitespace-nowrap text-xs font-bold ios-liquid-pill text-slate-800 dark:text-slate-200 py-1.5 px-3 rounded-xl transition-colors">
                 Load Last Draft
               </button>
             </div>
 
             <div className="space-y-4">
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Type of Check</label>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Type of Check</label>
                     <select
                         value={checkType}
                         onChange={(e) => {
                             setCheckType(e.target.value as CheckType);
-                            // don't clear everything on change so they can switch without losing date/tail etc.
                         }}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium"
+                        className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium"
                     >
                         <option value="VOT">VOT (FAA Test Signal)</option>
                         <option value="Ground Checkpoint">Ground Checkpoint</option>
@@ -302,75 +300,75 @@ Signature: ____________________`;
                         <option value="Airborne Checkpoint">Airborne Checkpoint</option>
                         <option value="Prominent Landmark">Prominent Landmark (Airway)</option>
                     </select>
-                    <p className="mt-1.5 text-xs font-bold text-slate-400">
+                    <p className="mt-1.5 text-xs font-bold text-slate-600 dark:text-slate-400">
                         {getToleranceText()}
                     </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Date</label>
                         <input
                             type="date"
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono text-sm"
+                            className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono text-sm"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Aircraft Tail #</label>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Aircraft Tail #</label>
                         <input
                             type="text"
                             placeholder="e.g. N12345"
                             value={tailNumber}
                             onChange={(e) => setTailNumber(e.target.value.toUpperCase())}
-                            className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono text-sm uppercase"
+                            className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono text-sm uppercase"
                         />
                     </div>
                 </div>
                 
                 <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Location/Place</label>
+                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Location/Place</label>
                     <input
                         type="text"
                         placeholder="e.g. KCDC Ground Check"
                         value={place}
                         onChange={(e) => setPlace(e.target.value)}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium text-sm"
+                        className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-medium text-sm"
                     />
                 </div>
 
                 {checkType === 'Dual VOR Cross-check' ? (
                     <div>
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">NAV 1 vs NAV 2 Difference (°)</label>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">NAV 1 vs NAV 2 Difference (°)</label>
                         <input
                             type="number"
                             placeholder="e.g. 2"
                             value={dualDifference}
                             onChange={(e) => setDualDifference(e.target.value !== '' ? Number(e.target.value) : '')}
-                            className={`w-full bg-slate-50 dark:bg-slate-800 border rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 font-mono text-sm ${isDualExceeded ? 'border-red-400 focus:ring-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700 focus:ring-cyan-500'}`}
+                            className={`w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 font-mono text-sm ${isDualExceeded ? 'border-red-400 focus:ring-red-500 text-red-600 dark:text-red-400 bg-red-500/15' : 'focus:ring-cyan-500'}`}
                         />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700/50">
+                    <div className="grid grid-cols-2 gap-4 ios-liquid-card p-3 rounded-2xl">
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">NAV 1 Error (°)</label>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">NAV 1 Error (°)</label>
                             <input
                                 type="number"
                                 placeholder="e.g. +2 or -1"
                                 value={nav1Error}
                                 onChange={(e) => setNav1Error(e.target.value !== '' ? Number(e.target.value) : '')}
-                                className={`w-full bg-white dark:bg-slate-800 border rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 font-mono text-sm ${isNav1Exceeded ? 'border-red-400 focus:ring-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700 focus:ring-cyan-500'}`}
+                                className={`w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 font-mono text-sm ${isNav1Exceeded ? 'border-red-400 focus:ring-red-500 text-red-600 dark:text-red-400 bg-red-500/15' : 'focus:ring-cyan-500'}`}
                             />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">NAV 2 Error (°) <span className="text-[10px] lowercase text-slate-400 font-normal ml-1">optional</span></label>
+                            <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">NAV 2 Error (°) <span className="text-[10px] lowercase text-slate-500 font-normal ml-1">optional</span></label>
                             <input
                                 type="number"
                                 placeholder="e.g. +1 or 0"
                                 value={nav2Error}
                                 onChange={(e) => setNav2Error(e.target.value !== '' ? Number(e.target.value) : '')}
-                                className={`w-full bg-white dark:bg-slate-800 border rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 font-mono text-sm ${isNav2Exceeded ? 'border-red-400 focus:ring-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-700 focus:ring-cyan-500'}`}
+                                className={`w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 font-mono text-sm ${isNav2Exceeded ? 'border-red-400 focus:ring-red-500 text-red-600 dark:text-red-400 bg-red-500/15' : 'focus:ring-cyan-500'}`}
                             />
                         </div>
                     </div>
@@ -378,7 +376,7 @@ Signature: ____________________`;
 
 
                 {isErrorExceeded && (
-                    <div className="flex items-center gap-2 text-red-600 dark:text-red-400 text-sm font-bold bg-red-50 dark:bg-red-900/20 p-2 rounded border border-red-200 dark:border-red-800/50">
+                    <div className="flex items-center gap-2 text-red-700 dark:text-red-400 text-sm font-bold bg-red-500/15 p-2.5 rounded-xl border border-red-300/60 dark:border-red-800/50">
                         <AlertTriangle size={16} />
                         Error exceeds limits - IFR Prohibited
                     </div>
@@ -388,26 +386,26 @@ Signature: ____________________`;
             <button
                 onClick={handleGenerate}
                 disabled={isErrorExceeded}
-                className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-bold rounded-lg shadow-md transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 bg-cyan-600/85 hover:bg-cyan-600 border border-white/60 disabled:bg-slate-400/40 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"
             >
                 <CheckCircle size={18} />
                 Generate Log Entry
             </button>
 
             {logEntry && (
-                <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-6 animate-fadeIn">
+                <div className="mt-6 border-t border-white/50 dark:border-slate-800/50 pt-6 animate-fadeIn">
                     <div className="flex items-center justify-between mb-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase">Results/Memo</label>
+                        <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase">Results/Memo</label>
                         <div className="flex gap-2">
                             <button 
                                 onClick={copyToClipboard}
-                                className="flex items-center gap-1.5 text-xs font-bold bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 py-1.5 px-3 rounded shadow-sm transition-colors"
+                                className="flex items-center gap-1.5 text-xs font-bold ios-liquid-pill text-slate-800 dark:text-slate-200 py-1.5 px-3 rounded-xl transition-colors"
                             >
                                 <Copy size={14} /> Copy
                             </button>
                             <button 
                                 onClick={shareEntry}
-                                className="flex items-center gap-1.5 text-xs font-bold bg-cyan-50 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-800/50 hover:bg-cyan-100 dark:hover:bg-cyan-900/50 py-1.5 px-3 rounded shadow-sm transition-colors"
+                                className="flex items-center gap-1.5 text-xs font-bold bg-cyan-500/20 text-cyan-800 dark:text-cyan-300 border border-cyan-300/60 dark:border-cyan-800/50 hover:bg-cyan-500/30 py-1.5 px-3 rounded-xl shadow-sm transition-colors"
                             >
                                 <Share2 size={14} /> Share / Save
                             </button>
@@ -416,7 +414,7 @@ Signature: ____________________`;
                     <textarea
                         readOnly
                         value={logEntry}
-                        className="w-full h-32 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-slate-300 font-mono text-sm leading-relaxed resize-none focus:outline-none shadow-inner"
+                        className="w-full h-32 ios-liquid-input rounded-xl p-3 text-slate-900 dark:text-slate-200 font-mono text-sm leading-relaxed resize-none focus:outline-none"
                     />
                 </div>
             )}
@@ -424,25 +422,25 @@ Signature: ____________________`;
         ) : (
         <div className="flex-1 min-h-0 p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto overscroll-y-contain touch-pan-y space-y-4 custom-scrollbar">
             {history.length === 0 ? (
-            <div className="text-center py-8 text-slate-400">
+            <div className="text-center py-8 text-slate-500">
                 <History size={32} className="mx-auto mb-2 opacity-50" />
                 <p>No logged VOR checks yet.</p>
             </div>
             ) : (
             history.map((item, idx) => (
-                <div key={item.id || idx} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-4 shadow-sm group">
+                <div key={item.id || idx} className="ios-liquid-card rounded-2xl p-4 group">
                 <div className="flex justify-between items-start mb-2">
                     <div>
-                    <h4 className="font-bold text-slate-800 dark:text-slate-200">{item.tailNumber}</h4>
-                    <p className="text-xs text-slate-500">{item.date} • {item.place} ({item.checkType})</p>
+                    <h4 className="font-bold text-slate-900 dark:text-slate-100">{item.tailNumber}</h4>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">{item.date} • {item.place} ({item.checkType})</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <button onClick={() => loadHistoryEntry(item)} className="text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 hover:underline text-xs font-bold transition-colors">Load</button>
-                        <div className="h-3 w-px bg-slate-300 dark:bg-slate-600"></div>
-                        <button onClick={() => deleteHistoryEntry(item.id)} className="text-slate-400 hover:text-red-500 transition-colors p-1" title="Delete entry"><Trash2 size={14} /></button>
+                        <div className="h-3 w-px bg-white/50 dark:bg-slate-600"></div>
+                        <button onClick={() => deleteHistoryEntry(item.id)} className="text-slate-500 hover:text-red-500 transition-colors p-1" title="Delete entry"><Trash2 size={14} /></button>
                     </div>
                 </div>
-                <div className="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-line bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 p-2.5 rounded font-mono">
+                <div className="text-xs text-slate-800 dark:text-slate-300 whitespace-pre-line bg-white/15 dark:bg-slate-900/25 border border-white/50 dark:border-slate-700/50 p-2.5 rounded-xl font-mono">
                     {item.logEntry}
                 </div>
                 </div>

@@ -90,15 +90,39 @@ app.get('/api/dinner', async (req: express.Request, res: express.Response) => {
     }
 });
 
-app.get('/api/awc/*all', async (req: express.Request, res: express.Response) => {
-    const rawAll = (req.params as any).all;
-    const subPath = Array.isArray(rawAll) ? rawAll.join('/') : rawAll;
+const awcCache = new Map<string, { status: number; contentType: string; body: string; timestamp: number }>();
+const AWC_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
 
-    const queryParams = new URLSearchParams(req.query as any);
-    queryParams.delete('_cb');
+const handleAwcProxy = async (req: express.Request, res: express.Response) => {
+    const rawAll = (req.params as any)?.all || req.query.path;
+    let subPath = Array.isArray(rawAll) ? rawAll.join('/') : String(rawAll || '');
+    if (!subPath && req.path.startsWith('/api/awc/')) {
+        subPath = req.path.replace(/^\/api\/awc\//, '');
+    }
+    subPath = subPath.replace(/^\/+/, '');
+
+    // Strip internal/rewrite/cache-buster parameters (_cb, path, all) because
+    // NOAA AWC strictly validates query params and returns HTTP 400 if extra params like `path=metar` are present.
+    const queryParams = new URLSearchParams();
+    for (const [key, value] of Object.entries(req.query || {})) {
+        if (key === '_cb' || key === 'path' || key === 'all' || key === '...path') continue;
+        if (typeof value === 'string') {
+            queryParams.set(key, value);
+        } else if (Array.isArray(value) && value.length > 0) {
+            queryParams.set(key, String(value[0]));
+        }
+    }
     const queryString = queryParams.toString();
 
     const targetUrl = `https://aviationweather.gov/api/data/${subPath}${queryString ? '?' + queryString : ''}`;
+
+    const cached = awcCache.get(targetUrl);
+    if (cached && Date.now() - cached.timestamp < AWC_CACHE_TTL_MS) {
+        res.setHeader('Content-Type', cached.contentType);
+        res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+        res.setHeader('X-AWC-Cache', 'HIT');
+        return res.status(cached.status).send(cached.body);
+    }
 
     try {
         const response = await fetch(targetUrl, {
@@ -111,6 +135,7 @@ app.get('/api/awc/*all', async (req: express.Request, res: express.Response) => 
 
         if (response.status === 204) {
             res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
             return res.status(200).send('[]');
         }
 
@@ -120,15 +145,37 @@ app.get('/api/awc/*all', async (req: express.Request, res: express.Response) => 
         }
 
         const contentType = response.headers.get('content-type') || 'application/json';
-        res.setHeader('Content-Type', contentType);
-        res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
+        const bodyText = (await response.text()) || '[]';
 
-        const bodyText = await response.text();
-        res.send(bodyText || '[]');
+        awcCache.set(targetUrl, {
+            status: 200,
+            contentType,
+            body: bodyText,
+            timestamp: Date.now()
+        });
+
+        res.setHeader('Content-Type', contentType);
+        res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+        res.setHeader('X-AWC-Cache', 'MISS');
+        res.send(bodyText);
     } catch (error) {
         console.error(`[AWC Proxy] Failed to proxy ${targetUrl}:`, error);
+        if (cached) {
+            res.setHeader('Content-Type', cached.contentType);
+            return res.status(cached.status).send(cached.body);
+        }
         res.status(500).send('Error proxying request to NOAA AWC');
     }
+};
+
+app.get('/api/awc/*all', handleAwcProxy);
+app.get('/api/index.ts', (req, res, next) => {
+    if (req.query.path) return handleAwcProxy(req, res);
+    next();
+});
+app.get('/api/index', (req, res, next) => {
+    if (req.query.path) return handleAwcProxy(req, res);
+    next();
 });
 
 export default app;

@@ -88,12 +88,12 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
   return (
     <div className="ios-liquid-card rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="bg-white/15 dark:bg-slate-800/25 px-4 py-2.5 border-b border-white/50 dark:border-slate-700/50">
+      <div className="bg-white/6 dark:bg-slate-800/15 px-4 py-2.5 border-b border-white/55 dark:border-slate-700/50">
         <h4 className="text-xs font-bold text-slate-800 dark:text-slate-200 tracking-tight">Current Surface Conditions</h4>
       </div>
 
       <div className="p-0">
-        <div className={`px-4 py-3 font-mono text-xs font-semibold leading-relaxed border-b border-white/45 dark:border-slate-700/50 bg-white/15 dark:bg-slate-900/20 ${getMetarColor()}`}>
+        <div className={`px-4 py-3 font-mono text-xs font-semibold leading-relaxed border-b border-white/50 dark:border-slate-700/50 bg-white/8 dark:bg-slate-900/15 ${getMetarColor()}`}>
           {weather.metar}
         </div>
 
@@ -111,7 +111,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
                   {observationDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric'})} · {observationDate.toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit', hour12:true})}
               </td>
             </tr>
-            <tr className="bg-white/12 dark:bg-slate-800/15">
+            <tr className="bg-white/6 dark:bg-slate-800/10">
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Wind</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">
                 {!weather.wind ? '-' : 
@@ -124,7 +124,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Visibility</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{weather.visibility || '-'} sm</td>
             </tr>
-            <tr className="bg-white/12 dark:bg-slate-800/15">
+            <tr className="bg-white/6 dark:bg-slate-800/10">
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Clouds (AGL)</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{getCloudsText()}</td>
             </tr>
@@ -134,7 +134,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
                  {temp !== null ? `${Math.round(temp)}°C (${Math.round(temp * 9/5 + 32)}°F)` : '-'}
               </td>
             </tr>
-             <tr className="bg-white/12 dark:bg-slate-800/15">
+             <tr className="bg-white/6 dark:bg-slate-800/10">
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Dewpoint</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">
                  {dewp !== null ? `${Math.round(dewp)}°C (${Math.round(dewp * 9/5 + 32)}°F)` : '-'}
@@ -144,7 +144,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Altimeter</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{altimInHg ? `${altimInHg} inHg` : '-'}</td>
             </tr>
-            <tr className="bg-white/12 dark:bg-slate-800/15">
+            <tr className="bg-white/6 dark:bg-slate-800/10">
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Humidity</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{humidity !== null ? `${humidity}%` : '-'}</td>
             </tr>
@@ -152,7 +152,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Density Altitude</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{densityAltitude !== null ? `${densityAltitude.toLocaleString()}'` : '-'}</td>
             </tr>
-            <tr className="bg-white/12 dark:bg-slate-800/15">
+            <tr className="bg-white/6 dark:bg-slate-800/10">
               <td className="py-2 px-4 text-slate-600 dark:text-slate-300 font-medium">Sunrise / Sunset</td>
               <td className="py-2 px-4 text-right font-semibold text-slate-900 dark:text-white font-mono">{formatTime(sunTimes.sunrise)} · {formatTime(sunTimes.sunset)}</td>
             </tr>
@@ -163,7 +163,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
           </tbody>
         </table>
 
-         <div className="p-3.5 border-t border-white/45 dark:border-slate-700/50 bg-white/15 dark:bg-slate-900/20 relative">
+         <div className="p-3.5 border-t border-white/50 dark:border-slate-700/50 bg-white/8 dark:bg-slate-900/15 relative">
             {weather.taf === 'TAF NOT FETCHED' ? (
                 <div className="flex items-center gap-2 text-slate-600 text-xs">
                     <div className="animate-spin h-3 w-3 border-2 border-sky-500 border-t-transparent rounded-full"></div>
@@ -174,7 +174,7 @@ export const WeatherBoard: React.FC<WeatherBoardProps> = ({ weather, airport }) 
             )}
          </div>
 
-         <div className="px-4 py-2 bg-white/10 dark:bg-slate-800/15 border-t border-white/40 dark:border-slate-700/40 text-[10px] text-slate-600 dark:text-slate-300">
+         <div className="px-4 py-2 bg-white/5 dark:bg-slate-800/10 border-t border-white/40 dark:border-slate-700/40 text-[10px] text-slate-600 dark:text-slate-300">
            Data sourced from NOAA Aviation Weather Center (AWC).
          </div>
       </div>

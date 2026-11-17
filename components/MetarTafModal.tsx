@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { WeatherData, Airport } from '../types';
-import { fetchWeather } from '../services/aviationService';
+import { fetchWeather, isValidWeatherData, normalizeStationId } from '../services/aviationService';
 import { 
   CloudSun, 
   Wind, 
@@ -27,6 +27,7 @@ interface MetarTafModalProps {
   weatherMap: Record<string, WeatherData>;
   selectedAirportId?: string | null;
   onSelectAirport?: (id: string) => void;
+  onWeatherUpdate?: (stationId: string, data: WeatherData) => void;
 }
 
 export const MetarTafModal: React.FC<MetarTafModalProps> = ({
@@ -35,7 +36,8 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
   airports,
   weatherMap,
   selectedAirportId,
-  onSelectAirport
+  onSelectAirport,
+  onWeatherUpdate
 }) => {
   const [searchQuery, setSearchQuery] = useState<string>('KCDC');
   const [activeAirportId, setActiveAirportId] = useState<string>('KCDC');
@@ -62,25 +64,36 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
     if (!isOpen || !activeAirportId) return;
 
     const id = activeAirportId.toUpperCase().trim();
-    // Check if we already have it in weatherMap
-    const mapMatch = weatherMap[id] || weatherMap[id.replace(/^K/, '')];
+    const matchedAirport = airports.find(a => a.id.toUpperCase() === id);
+    const stationId = matchedAirport?.weatherSource || id;
+    const normStation = normalizeStationId(stationId);
+
+    const mapMatch =
+      weatherMap[id] ||
+      weatherMap[stationId] ||
+      weatherMap[normStation] ||
+      weatherMap[id.replace(/^K/, '')];
     
-    if (mapMatch && mapMatch.metar && !mapMatch.metar.includes('ERROR') && !mapMatch.metar.includes('Unavailable')) {
+    if (isValidWeatherData(mapMatch)) {
       setCurrentWeather(mapMatch);
       setError(null);
+      setIsLoading(false);
     } else {
-      // Fetch live weather via aviationService
-      loadLiveWeather(id);
+      loadLiveWeather(stationId);
     }
-  }, [activeAirportId, isOpen, weatherMap]);
+  }, [activeAirportId, isOpen, weatherMap, airports]);
 
   const loadLiveWeather = async (id: string, force = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await fetchWeather(id, force);
+      const matchedAirport = airports.find(a => a.id.toUpperCase() === id.toUpperCase());
+      const queryStation = matchedAirport?.weatherSource || id;
+      const data = await fetchWeather(queryStation, force);
       setCurrentWeather(data);
-      if (!data.metar || data.metar.includes('ERROR') || data.metar.includes('Unavailable')) {
+      if (isValidWeatherData(data)) {
+        onWeatherUpdate?.(queryStation, data);
+      } else {
         setError(`No active METAR reported for station ${id}.`);
       }
     } catch (err) {
@@ -168,13 +181,13 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1200] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/25 backdrop-blur-md animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-[1200] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/15 backdrop-blur-sm animate-fade-in" onClick={onClose}>
       <div 
         className="w-full md:max-w-3xl ios-liquid-glass-heavy rounded-t-3xl md:rounded-[28px] overflow-hidden flex flex-col max-h-[90dvh] md:max-h-[85dvh] animate-slide-in-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
-        <div className="bg-white/15 dark:bg-slate-900/25 text-slate-900 dark:text-white px-5 py-4 flex items-center justify-between border-b border-white/50 dark:border-slate-800/60 shrink-0">
+        <div className="bg-white/6 dark:bg-slate-900/12 text-slate-900 dark:text-white px-5 py-4 flex items-center justify-between border-b border-white/55 dark:border-slate-800/60 shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-sky-500/15 text-sky-600 dark:text-sky-400 rounded-2xl border border-sky-400/30 shadow-2xs">
               <CloudSun size={22} />
@@ -186,7 +199,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
                   Live Aviation Weather
                 </span>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium">
                 Search & inspect raw METARs, TAF forecasts, and flight category rules
               </p>
             </div>
@@ -202,7 +215,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
         </div>
 
         {/* Top Controls & Search Bar */}
-        <div className="p-4 bg-white/10 dark:bg-slate-900/20 border-b border-white/45 dark:border-slate-800/60 flex flex-col sm:flex-row items-center gap-3 shrink-0">
+        <div className="p-4 bg-white/5 dark:bg-slate-900/10 border-b border-white/50 dark:border-slate-800/60 flex flex-col sm:flex-row items-center gap-3 shrink-0">
           <form onSubmit={handleSearchSubmit} className="relative flex-1 w-full">
             <Search className="absolute left-3.5 top-3 text-sky-600" size={18} />
             <input
@@ -214,7 +227,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
             />
             <button
               type="submit"
-              className="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 bg-sky-600/80 hover:bg-sky-500/85 backdrop-blur-md border border-white/50 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1 shadow-xs"
+              className="absolute right-1.5 top-1.5 bottom-1.5 px-3.5 bg-sky-600/75 hover:bg-sky-500/80 backdrop-blur-md border border-white/60 text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1 shadow-xs"
             >
               Search
             </button>
@@ -233,8 +246,8 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
         </div>
 
         {/* Weather Category Quick Filters */}
-        <div className="px-4 py-2 bg-white/10 dark:bg-slate-950/20 border-b border-white/45 dark:border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-hide text-xs shrink-0">
-          <span className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-400 tracking-wider flex items-center gap-1 mr-1 shrink-0">
+        <div className="px-4 py-2 bg-white/5 dark:bg-slate-950/10 border-b border-white/50 dark:border-slate-800/60 flex items-center gap-2 overflow-x-auto scrollbar-hide text-xs shrink-0">
+          <span className="text-[10px] font-black uppercase text-slate-700 dark:text-slate-400 tracking-wider flex items-center gap-1 mr-1 shrink-0">
             <Filter size={11} /> Quick Stations:
           </span>
           {airports.slice(0, 8).map((ap) => {
@@ -250,8 +263,8 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
                 }}
                 className={`px-2.5 py-1 rounded-full text-xs font-bold font-mono transition-all flex items-center gap-1.5 border whitespace-nowrap shrink-0 ${
                   isCurrent
-                    ? 'bg-sky-500/75 backdrop-blur-md text-white border-white/60 shadow-xs'
-                    : 'bg-white/25 dark:bg-slate-800/35 text-slate-800 dark:text-slate-200 border-white/60 dark:border-slate-700 hover:bg-white/45'
+                    ? 'bg-sky-500/70 backdrop-blur-md text-white border-white/65 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.55)]'
+                    : 'bg-white/14 dark:bg-slate-800/22 text-slate-800 dark:text-slate-200 border-white/65 dark:border-slate-700 hover:bg-white/30'
                 }`}
               >
                 <span>{ap.id}</span>
@@ -387,7 +400,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
 
               {/* RAW METAR Box */}
               <div className="ios-liquid-card rounded-2xl overflow-hidden">
-                <div className="px-4 py-2.5 bg-white/15 dark:bg-slate-800/30 border-b border-white/45 dark:border-slate-700 flex items-center justify-between">
+                <div className="px-4 py-2.5 bg-white/8 dark:bg-slate-800/18 border-b border-white/50 dark:border-slate-700 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText size={16} className="text-sky-600" />
                     <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
@@ -402,14 +415,14 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
                     <span>{copiedMetar ? 'Copied' : 'Copy METAR'}</span>
                   </button>
                 </div>
-                <div className="p-4 font-mono text-sm font-semibold leading-relaxed bg-white/20 dark:bg-slate-900/40 text-emerald-800 dark:text-emerald-300 rounded-b-2xl overflow-x-auto selection:bg-sky-500 selection:text-white">
+                <div className="p-4 font-mono text-sm font-semibold leading-relaxed bg-white/10 dark:bg-slate-900/20 text-emerald-900 dark:text-emerald-300 rounded-b-2xl overflow-x-auto selection:bg-sky-500 selection:text-white">
                   {currentWeather.metar || 'METAR NOT AVAILABLE'}
                 </div>
               </div>
 
               {/* RAW TAF Box */}
               <div className="ios-liquid-card rounded-2xl overflow-hidden">
-                <div className="px-4 py-2.5 bg-white/15 dark:bg-slate-800/30 border-b border-white/45 dark:border-slate-700 flex items-center justify-between">
+                <div className="px-4 py-2.5 bg-white/8 dark:bg-slate-800/18 border-b border-white/50 dark:border-slate-700 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CloudSun size={16} className="text-indigo-600" />
                     <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
@@ -424,7 +437,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
                     <span>{copiedTaf ? 'Copied' : 'Copy TAF'}</span>
                   </button>
                 </div>
-                <div className="p-4 font-mono text-sm font-semibold leading-relaxed bg-white/20 dark:bg-slate-900/40 text-sky-900 dark:text-sky-200 rounded-b-2xl overflow-x-auto whitespace-pre-wrap selection:bg-indigo-500 selection:text-white">
+                <div className="p-4 font-mono text-sm font-semibold leading-relaxed bg-white/10 dark:bg-slate-900/20 text-sky-950 dark:text-sky-200 rounded-b-2xl overflow-x-auto whitespace-pre-wrap selection:bg-indigo-500 selection:text-white">
                   {currentWeather.taf || 'TAF NOT REPORTED FOR THIS STATION'}
                 </div>
               </div>
@@ -433,7 +446,7 @@ export const MetarTafModal: React.FC<MetarTafModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.5rem))] md:p-3 bg-white/15 dark:bg-slate-900/25 border-t border-white/45 dark:border-slate-700 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 shrink-0">
+        <div className="p-3 pb-[max(0.75rem,calc(env(safe-area-inset-bottom)+0.5rem))] md:p-3 bg-white/6 dark:bg-slate-900/15 border-t border-white/55 dark:border-slate-700 flex items-center justify-between text-xs text-slate-700 dark:text-slate-300 shrink-0">
           <span className="font-semibold text-[11px]">
             Data Source: NOAA / Aviation Weather Center (AWC API)
           </span>

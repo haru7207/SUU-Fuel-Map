@@ -183,81 +183,81 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 md:p-4">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-5xl h-[90dvh] md:h-auto max-h-[90dvh] rounded-t-3xl md:rounded-2xl shadow-2xl flex flex-col md:flex-row overflow-y-auto md:overflow-hidden overscroll-y-contain touch-pan-y border border-slate-200 dark:border-slate-800">
+    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center bg-slate-900/15 backdrop-blur-md p-0 md:p-4">
+      <div className="ios-liquid-glass-heavy w-full max-w-5xl h-[90dvh] md:h-auto max-h-[90dvh] rounded-t-[32px] md:rounded-[28px] flex flex-col md:flex-row overflow-y-auto md:overflow-hidden overscroll-y-contain touch-pan-y">
         
         {/* Left Column - Inputs */}
-        <div className="flex-1 md:min-h-0 md:overflow-y-auto border-b md:border-b-0 md:border-r border-slate-200 dark:border-slate-800 p-5 md:p-6">
+        <div className="flex-1 md:min-h-0 md:overflow-y-auto border-b md:border-b-0 md:border-r border-white/50 dark:border-slate-800/50 p-5 md:p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
               <Calculator className="text-blue-500" />
               E6B Flight Computer
             </h2>
             <button 
               onClick={onClose}
-              className="md:hidden text-slate-400 hover:text-white transition-colors"
+              className="md:hidden ios-liquid-pill p-2 rounded-full text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
             >
-              <X size={24} />
+              <X size={20} />
             </button>
           </div>
 
           <div className="space-y-8">
             {/* Section A */}
             <div className="space-y-4">
-               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-white/50 dark:border-slate-700/50 pb-2">
                  <Navigation size={16} /> Heading, Ground Speed & WCA
                </h3>
                
                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">True Course</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">True Course</label>
                       <input
                           type="number"
                           value={tc}
                           onChange={(e) => setTc(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">True Air Speed</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">True Air Speed</label>
                       <input
                           type="number"
                           value={tas}
                           onChange={(e) => setTas(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Wind Dir (True)</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Wind Dir (True)</label>
                       <input
                           type="number"
                           value={wd}
                           onChange={(e) => setWd(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Wind Speed</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Wind Speed</label>
                       <input
                           type="number"
                           value={ws}
                           onChange={(e) => setWs(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
                   <div className="col-span-2 md:col-span-1">
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Mag Variation</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Mag Variation</label>
                       <div className="flex gap-2">
                           <input
                               type="number"
                               value={magVarVal}
                               onChange={(e) => setMagVarVal(e.target.value)}
-                              className="w-2/3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                              className="w-2/3 ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                           />
                           <select
                               value={magVarDir}
                               onChange={(e) => setMagVarDir(e.target.value)}
-                              className="w-1/3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                              className="w-1/3 ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
                           >
                               <option value="E">E</option>
                               <option value="W">W</option>
@@ -267,27 +267,27 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                </div>
 
                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">
-                   <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                       <span className="block text-xs font-bold text-slate-500 uppercase mb-1">WCA</span>
-                       <span className="font-mono text-lg font-bold text-slate-800 dark:text-slate-200">
+                   <div className="ios-liquid-card p-3 rounded-xl">
+                       <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">WCA</span>
+                       <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
                            {wca > 0 ? '+' : ''}{wca.toFixed(1)}
                        </span>
                    </div>
-                   <div className="bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
-                       <span className="block text-xs font-bold text-slate-500 uppercase mb-1">True Hdg</span>
-                       <span className="font-mono text-lg font-bold text-slate-800 dark:text-slate-200">
+                   <div className="ios-liquid-card p-3 rounded-xl">
+                       <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">True Hdg</span>
+                       <span className="font-mono text-lg font-bold text-slate-900 dark:text-slate-100">
                            {th.toFixed(0).padStart(3, '0')}
                        </span>
                    </div>
-                   <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
-                       <span className="block text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase mb-1">Mag Hdg</span>
-                       <span className="font-mono text-lg font-bold text-indigo-800 dark:text-indigo-300">
+                   <div className="bg-indigo-500/15 dark:bg-indigo-900/25 p-3 rounded-xl border border-indigo-300/60 dark:border-indigo-800/50">
+                       <span className="block text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase mb-1">Mag Hdg</span>
+                       <span className="font-mono text-lg font-bold text-indigo-900 dark:text-indigo-300">
                            {mh.toFixed(0).padStart(3, '0')}
                        </span>
                    </div>
-                   <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-100 dark:border-blue-800">
-                       <span className="block text-xs font-bold text-blue-600 dark:text-blue-400 uppercase mb-1">Ground Speed</span>
-                       <span className="font-mono text-lg font-bold text-blue-800 dark:text-blue-300">
+                   <div className="bg-blue-500/15 dark:bg-blue-900/25 p-3 rounded-xl border border-blue-300/60 dark:border-blue-800/50">
+                       <span className="block text-xs font-bold text-blue-700 dark:text-blue-400 uppercase mb-1">Ground Speed</span>
+                       <span className="font-mono text-lg font-bold text-blue-900 dark:text-blue-300">
                            {gs > 0 ? gs.toFixed(1) : '---'}
                        </span>
                    </div>
@@ -296,25 +296,25 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
 
             {/* Section B */}
             <div className="space-y-4">
-               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-white/50 dark:border-slate-700/50 pb-2">
                  <Clock size={16} /> Flight Time
                </h3>
                
                <div className="grid grid-cols-2 gap-4">
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Distance (NM)</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Distance (NM)</label>
                       <input
                           type="number"
                           value={dist}
                           onChange={(e) => setDist(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
                   <div>
                       <div className="h-full flex flex-col justify-end">
-                         <div className="bg-emerald-50 dark:bg-emerald-900/20 p-3 flex-1 rounded-lg border border-emerald-100 dark:border-emerald-800">
-                             <span className="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-1">Flight Time</span>
-                             <span className="font-mono text-lg font-bold text-emerald-800 dark:text-emerald-300">
+                         <div className="bg-emerald-500/15 dark:bg-emerald-900/25 p-3 flex-1 rounded-xl border border-emerald-300/60 dark:border-emerald-800/50">
+                             <span className="block text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase mb-1">Flight Time</span>
+                             <span className="font-mono text-lg font-bold text-emerald-900 dark:text-emerald-300">
                                  {gs > 0 ? flightTimeStr : '--:--:--'}
                              </span>
                          </div>
@@ -325,25 +325,25 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
 
             {/* Section C */}
             <div className="space-y-4">
-               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-2">
+               <h3 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2 border-b border-white/50 dark:border-slate-700/50 pb-2">
                  <Droplet size={16} /> Fuel Consumption
                </h3>
                
                <div className="grid grid-cols-2 gap-4">
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Fuel per Hour (GPH)</label>
+                      <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">Fuel per Hour (GPH)</label>
                       <input
                           type="number"
                           value={gph}
                           onChange={(e) => setGph(e.target.value)}
-                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                          className="w-full ios-liquid-input rounded-xl p-2.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
                       />
                   </div>
                   <div>
                       <div className="h-full flex flex-col justify-end">
-                         <div className="bg-amber-50 dark:bg-amber-900/20 p-3 flex-1 rounded-lg border border-amber-100 dark:border-amber-800">
-                             <span className="block text-xs font-bold text-amber-600 dark:text-amber-400 uppercase mb-1">Required Fuel</span>
-                             <span className="font-mono text-lg font-bold text-amber-800 dark:text-amber-300">
+                         <div className="bg-amber-500/15 dark:bg-amber-900/25 p-3 flex-1 rounded-xl border border-amber-300/60 dark:border-amber-800/50">
+                             <span className="block text-xs font-bold text-amber-700 dark:text-amber-400 uppercase mb-1">Required Fuel</span>
+                             <span className="font-mono text-lg font-bold text-amber-900 dark:text-amber-300">
                                  {gs > 0 ? reqFuel.toFixed(2) : '--'}
                              </span>
                          </div>
@@ -356,15 +356,15 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
         </div>
 
         {/* Right Column - Illustration */}
-        <div className="flex flex-1 bg-slate-50 dark:bg-slate-950 p-6 pb-24 md:pb-6 flex-col items-center justify-center relative shrink-0">
+        <div className="flex flex-1 bg-white/5 dark:bg-slate-950/20 p-6 pb-24 md:pb-6 flex-col items-center justify-center relative shrink-0">
             <button 
               onClick={onClose}
-              className="hidden md:flex absolute top-4 right-4 p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 rounded-full transition-colors"
+              className="hidden md:flex absolute top-4 right-4 p-2 ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-full transition-colors"
             >
               <X size={20} />
             </button>
             
-            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 mb-6 uppercase tracking-wider">Illustration</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-6 uppercase tracking-wider">Illustration</h3>
             
             <div className="relative">
                 <canvas 
@@ -375,34 +375,34 @@ export const E6BCalculator: React.FC<E6BCalculatorProps> = ({ isOpen, onClose })
                 ></canvas>
 
                 {/* Legend Overlay */}
-                <div className="absolute top-0 right-0 lg:-right-4 space-y-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm p-3 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm text-sm">
+                <div className="absolute top-0 right-0 lg:-right-4 space-y-2 ios-liquid-card p-3 rounded-2xl text-sm">
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 bg-red-500 rounded-sm"></span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">Course: {tc.padStart(3, '0')}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">Course: {tc.padStart(3, '0')}</span>
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 bg-slate-200 rounded-sm outline outline-1 outline-slate-400"></span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">T Hdg: {th.toFixed(0).padStart(3, '0')}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">T Hdg: {th.toFixed(0).padStart(3, '0')}</span>
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 bg-indigo-500 rounded-sm"></span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">M Hdg: {mh.toFixed(0).padStart(3, '0')}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">M Hdg: {mh.toFixed(0).padStart(3, '0')}</span>
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 bg-blue-500 rounded-sm"></span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">Wind: {wd.padStart(3, '0')} @ {ws}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">Wind: {wd.padStart(3, '0')} @ {ws}</span>
                    </div>
-                   <div className="flex items-center gap-2 mt-4 pt-2 border-t border-slate-200 dark:border-slate-700">
+                   <div className="flex items-center gap-2 mt-4 pt-2 border-t border-white/50 dark:border-slate-700/50">
                        <span className="w-4 h-4 font-black text-amber-500 flex items-center justify-center">∠</span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">WCA: {wca > 0 ? '+' : ''}{wca.toFixed(1)}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">WCA: {wca > 0 ? '+' : ''}{wca.toFixed(1)}</span>
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 font-black flex items-center justify-center text-blue-500">→</span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">GS: {gs > 0 ? gs.toFixed(1) : '---'}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">GS: {gs > 0 ? gs.toFixed(1) : '---'}</span>
                    </div>
                    <div className="flex items-center gap-2">
                        <span className="w-4 h-4 font-black flex items-center justify-center text-slate-500">TAS</span>
-                       <span className="font-mono text-slate-700 dark:text-slate-300">TAS: {tas}</span>
+                       <span className="font-mono text-slate-800 dark:text-slate-200">TAS: {tas}</span>
                    </div>
                 </div>
             </div>

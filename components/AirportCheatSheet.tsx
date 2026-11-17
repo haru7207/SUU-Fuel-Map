@@ -69,30 +69,30 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
   });
 
   return (
-    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/80 backdrop-blur-sm animate-fade-in">
-      <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-t-3xl md:rounded-xl w-full max-w-6xl h-[90dvh] md:h-auto max-h-[90dvh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 z-[2000] flex items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/15 backdrop-blur-md animate-fade-in">
+      <div className="ios-liquid-glass-heavy rounded-t-[32px] md:rounded-[28px] w-full max-w-6xl h-[90dvh] md:h-auto max-h-[90dvh] flex flex-col overflow-hidden">
         
         {/* Header */}
-        <div className="bg-slate-800 px-6 py-4 border-b border-slate-700 flex justify-between items-center flex-shrink-0">
+        <div className="bg-white/6 dark:bg-slate-800/15 px-6 py-4 border-b border-white/55 dark:border-slate-700/50 flex justify-between items-center flex-shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-600/20 p-2 rounded-lg">
-              <FileSpreadsheet className="text-blue-400 w-6 h-6" />
+            <div className="bg-blue-500/20 border border-blue-400/50 p-2 rounded-xl">
+              <FileSpreadsheet className="text-blue-600 dark:text-blue-400 w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-100">Airport Cheat Sheet</h2>
-              <p className="text-xs text-slate-400">Quick reference data for local airports</p>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Airport Cheat Sheet</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Quick reference data for local airports</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-white hover:bg-slate-700 p-2 rounded-full transition-colors"
+            className="ios-liquid-pill text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-2 rounded-full transition-colors"
           >
-            <X size={24} />
+            <X size={20} />
           </button>
         </div>
 
         {/* Search */}
-        <div className="p-4 bg-slate-800/50 border-b border-slate-700 flex-shrink-0">
+        <div className="p-4 bg-white/5 dark:bg-slate-800/15 border-b border-white/50 dark:border-slate-700/50 flex-shrink-0">
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <Search className="h-5 w-5 text-slate-500" />
@@ -100,7 +100,7 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
             <input
               type="text"
               placeholder="Search by Airport ID or Name..."
-              className="w-full bg-slate-900 border border-slate-700 text-slate-200 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block pl-10 p-2.5"
+              className="w-full ios-liquid-input text-slate-900 dark:text-slate-100 text-sm rounded-xl focus:ring-2 focus:ring-blue-500 block pl-10 p-2.5"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -108,34 +108,34 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
         </div>
 
         {/* Table Content */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y bg-slate-900 p-4 pb-24 md:pb-6 custom-scrollbar">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y bg-transparent p-4 pb-24 md:pb-6 custom-scrollbar">
           {isLoading ? (
             <div className="flex justify-center items-center h-full">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400">
+            <div className="flex flex-col items-center justify-center h-full text-slate-600 dark:text-slate-400">
               <AlertTriangle className="h-10 w-10 text-red-500 mb-2" />
               <p>{error}</p>
             </div>
           ) : (
             <>
               {/* Desktop View */}
-              <div className="hidden md:block overflow-x-auto rounded-lg border border-slate-700">
-                <table className="w-full text-sm text-left text-slate-300">
-                  <thead className="text-xs text-slate-400 uppercase bg-slate-800 sticky top-0 z-10 shadow-md">
+              <div className="hidden md:block overflow-x-auto rounded-2xl ios-liquid-card">
+                <table className="w-full text-sm text-left text-slate-800 dark:text-slate-200">
+                  <thead className="text-xs text-slate-600 dark:text-slate-400 uppercase bg-white/25 dark:bg-slate-800/40 backdrop-blur-md sticky top-0 z-10 border-b border-white/55 dark:border-slate-700/50">
                     <tr>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">ID</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">Airport Name</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">Elev</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">TPA</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">CTAF/TWR</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">WX</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">Right Traffic</th>
-                      <th scope="col" className="px-4 py-3 border-b border-slate-700">CFI Notes</th>
+                      <th scope="col" className="px-4 py-3">ID</th>
+                      <th scope="col" className="px-4 py-3">Airport Name</th>
+                      <th scope="col" className="px-4 py-3">Elev</th>
+                      <th scope="col" className="px-4 py-3">TPA</th>
+                      <th scope="col" className="px-4 py-3">CTAF/TWR</th>
+                      <th scope="col" className="px-4 py-3">WX</th>
+                      <th scope="col" className="px-4 py-3">Right Traffic</th>
+                      <th scope="col" className="px-4 py-3">CFI Notes</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-white/40 dark:divide-slate-700/40">
                     {filteredData.length > 0 ? (
                       filteredData.map((row, index) => {
                         const hasRightTraffic = row['Right Traffic'] && row['Right Traffic'].trim() !== '' && row['Right Traffic'].trim() !== '-';
@@ -143,24 +143,24 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
                         return (
                           <tr 
                             key={index} 
-                            className="border-b border-slate-800 bg-slate-900 hover:bg-slate-800 transition-colors"
+                            className="bg-white/8 dark:bg-slate-900/15 hover:bg-white/25 dark:hover:bg-slate-800/35 transition-colors"
                           >
-                            <td className="px-4 py-3 font-medium text-blue-400 whitespace-nowrap">{row.ID}</td>
-                            <td className="px-4 py-3 font-medium text-slate-200">{row['Airport Name']}</td>
+                            <td className="px-4 py-3 font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">{row.ID}</td>
+                            <td className="px-4 py-3 font-semibold text-slate-900 dark:text-slate-100">{row['Airport Name']}</td>
                             <td className="px-4 py-3">{row['Elev (ft)']}</td>
                             <td className="px-4 py-3">{row['TPA (MSL)']}</td>
                             <td className="px-4 py-3">{row['CTAF/TWR']}</td>
-                            <td className="px-4 py-3 text-slate-400">{row['WX (AWOS/ATIS)']}</td>
-                            <td className={`px-4 py-3 ${hasRightTraffic ? 'text-red-500 font-bold' : ''}`}>
+                            <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{row['WX (AWOS/ATIS)']}</td>
+                            <td className={`px-4 py-3 ${hasRightTraffic ? 'text-red-600 dark:text-red-400 font-bold' : ''}`}>
                               {row['Right Traffic']}
                             </td>
-                            <td className="px-4 py-3 text-slate-400 text-xs max-w-xs">{row['CFI Practical Notes / Remarks']}</td>
+                            <td className="px-4 py-3 text-slate-700 dark:text-slate-300 text-xs max-w-xs">{row['CFI Practical Notes / Remarks']}</td>
                           </tr>
                         );
                       })
                     ) : (
                       <tr>
-                        <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                        <td colSpan={8} className="px-4 py-8 text-center text-slate-600 dark:text-slate-400">
                           No airports found matching "{searchQuery}"
                         </td>
                       </tr>
@@ -175,46 +175,46 @@ export const AirportCheatSheet: React.FC<AirportCheatSheetProps> = ({ isOpen, on
                   filteredData.map((row, index) => {
                     const hasRightTraffic = row['Right Traffic'] && row['Right Traffic'].trim() !== '' && row['Right Traffic'].trim() !== '-';
                     return (
-                      <div key={index} className="bg-slate-800 border border-slate-700 rounded-lg p-4 space-y-3 shadow-sm">
-                        <div className="flex justify-between items-center border-b border-slate-700 pb-2">
+                      <div key={index} className="ios-liquid-card rounded-2xl p-4 space-y-3">
+                        <div className="flex justify-between items-center border-b border-white/50 dark:border-slate-700/50 pb-2">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-blue-400 text-lg">{row.ID}</span>
-                            <span className="font-medium text-slate-200">{row['Airport Name']}</span>
+                            <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">{row.ID}</span>
+                            <span className="font-semibold text-slate-900 dark:text-slate-100">{row['Airport Name']}</span>
                           </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-sm pt-1">
                           <div>
-                            <span className="text-slate-500 text-xs block mb-0.5 uppercase tracking-wider font-semibold">Elev</span>
-                            <span className="text-slate-300">{row['Elev (ft)']}</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-xs block mb-0.5 uppercase tracking-wider font-semibold">Elev</span>
+                            <span className="text-slate-900 dark:text-slate-200 font-medium">{row['Elev (ft)']}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 text-xs block mb-0.5 uppercase tracking-wider font-semibold">TPA</span>
-                            <span className="text-slate-300">{row['TPA (MSL)']}</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-xs block mb-0.5 uppercase tracking-wider font-semibold">TPA</span>
+                            <span className="text-slate-900 dark:text-slate-200 font-medium">{row['TPA (MSL)']}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 text-xs block mb-0.5 uppercase tracking-wider font-semibold">CTAF/TWR</span>
-                            <span className="text-slate-300">{row['CTAF/TWR']}</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-xs block mb-0.5 uppercase tracking-wider font-semibold">CTAF/TWR</span>
+                            <span className="text-slate-900 dark:text-slate-200 font-medium">{row['CTAF/TWR']}</span>
                           </div>
                           <div>
-                            <span className="text-slate-500 text-xs block mb-0.5 uppercase tracking-wider font-semibold">WX</span>
-                            <span className="text-slate-300">{row['WX (AWOS/ATIS)']}</span>
+                            <span className="text-slate-500 dark:text-slate-400 text-xs block mb-0.5 uppercase tracking-wider font-semibold">WX</span>
+                            <span className="text-slate-900 dark:text-slate-200 font-medium">{row['WX (AWOS/ATIS)']}</span>
                           </div>
                         </div>
-                        <div className="pt-2 border-t border-slate-700/50 flex flex-col gap-1">
-                           <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">Right Traffic</span>
-                           <span className={hasRightTraffic ? 'text-red-500 font-bold' : 'text-slate-300'}>{row['Right Traffic'] || '-'}</span>
+                        <div className="pt-2 border-t border-white/45 dark:border-slate-700/50 flex flex-col gap-1">
+                           <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold">Right Traffic</span>
+                           <span className={hasRightTraffic ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-900 dark:text-slate-200'}>{row['Right Traffic'] || '-'}</span>
                         </div>
                         {row['CFI Practical Notes / Remarks'] && (
-                          <div className="pt-2 border-t border-slate-700/50 flex flex-col gap-1">
-                            <span className="text-slate-500 text-xs uppercase tracking-wider font-semibold">CFI Notes</span>
-                            <p className="text-slate-300 text-sm leading-relaxed">{row['CFI Practical Notes / Remarks']}</p>
+                          <div className="pt-2 border-t border-white/45 dark:border-slate-700/50 flex flex-col gap-1">
+                            <span className="text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider font-semibold">CFI Notes</span>
+                            <p className="text-slate-800 dark:text-slate-200 text-sm leading-relaxed">{row['CFI Practical Notes / Remarks']}</p>
                           </div>
                         )}
                       </div>
                     );
                   })
                 ) : (
-                  <div className="py-8 text-center text-slate-500 bg-slate-800 rounded-lg border border-slate-700 shadow-sm">
+                  <div className="py-8 text-center text-slate-600 dark:text-slate-400 ios-liquid-card rounded-2xl">
                     No airports found matching "{searchQuery}"
                   </div>
                 )}
